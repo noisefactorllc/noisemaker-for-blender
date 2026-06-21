@@ -50,6 +50,30 @@ and [`PORTING-GUIDE.md`](PORTING-GUIDE.md).
 ### Platform note (cross-engine precision)
 Blender's `gpu`-module Metal shader codegen differs from the reference's ANGLE path (transcendentals/fma/divide-singularities). This is **invisible for single-pass effects** (byte-identical) but **amplified by chaotic iteration** (navierStokes with sharp input, `flow:chaotic`). `babylon` reaches byte-identical on these *only because it runs the same ANGLE compiler as the reference*; through Blender's gpu module, raw chaotic byte-parity isn't reachable — structural parity is.
 
+## Using the addon
+
+The addon renders a Noisemaker DSL program with the `gpu` module and **bakes the result into
+an Image datablock** — the real compositor consumes it through a stock **Image node**
+("compositor-feeding"; Blender's compositor node set is C-defined and closed to Python).
+
+1. **Enable** — Edit ▸ Preferences ▸ Add-ons ▸ install `blender/noisemaker_blender/`, enable "Noisemaker".
+2. **Author** — in the Text Editor write a DSL program, e.g.
+   ```
+   search synth, filter
+   noise(seed: 1, scaleX: 50, scaleY: 50).adjust().write(o0)
+   render(o0)
+   ```
+   (or point the panel at an external `.dsl` file).
+3. **Bake** — in the **Compositor** or **Image Editor** sidebar (`N`) ▸ **Noisemaker** tab,
+   pick the Text block, set Size/Time, and click **Bake**. Or use the **Noisemaker** node
+   editor: add a *Program* node (Shift+A), set its DSL + params, and Bake from the node.
+   The result lands in an Image datablock (default name `Noisemaker`).
+4. **Consume** — add an **Image node** in the compositor pointing at that datablock (or use it
+   as any texture). It's stored `Non-Color` (raw linear values, matching the reference capture).
+
+For stateful effects (navierStokes, agent sims, reaction-diffusion, cellular automata) raise
+**Frames** and set **Timestep** (≈ `0.00167` = 1/600) so the simulation evolves to steady state.
+
 ## Running the parity gate
 
 ```sh
