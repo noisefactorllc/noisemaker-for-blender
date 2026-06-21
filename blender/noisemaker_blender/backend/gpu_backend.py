@@ -11,6 +11,7 @@ Implements reference/04 §10 + reference/05 backend semantics:
 Readback flattens the 3-D Buffer, flips to top-down, quantizes round(v*255).
 """
 import os
+import re
 import json
 import math
 
@@ -34,9 +35,23 @@ _FORMAT = {"rgba8": "RGBA8", "rgba16f": "RGBA16F", "rgba32f": "RGBA32F"}
 _FMT_RANK = {"RGBA8": 1, "RGBA16F": 2, "RGBA32F": 3}
 
 
+_STATE_NODE_RE = re.compile(r"^(xyz|vel|rgba|points_trail)_node_\d+$")
+
+
 def _is_state_surface(name):
-    # display surfaces are o0..o7; everything else (sims, particles) is persistent state.
-    return not (len(name) == 2 and name[0] == "o" and name[1].isdigit())
+    """reference/04 §10.7 isStateSurface — EXACT predicate (parity-critical; name has no
+    global_ prefix). State surfaces persist their within-frame bindings end-of-frame so
+    particle/feedback sims continue; everything else (display/scratch) swaps read<->write.
+    Getting this wrong desyncs feedback: a display surface written an EVEN number of times
+    per frame (lenia's clear+deposit) needs the swap, or deposit lands on a never-cleared
+    buffer and accumulates unbounded."""
+    if name in ("xyz", "vel", "rgba", "trail"):
+        return True
+    if name.endswith(("_xyz", "_vel", "_rgba", "_trail")):
+        return True
+    if "state" in name or "State" in name:
+        return True
+    return bool(_STATE_NODE_RE.match(name))
 
 
 class _Surface:
@@ -148,10 +163,17 @@ class GpuBackend:
             self.frame_write[name] = s.write
 
     def frame_persist(self):
-        # end-of-frame (reference/04 §10.7): keep the latest bindings so sims/particles continue.
+        # end-of-frame double-buffer resolution (reference/04 §10.7). State surfaces persist
+        # their within-frame final bindings (sims/particles continue from last frame's buffers).
+        # Display/scratch surfaces SWAP read<->write (the frame-START persistent bindings, which
+        # within-frame ping-pong left untouched): an odd within-frame write count works either
+        # way, but an even count — lenia's clear+deposit — only stays fresh under the swap.
         for name, s in self.surfaces.items():
-            s.read = self.frame_read[name]
-            s.write = self.frame_write[name]
+            if _is_state_surface(name):
+                s.read = self.frame_read[name]
+                s.write = self.frame_write[name]
+            else:
+                s.read, s.write = s.write, s.read
 
     def _read(self, tid, graph):
         if tid.startswith("global_"):
