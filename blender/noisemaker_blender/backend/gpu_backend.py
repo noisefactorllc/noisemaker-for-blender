@@ -30,6 +30,8 @@ _BLIT_DESC = {"pushConstants": [["VEC2", "resolution"]], "samplers": [[0, "FLOAT
 
 # graph texture format string -> GPUOffScreen format token.
 _FORMAT = {"rgba8": "RGBA8", "rgba16f": "RGBA16F", "rgba32f": "RGBA32F"}
+# Precision rank: a pooled slot shared by mixed formats must hold the most demanding one.
+_FMT_RANK = {"RGBA8": 1, "RGBA16F": 2, "RGBA32F": 3}
 
 
 def _is_state_surface(name):
@@ -103,18 +105,42 @@ class GpuBackend:
         for p in graph.passes:
             for tid in list(p.get("inputs", {}).values()) + list(p.get("outputs", {}).values()):
                 texspecs.setdefault(tid, {"width": "screen", "height": "screen"})
+        # Resolve every logical texture's dims once (drives per-pass viewport, not the
+        # physical slot size — a small pooled texture renders only its corner of a shared slot).
+        self.tex_dims = {}
         for tid, spec in texspecs.items():
-            w = self.resolve_dim(spec.get("width", "screen"), uniforms)
-            h = self.resolve_dim(spec.get("height", "screen"), uniforms)
+            self.tex_dims[tid] = (self.resolve_dim(spec.get("width", "screen"), uniforms),
+                                  self.resolve_dim(spec.get("height", "screen"), uniforms))
+        # Pooled physical slots are sized to the MAX envelope over every aliased logical
+        # texture (and the most-demanding format). The reference allocator guarantees aliased
+        # lifetimes don't overlap, but the physical resource must fit the LARGEST member:
+        # life's 8x8 forceMatrix aliases screen-sized slots and must NOT shrink them to 8x8.
+        phys_env = {}  # phys -> [w, h, fmt_rank, fmt]
+        for tid, spec in texspecs.items():
+            if tid.startswith("global_"):
+                continue
+            phys = graph.phys(tid)
+            w, h = self.tex_dims[tid]
             fmt = self._fmt(spec)
+            rank = _FMT_RANK.get(fmt, 2)
+            cur = phys_env.get(phys)
+            if cur is None:
+                phys_env[phys] = [w, h, rank, fmt]
+            else:
+                cur[0] = max(cur[0], w)
+                cur[1] = max(cur[1], h)
+                if rank > cur[2]:
+                    cur[2], cur[3] = rank, fmt
+        for tid, spec in texspecs.items():
             if tid.startswith("global_"):
                 name = tid[len("global_"):]
                 if name not in self.surfaces:
+                    w, h = self.tex_dims[tid]
+                    fmt = self._fmt(spec)
                     self.surfaces[name] = _Surface(self._new_off(w, h, fmt), self._new_off(w, h, fmt), fmt)
-            else:
-                phys = graph.phys(tid)
-                if phys not in self.pool:
-                    self.pool[phys] = self._new_off(w, h, fmt)
+        for phys, (w, h, _rank, fmt) in phys_env.items():
+            if phys not in self.pool:
+                self.pool[phys] = self._new_off(w, h, fmt)
 
     def frame_begin(self):
         for name, s in self.surfaces.items():
@@ -241,20 +267,27 @@ class GpuBackend:
         else:
             self._render(compiled, merged, inputs, p, graph)
 
-    def _ordered_write_offs(self, desc, p, graph):
-        """Resolve output offscreens in fragmentOut-slot order (MRT-aware)."""
+    def _resolve_outputs(self, desc, p, graph):
+        """Resolve output offscreens in fragmentOut-slot order (MRT-aware), plus the LOGICAL
+        (w,h) of the primary output. The viewport uses logical dims, not the physical slot
+        size, so a small pooled texture (life's 8x8 forceMatrix) renders only its corner of a
+        screen-sized shared slot — matching the reference's per-target viewport."""
         out_map = p.get("outputs", {})
         fout = sorted(desc.get("fragmentOut", []), key=lambda x: x[0])
-        offs = []
+        offs, prim = [], None
         for _, _, fname in fout:
             tid = out_map.get(fname)
             if tid is None and len(out_map) == 1:
                 tid = next(iter(out_map.values()))
             if tid is not None:
                 offs.append(self._write(tid, graph))
+                if prim is None:
+                    prim = tid
         if not offs:                                   # blit / unnamed single output
-            offs = [self._write(next(iter(out_map.values())), graph)]
-        return offs
+            prim = next(iter(out_map.values()))
+            offs = [self._write(prim, graph)]
+        lw, lh = self.tex_dims.get(prim, (self.size, self.size))
+        return offs, lw, lh
 
     @staticmethod
     def _blend_mode(p):
@@ -263,8 +296,7 @@ class GpuBackend:
 
     def _render(self, compiled, merged, inputs, p, graph):
         shader, desc, rev = compiled
-        write_offs = self._ordered_write_offs(desc, p, graph)
-        w, h = write_offs[0].width, write_offs[0].height
+        write_offs, w, h = self._resolve_outputs(desc, p, graph)
         mrt = len(write_offs) > 1
         ctx = self._mrt_fb(write_offs).bind() if mrt else write_offs[0].bind()
         with ctx:
@@ -277,8 +309,8 @@ class GpuBackend:
 
     def _render_points(self, compiled, merged, inputs, p, graph, per_particle=1, tris=False):
         shader, desc, rev = compiled
-        target = self._ordered_write_offs(desc, p, graph)[0]
-        w, h = target.width, target.height
+        offs, w, h = self._resolve_outputs(desc, p, graph)
+        target = offs[0]
         # count='input' -> one primitive per agent texel (xyzTex dims product).
         src = inputs.get("xyzTex") or next(iter(inputs.values()))
         src_off = self._read(src, graph)
