@@ -1,0 +1,36 @@
+{
+  "name": "LoopEnd",
+  "namespace": "render",
+  "func": "loopEnd",
+  "tags": [
+    "util",
+    "sim"
+  ],
+  "paramAliases": {},
+  "globals": {},
+  "passes": [
+    {
+      "name": "feedback",
+      "program": "copy",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "global_accum"
+      },
+      "uniforms": {}
+    },
+    {
+      "name": "output",
+      "program": "copy",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

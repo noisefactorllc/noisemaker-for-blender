@@ -1,0 +1,69 @@
+{
+  "name": "PrismaticAberration",
+  "namespace": "filter",
+  "func": "prismaticAberration",
+  "tags": [
+    "color",
+    "lens"
+  ],
+  "paramAliases": {
+    "aberrationAmt": "aberration"
+  },
+  "defaultProgram": "search filter, synth\n\nnoise(ridges: true, colorMode: mono)\n.prismaticAberration(modulate: true)\n.write(o0)",
+  "globals": {
+    "aberration": {
+      "type": "float",
+      "default": 50,
+      "uniform": "aberrationAmt",
+      "min": 0,
+      "max": 100
+    },
+    "modulate": {
+      "type": "boolean",
+      "default": false,
+      "uniform": "modulate"
+    },
+    "hueRotation": {
+      "type": "float",
+      "default": 0,
+      "uniform": "hueRotation",
+      "min": -180,
+      "max": 180
+    },
+    "hueRange": {
+      "type": "float",
+      "default": 0,
+      "uniform": "hueRange",
+      "min": 0,
+      "max": 100
+    },
+    "saturation": {
+      "type": "float",
+      "default": 0,
+      "uniform": "saturation",
+      "min": -100,
+      "max": 100
+    },
+    "passthru": {
+      "type": "float",
+      "default": 50,
+      "uniform": "passthru",
+      "min": 0,
+      "max": 100
+    }
+  },
+  "passes": [
+    {
+      "name": "render",
+      "program": "prismaticAberration",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

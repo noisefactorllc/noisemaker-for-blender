@@ -1,0 +1,48 @@
+{
+  "name": "Alpha Mask",
+  "namespace": "mixer",
+  "func": "alphaMask",
+  "tags": [
+    "blend"
+  ],
+  "paramAliases": {
+    "mixAmt": "mix"
+  },
+  "defaultProgram": "search mixer, synth\n\npolygon(smooth: 0, bgAlpha: 0)\n  .write(o0)\n\n noise(scaleX: 100, scaleY: 100)\n  .alphaMask(tex: read(o0))\n  .write(o1)\n",
+  "globals": {
+    "tex": {
+      "type": "surface",
+      "default": "none"
+    },
+    "mix": {
+      "type": "float",
+      "default": 0,
+      "uniform": "mixAmt",
+      "min": -100,
+      "max": 100
+    },
+    "maskMode": {
+      "type": "boolean",
+      "default": false,
+      "uniform": "maskMode"
+    }
+  },
+  "passes": [
+    {
+      "name": "render",
+      "program": "alphaMask",
+      "inputs": {
+        "inputTex": "inputTex",
+        "tex": "tex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {
+        "mixAmt": "mix",
+        "maskMode": "maskMode"
+      }
+    }
+  ],
+  "textures": {}
+}

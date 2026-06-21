@@ -1,0 +1,132 @@
+{
+  "name": "Cell",
+  "namespace": "synth",
+  "func": "cell",
+  "tags": [
+    "noise",
+    "geometric"
+  ],
+  "paramAliases": {
+    "cellVariation": "variation",
+    "loopAmp": "speed"
+  },
+  "uniformLayout": {
+    "resolution": {
+      "slot": 0,
+      "components": "xy"
+    },
+    "time": {
+      "slot": 0,
+      "components": "z"
+    },
+    "seed": {
+      "slot": 0,
+      "components": "w"
+    },
+    "metric": {
+      "slot": 1,
+      "components": "x"
+    },
+    "scale": {
+      "slot": 1,
+      "components": "y"
+    },
+    "cellScale": {
+      "slot": 1,
+      "components": "z"
+    },
+    "cellSmooth": {
+      "slot": 1,
+      "components": "w"
+    },
+    "variation": {
+      "slot": 2,
+      "components": "x"
+    },
+    "speed": {
+      "slot": 2,
+      "components": "y"
+    },
+    "tileOffset": {
+      "slot": 3,
+      "components": "xy"
+    },
+    "fullResolution": {
+      "slot": 3,
+      "components": "zw"
+    }
+  },
+  "globals": {
+    "shape": {
+      "type": "int",
+      "default": 0,
+      "uniform": "metric",
+      "choices": {
+        "circle": 0,
+        "diamond": 1,
+        "hexagon": 2,
+        "octagon": 3,
+        "square": 4,
+        "triangle": 6
+      }
+    },
+    "scale": {
+      "type": "float",
+      "default": 75,
+      "uniform": "scale",
+      "min": 1,
+      "max": 100
+    },
+    "cellScale": {
+      "type": "float",
+      "default": 87,
+      "uniform": "cellScale",
+      "min": 1,
+      "max": 100
+    },
+    "cellSmooth": {
+      "type": "float",
+      "default": 0,
+      "uniform": "cellSmooth",
+      "min": 0,
+      "max": 100
+    },
+    "variation": {
+      "type": "float",
+      "default": 50,
+      "uniform": "variation",
+      "min": 0,
+      "max": 100
+    },
+    "speed": {
+      "type": "int",
+      "default": 1,
+      "uniform": "speed",
+      "min": 0,
+      "max": 5,
+      "zero": 0
+    },
+    "seed": {
+      "type": "int",
+      "default": 1,
+      "uniform": "seed",
+      "min": 1,
+      "max": 100
+    }
+  },
+  "passes": [
+    {
+      "name": "render",
+      "program": "cell",
+      "inputs": {},
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {
+        "cellSmooth": "cellSmooth",
+        "speed": "speed"
+      }
+    }
+  ],
+  "textures": {}
+}

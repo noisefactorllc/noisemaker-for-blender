@@ -1,0 +1,55 @@
+{
+  "name": "Wobble",
+  "namespace": "filter",
+  "func": "wobble",
+  "tags": [
+    "transform"
+  ],
+  "paramAliases": {},
+  "globals": {
+    "speed": {
+      "type": "float",
+      "default": 5,
+      "uniform": "speed",
+      "min": 0,
+      "max": 5,
+      "zero": 0
+    },
+    "range": {
+      "type": "float",
+      "default": 0.5,
+      "uniform": "range",
+      "min": 0,
+      "max": 5
+    },
+    "wrap": {
+      "type": "int",
+      "default": 0,
+      "uniform": "wrap",
+      "choices": {
+        "mirror": 0,
+        "repeat": 1,
+        "clamp": 2
+      }
+    }
+  },
+  "passes": [
+    {
+      "name": "main",
+      "program": "wobble",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {
+        "speed": "speed",
+        "range": "range",
+        "time": "time",
+        "wrap": "wrap"
+      }
+    }
+  ],
+  "textures": {}
+}

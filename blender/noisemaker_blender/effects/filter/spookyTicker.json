@@ -1,0 +1,59 @@
+{
+  "name": "Spooky Ticker",
+  "namespace": "filter",
+  "func": "spookyTicker",
+  "tags": [
+    "text"
+  ],
+  "paramAliases": {},
+  "defaultProgram": "search filter, synth\n\nperlin()\n  .spookyTicker()\n  .write(o0)",
+  "globals": {
+    "rows": {
+      "type": "int",
+      "default": 2,
+      "uniform": "rows",
+      "min": 1,
+      "max": 3
+    },
+    "seed": {
+      "type": "int",
+      "default": 1,
+      "uniform": "seed",
+      "min": 1,
+      "max": 100
+    },
+    "alpha": {
+      "type": "float",
+      "default": 0.75,
+      "uniform": "alpha",
+      "min": 0,
+      "max": 1
+    },
+    "speed": {
+      "type": "float",
+      "default": 1,
+      "uniform": "speed",
+      "min": 0,
+      "max": 5
+    }
+  },
+  "passes": [
+    {
+      "name": "main",
+      "program": "spookyTicker",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {
+        "speed": "speed",
+        "alpha": "alpha",
+        "rows": "rows",
+        "seed": "seed"
+      }
+    }
+  ],
+  "textures": {}
+}

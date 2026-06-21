@@ -1,0 +1,41 @@
+{
+  "name": "LoopBegin",
+  "namespace": "render",
+  "func": "loopBegin",
+  "tags": [
+    "util",
+    "sim"
+  ],
+  "paramAliases": {},
+  "globals": {
+    "alpha": {
+      "type": "float",
+      "default": 50,
+      "uniform": "alpha",
+      "min": 0,
+      "max": 100
+    },
+    "intensity": {
+      "type": "float",
+      "default": 100,
+      "uniform": "intensity",
+      "min": 0,
+      "max": 100
+    }
+  },
+  "passes": [
+    {
+      "name": "accumBlend",
+      "program": "loopBegin",
+      "inputs": {
+        "inputTex": "inputTex",
+        "accumTex": "global_accum"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

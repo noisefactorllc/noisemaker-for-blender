@@ -1,0 +1,66 @@
+{
+  "name": "Roll",
+  "namespace": "synth",
+  "func": "roll",
+  "tags": [
+    "midi"
+  ],
+  "paramAliases": {},
+  "globals": {
+    "color": {
+      "type": "color",
+      "default": [
+        0,
+        1,
+        0
+      ],
+      "uniform": "lineColor"
+    },
+    "gain": {
+      "type": "float",
+      "default": 1,
+      "uniform": "gain",
+      "min": 0.1,
+      "max": 5
+    },
+    "speed": {
+      "type": "float",
+      "default": 1,
+      "uniform": "speed",
+      "min": 0.5,
+      "max": 5
+    }
+  },
+  "passes": [
+    {
+      "name": "scroll",
+      "program": "roll",
+      "inputs": {
+        "feedbackTex": "_rollFb",
+        "noteGridTex": "midiNoteGrid"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    },
+    {
+      "name": "feedback",
+      "program": "copy",
+      "inputs": {
+        "inputTex": "outputTex"
+      },
+      "outputs": {
+        "fragColor": "_rollFb"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {
+    "_rollFb": {
+      "width": "100%",
+      "height": "100%",
+      "format": "rgba16f"
+    }
+  }
+}

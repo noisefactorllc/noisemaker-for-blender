@@ -1,0 +1,34 @@
+{
+  "name": "Sharpen",
+  "namespace": "filter",
+  "func": "sharpen",
+  "tags": [
+    "edges"
+  ],
+  "paramAliases": {},
+  "defaultProgram": "search filter, synth\n\npattern(type: dots, smoothness: 0.04)\n  .sharpen(amount: 5)\n  .write(o0)",
+  "globals": {
+    "amount": {
+      "type": "float",
+      "default": 1,
+      "uniform": "amount",
+      "min": 0.1,
+      "max": 5,
+      "zero": 0
+    }
+  },
+  "passes": [
+    {
+      "name": "render",
+      "program": "sharpen",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

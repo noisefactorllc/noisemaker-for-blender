@@ -1,0 +1,61 @@
+{
+  "name": "Bulge",
+  "namespace": "filter",
+  "func": "bulge",
+  "tags": [
+    "distort"
+  ],
+  "paramAliases": {},
+  "defaultProgram": "search synth, filter\ntestPattern(gridSize: 8)\n.bulge()\n.write(o0)",
+  "globals": {
+    "strength": {
+      "type": "float",
+      "default": 25,
+      "uniform": "strength",
+      "min": 0,
+      "max": 100,
+      "zero": 0
+    },
+    "aspectLens": {
+      "type": "boolean",
+      "default": true,
+      "uniform": "aspectLens"
+    },
+    "wrap": {
+      "type": "int",
+      "default": 0,
+      "uniform": "wrap",
+      "choices": {
+        "mirror": 0,
+        "repeat": 1,
+        "clamp": 2
+      }
+    },
+    "rotation": {
+      "type": "float",
+      "default": 0,
+      "uniform": "rotation",
+      "min": -180,
+      "max": 180
+    },
+    "antialias": {
+      "type": "boolean",
+      "default": true,
+      "uniform": "antialias"
+    }
+  },
+  "passes": [
+    {
+      "name": "render",
+      "program": "bulge",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

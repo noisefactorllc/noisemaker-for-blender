@@ -1,0 +1,29 @@
+{
+  "name": "Mesh Loader",
+  "namespace": "render",
+  "func": "meshLoader",
+  "tags": [
+    "mesh",
+    "geometry",
+    "3D",
+    "OBJ"
+  ],
+  "paramAliases": {},
+  "defaultProgram": "search render\n\nmeshLoader()\n.meshRender()\n.write(o0)",
+  "globals": {},
+  "passes": [
+    {
+      "name": "preview",
+      "program": "preview",
+      "inputs": {
+        "positionsTex": "global_mesh0_positions",
+        "normalsTex": "global_mesh0_normals"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

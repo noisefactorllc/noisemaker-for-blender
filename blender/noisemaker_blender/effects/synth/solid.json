@@ -1,0 +1,39 @@
+{
+  "name": "Solid",
+  "namespace": "synth",
+  "func": "solid",
+  "tags": [
+    "color"
+  ],
+  "paramAliases": {},
+  "globals": {
+    "color": {
+      "type": "color",
+      "default": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "uniform": "color"
+    },
+    "alpha": {
+      "type": "float",
+      "default": 1,
+      "uniform": "alpha",
+      "min": 0,
+      "max": 1
+    }
+  },
+  "passes": [
+    {
+      "name": "main",
+      "program": "solid",
+      "inputs": {},
+      "outputs": {
+        "color": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

@@ -1,0 +1,40 @@
+{
+  "name": "Grain",
+  "namespace": "filter",
+  "func": "grain",
+  "tags": [
+    "noise"
+  ],
+  "paramAliases": {},
+  "globals": {
+    "alpha": {
+      "type": "float",
+      "default": 0.25,
+      "uniform": "alpha",
+      "min": 0,
+      "max": 1
+    },
+    "pause": {
+      "type": "boolean",
+      "default": false,
+      "uniform": "pause"
+    }
+  },
+  "passes": [
+    {
+      "name": "main",
+      "program": "grain",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {
+        "alpha": "alpha",
+        "pause": "pause"
+      }
+    }
+  ],
+  "textures": {}
+}

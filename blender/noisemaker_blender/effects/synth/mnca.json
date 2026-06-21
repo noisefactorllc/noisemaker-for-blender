@@ -1,0 +1,282 @@
+{
+  "name": "Mnca",
+  "namespace": "synth",
+  "func": "mnca",
+  "tags": [
+    "sim"
+  ],
+  "paramAliases": {},
+  "uniformLayout": {
+    "resolution": {
+      "slot": 0,
+      "components": "xy"
+    },
+    "time": {
+      "slot": 0,
+      "components": "z"
+    },
+    "deltaTime": {
+      "slot": 0,
+      "components": "w"
+    },
+    "speed": {
+      "slot": 1,
+      "components": "x"
+    },
+    "smoothing": {
+      "slot": 1,
+      "components": "y"
+    },
+    "weight": {
+      "slot": 1,
+      "components": "z"
+    },
+    "seed": {
+      "slot": 1,
+      "components": "w"
+    },
+    "resetState": {
+      "slot": 2,
+      "components": "x"
+    },
+    "n1v1": {
+      "slot": 2,
+      "components": "y"
+    },
+    "n1r1": {
+      "slot": 2,
+      "components": "z"
+    },
+    "n1v2": {
+      "slot": 2,
+      "components": "w"
+    },
+    "n1r2": {
+      "slot": 3,
+      "components": "x"
+    },
+    "n1v3": {
+      "slot": 3,
+      "components": "y"
+    },
+    "n1r3": {
+      "slot": 3,
+      "components": "z"
+    },
+    "n1v4": {
+      "slot": 3,
+      "components": "w"
+    },
+    "n1r4": {
+      "slot": 4,
+      "components": "x"
+    },
+    "n2v1": {
+      "slot": 4,
+      "components": "y"
+    },
+    "n2r1": {
+      "slot": 4,
+      "components": "z"
+    },
+    "n2v2": {
+      "slot": 4,
+      "components": "w"
+    },
+    "n2r2": {
+      "slot": 5,
+      "components": "x"
+    }
+  },
+  "globals": {
+    "tex": {
+      "type": "surface",
+      "default": "none"
+    },
+    "zoom": {
+      "type": "int",
+      "default": 8,
+      "choices": {
+        "x1": 1,
+        "x2": 2,
+        "x4": 4,
+        "x8": 8,
+        "x16": 16,
+        "x32": 32,
+        "x64": 64
+      }
+    },
+    "seed": {
+      "type": "int",
+      "default": 1,
+      "uniform": "seed",
+      "min": 1,
+      "max": 100
+    },
+    "smoothing": {
+      "type": "int",
+      "default": 0,
+      "uniform": "smoothing",
+      "choices": {
+        "constant": 0,
+        "linear": 1,
+        "hermite": 2,
+        "catmullRom3x3": 3,
+        "catmullRom4x4": 4,
+        "bSpline3x3": 5,
+        "bSpline4x4": 6
+      }
+    },
+    "speed": {
+      "type": "float",
+      "default": 10,
+      "uniform": "speed",
+      "min": 1,
+      "max": 100
+    },
+    "resetState": {
+      "type": "boolean",
+      "default": false,
+      "uniform": "resetState"
+    },
+    "weight": {
+      "type": "float",
+      "default": 0,
+      "uniform": "weight",
+      "min": 0,
+      "max": 100
+    },
+    "n1v1": {
+      "type": "float",
+      "default": 21,
+      "uniform": "n1v1",
+      "min": 0,
+      "max": 100
+    },
+    "n1r1": {
+      "type": "float",
+      "default": 1,
+      "uniform": "n1r1",
+      "min": 0,
+      "max": 100
+    },
+    "n1v2": {
+      "type": "float",
+      "default": 35,
+      "uniform": "n1v2",
+      "min": 0,
+      "max": 100
+    },
+    "n1r2": {
+      "type": "float",
+      "default": 15,
+      "uniform": "n1r2",
+      "min": 0,
+      "max": 100
+    },
+    "n1v3": {
+      "type": "float",
+      "default": 75,
+      "uniform": "n1v3",
+      "min": 0,
+      "max": 100
+    },
+    "n1r3": {
+      "type": "float",
+      "default": 10,
+      "uniform": "n1r3",
+      "min": 0,
+      "max": 100
+    },
+    "n1v4": {
+      "type": "float",
+      "default": 12,
+      "uniform": "n1v4",
+      "min": 0,
+      "max": 100
+    },
+    "n1r4": {
+      "type": "float",
+      "default": 3,
+      "uniform": "n1r4",
+      "min": 0,
+      "max": 100
+    },
+    "n2v1": {
+      "type": "float",
+      "default": 10,
+      "uniform": "n2v1",
+      "min": 0,
+      "max": 100
+    },
+    "n2r1": {
+      "type": "float",
+      "default": 18,
+      "uniform": "n2r1",
+      "min": 0,
+      "max": 100
+    },
+    "n2v2": {
+      "type": "float",
+      "default": 43,
+      "uniform": "n2v2",
+      "min": 0,
+      "max": 100
+    },
+    "n2r2": {
+      "type": "float",
+      "default": 12,
+      "uniform": "n2r2",
+      "min": 0,
+      "max": 100
+    },
+    "source": {
+      "type": "int",
+      "default": 0,
+      "uniform": "source",
+      "min": 0,
+      "max": 7
+    }
+  },
+  "passes": [
+    {
+      "name": "update",
+      "program": "mncaFb",
+      "inputs": {
+        "bufTex": "global_mnca_state",
+        "seedTex": "tex"
+      },
+      "outputs": {
+        "fragColor": "global_mnca_state"
+      },
+      "uniforms": {}
+    },
+    {
+      "name": "render",
+      "program": "mnca",
+      "inputs": {
+        "fbTex": "global_mnca_state",
+        "prevFrameTex": "global_mnca_state",
+        "bufTex": "global_mnca_state",
+        "seedTex": "tex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {
+    "global_mnca_state": {
+      "width": {
+        "screenDivide": "zoom",
+        "default": 8
+      },
+      "height": {
+        "screenDivide": "zoom",
+        "default": 8
+      },
+      "format": "rgba16f"
+    }
+  }
+}

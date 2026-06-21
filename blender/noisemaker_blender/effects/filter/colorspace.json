@@ -1,0 +1,39 @@
+{
+  "name": "Colorspace",
+  "namespace": "filter",
+  "func": "colorspace",
+  "tags": [
+    "color",
+    "util"
+  ],
+  "paramAliases": {},
+  "defaultProgram": "search filter, synth\n\nnoise(ridges: true)\n.colorspace(mode: oklab)\n.write(o0)",
+  "hidden": true,
+  "deprecatedBy": "adjust",
+  "globals": {
+    "mode": {
+      "type": "int",
+      "default": 0,
+      "uniform": "mode",
+      "choices": {
+        "hsv": 0,
+        "oklab": 1,
+        "oklch": 2
+      }
+    }
+  },
+  "passes": [
+    {
+      "name": "render",
+      "program": "colorspace",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

@@ -1,0 +1,52 @@
+{
+  "name": "Apply Mode",
+  "namespace": "mixer",
+  "func": "applyMode",
+  "tags": [
+    "color"
+  ],
+  "paramAliases": {
+    "mixAmt": "mix"
+  },
+  "defaultProgram": "search mixer, synth\n\nnoise(seed: 1, ridges: true)\n.write(o0)\n\nperlin()\n.applyMode(tex: read(o0))\n.write(o1)",
+  "globals": {
+    "tex": {
+      "type": "surface",
+      "default": "none"
+    },
+    "mode": {
+      "type": "int",
+      "default": 0,
+      "uniform": "mode",
+      "choices": {
+        "brightness": 0,
+        "hue": 1,
+        "saturation": 2
+      }
+    },
+    "mix": {
+      "type": "float",
+      "default": 0,
+      "uniform": "mixAmt",
+      "min": -100,
+      "max": 100
+    }
+  },
+  "passes": [
+    {
+      "name": "render",
+      "program": "applyMode",
+      "inputs": {
+        "inputTex": "inputTex",
+        "tex": "tex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {
+        "mixAmt": "mix"
+      }
+    }
+  ],
+  "textures": {}
+}

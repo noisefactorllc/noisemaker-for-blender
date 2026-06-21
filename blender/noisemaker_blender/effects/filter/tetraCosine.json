@@ -1,0 +1,227 @@
+{
+  "name": "TetraCosine",
+  "namespace": "filter",
+  "func": "tetraCosine",
+  "tags": [
+    "color",
+    "palette"
+  ],
+  "paramAliases": {},
+  "defaultProgram": "search filter, synth\n\nnoise()\n  .tetraCosine()\n  .write(o0)",
+  "uniformLayout": {
+    "offsetR": {
+      "slot": 0,
+      "components": "x"
+    },
+    "offsetG": {
+      "slot": 0,
+      "components": "y"
+    },
+    "offsetB": {
+      "slot": 0,
+      "components": "z"
+    },
+    "colorMode": {
+      "slot": 0,
+      "components": "w"
+    },
+    "ampR": {
+      "slot": 1,
+      "components": "x"
+    },
+    "ampG": {
+      "slot": 1,
+      "components": "y"
+    },
+    "ampB": {
+      "slot": 1,
+      "components": "z"
+    },
+    "repeat": {
+      "slot": 1,
+      "components": "w"
+    },
+    "freqR": {
+      "slot": 2,
+      "components": "x"
+    },
+    "freqG": {
+      "slot": 2,
+      "components": "y"
+    },
+    "freqB": {
+      "slot": 2,
+      "components": "z"
+    },
+    "offset": {
+      "slot": 2,
+      "components": "w"
+    },
+    "phaseR": {
+      "slot": 3,
+      "components": "x"
+    },
+    "phaseG": {
+      "slot": 3,
+      "components": "y"
+    },
+    "phaseB": {
+      "slot": 3,
+      "components": "z"
+    },
+    "alpha": {
+      "slot": 3,
+      "components": "w"
+    },
+    "rotation": {
+      "slot": 4,
+      "components": "x"
+    },
+    "time": {
+      "slot": 4,
+      "components": "y"
+    }
+  },
+  "globals": {
+    "colorMode": {
+      "type": "int",
+      "default": 0,
+      "uniform": "colorMode",
+      "choices": {
+        "rgb": 0,
+        "hsv": 1,
+        "oklab": 2,
+        "oklch": 3
+      }
+    },
+    "offsetR": {
+      "type": "float",
+      "default": 0.5,
+      "uniform": "offsetR",
+      "min": 0,
+      "max": 1
+    },
+    "offsetG": {
+      "type": "float",
+      "default": 0.5,
+      "uniform": "offsetG",
+      "min": 0,
+      "max": 1
+    },
+    "offsetB": {
+      "type": "float",
+      "default": 0.5,
+      "uniform": "offsetB",
+      "min": 0,
+      "max": 1
+    },
+    "ampR": {
+      "type": "float",
+      "default": 0.5,
+      "uniform": "ampR",
+      "min": 0,
+      "max": 1
+    },
+    "ampG": {
+      "type": "float",
+      "default": 0.5,
+      "uniform": "ampG",
+      "min": 0,
+      "max": 1
+    },
+    "ampB": {
+      "type": "float",
+      "default": 0.5,
+      "uniform": "ampB",
+      "min": 0,
+      "max": 1
+    },
+    "freqR": {
+      "type": "int",
+      "default": 1,
+      "uniform": "freqR",
+      "min": 0,
+      "max": 4
+    },
+    "freqG": {
+      "type": "int",
+      "default": 1,
+      "uniform": "freqG",
+      "min": 0,
+      "max": 4
+    },
+    "freqB": {
+      "type": "int",
+      "default": 1,
+      "uniform": "freqB",
+      "min": 0,
+      "max": 4
+    },
+    "phaseR": {
+      "type": "float",
+      "default": 0,
+      "uniform": "phaseR",
+      "min": 0,
+      "max": 1
+    },
+    "phaseG": {
+      "type": "float",
+      "default": 0.33,
+      "uniform": "phaseG",
+      "min": 0,
+      "max": 1
+    },
+    "phaseB": {
+      "type": "float",
+      "default": 0.67,
+      "uniform": "phaseB",
+      "min": 0,
+      "max": 1
+    },
+    "rotation": {
+      "type": "float",
+      "default": 0,
+      "uniform": "rotation",
+      "choices": {
+        "none": 0,
+        "fwd": 1,
+        "back": -1
+      }
+    },
+    "repeat": {
+      "type": "float",
+      "default": 1,
+      "uniform": "repeat",
+      "min": 0,
+      "max": 10
+    },
+    "offset": {
+      "type": "float",
+      "default": 0,
+      "uniform": "offset",
+      "min": 0,
+      "max": 1
+    },
+    "alpha": {
+      "type": "float",
+      "default": 1,
+      "uniform": "alpha",
+      "min": 0,
+      "max": 1
+    }
+  },
+  "passes": [
+    {
+      "name": "render",
+      "program": "tetraCosine",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

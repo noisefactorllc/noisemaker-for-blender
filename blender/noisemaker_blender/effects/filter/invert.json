@@ -1,0 +1,25 @@
+{
+  "name": "Invert",
+  "namespace": "filter",
+  "func": "invert",
+  "tags": [
+    "color"
+  ],
+  "paramAliases": {},
+  "uniformLayout": {},
+  "globals": {},
+  "passes": [
+    {
+      "name": "render",
+      "program": "inv",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

@@ -1,0 +1,70 @@
+{
+  "name": "Scanline Error",
+  "namespace": "filter",
+  "func": "scanlineError",
+  "tags": [
+    "distort",
+    "glitch"
+  ],
+  "paramAliases": {},
+  "globals": {
+    "mode": {
+      "type": "int",
+      "default": 1,
+      "uniform": "mode",
+      "choices": {
+        "scanline": 0,
+        "vhs": 1
+      }
+    },
+    "timeOffset": {
+      "type": "float",
+      "default": 0,
+      "uniform": "timeOffset",
+      "min": -10,
+      "max": 10
+    },
+    "distortion": {
+      "type": "float",
+      "default": 1,
+      "uniform": "distortion",
+      "min": 0,
+      "max": 3
+    },
+    "noise": {
+      "type": "float",
+      "default": 1,
+      "uniform": "noise",
+      "min": 0,
+      "max": 3
+    },
+    "speed": {
+      "type": "float",
+      "default": 1,
+      "uniform": "speed",
+      "min": 0,
+      "max": 5
+    }
+  },
+  "passes": [
+    {
+      "name": "main",
+      "program": "scanlineError",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {
+        "speed": "speed",
+        "timeOffset": "timeOffset",
+        "distortion": "distortion",
+        "noise": "noise",
+        "mode": "mode",
+        "time": "time"
+      }
+    }
+  ],
+  "textures": {}
+}
