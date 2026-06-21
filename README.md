@@ -32,14 +32,20 @@ and [`PORTING-GUIDE.md`](PORTING-GUIDE.md).
 | P1 shader transpiler | ✅ 249/249 transpiled; **194 compile on Metal** (rest: staged MRT/UBO/varying) |
 | P2 backend + **Tier-1 parity gate** | ✅ **8/8 pass** (7 byte-identical, blur ±1) |
 | P4 single-pass sweep | ✅ **61/64 rendered pass** (NEAREST+CLAMP via texelFetch); 2 stateful→P3, 1 crt |
-| P3 executor: double-buffered surfaces, 3-tier ping-pong, iteration (`repeat`), `resolveDimension`, timed stateful sampling (30s/5s) | ✅ built; runs navierStokes (evolves, 20-iter pressure solve, zoom→64px) |
-| P3 stateful-sim **parity** (navierStokes/CA seeding+convergence) | 🔄 last-mile (shader dynamics; ssim gap) |
-| P4b breadth: compile-fail effects (palette, classicNoisedeck…) | ⏳ |
-| points/agents (MRT + drawMode:points), 3D, integration target golden | ⏳ |
+| P3 executor: double-buffered surfaces, 3-tier ping-pong, iteration (`repeat`), `resolveDimension`, timed evolution (1800f @ 1/600) | ✅ |
+| **points/agents** (MRT + drawMode:points/billboards, additive ONE,ONE) | ✅ **byte-identical** (flow/flock/pointsRender/billboards, even @1800 timed) |
+| **3D perlin** (`#define DIMENSIONS 3`) | ✅ **byte-identical** |
+| **navierStokes** parity | ✅ **ssim 0.999** (smooth input @ speed 55 & 145 = the continuous-solver bar) |
+| breadth compile-fixes (palette struct-array, const-int→#define) | ✅ palette (was fail); classicNoisedeck PUSH_OVER_128 → UBO path staged |
+| **Integration target** (32 passes: perlin3d+agents+billboards+blur+navierStokes+palette/lighting+bloom/lens/vignette) | ✅ **renders end-to-end** (ssim 0.496; structure/colour match — chaotic-precision gap) |
+| 20-program blaster corpus scorecard | 🔄 (19/20 renderable; B5oBsA uses non-reference effects) |
 | P5 integration (bake-to-Image, node tree) | ⏳ |
-| P6 in-Blender DSL compiler; MRT/points/3D | staged |
+| P6 in-Blender DSL compiler; classicNoisedeck UBO; attractor/lenia/life | staged |
 
 **Out of scope:** media plugin (MIDI/audio inputs).
+
+### Platform note (cross-engine precision)
+Blender's `gpu`-module Metal shader codegen differs from the reference's ANGLE path (transcendentals/fma/divide-singularities). This is **invisible for single-pass effects** (byte-identical) but **amplified by chaotic iteration** (navierStokes with sharp input, `flow:chaotic`). `babylon` reaches byte-identical on these *only because it runs the same ANGLE compiler as the reference*; through Blender's gpu module, raw chaotic byte-parity isn't reachable — structural parity is.
 
 ## Running the parity gate
 
