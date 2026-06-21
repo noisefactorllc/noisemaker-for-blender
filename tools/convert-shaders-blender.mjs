@@ -75,6 +75,22 @@ function constIntToDefine (src) {
     '#define $1 $2')
 }
 
+// GLSL ES `vecN == vecN` yields a SCALAR bool (true iff ALL components equal). Blender's
+// GLSL->MSL codegen instead emits a component-wise `bvecN` and then rejects it as a ternary
+// condition ("vector condition ... do not have elements of the same size"). Make the scalar-bool
+// intent explicit with all(equal(...)) / any(notEqual(...)) — identical semantics — wherever a
+// vecN(...) constructor is compared and the result feeds a `? :` (feedback/coalesce/refract/
+// applyMode blend-mode tables). Only fires when the comparison is directly parenthesised before a
+// `?`, so scalar comparisons and `min(...,vecN(...))` args are untouched.
+function fixVecBoolTernary (src) {
+  let out = src
+  out = out.replace(/\(\s*([^()]+?)\s*==\s*(vec[234]\([^()]*\))\s*\)(\s*\?)/g, '(all(equal($1, $2)))$3')
+  out = out.replace(/\(\s*(vec[234]\([^()]*\))\s*==\s*([^()]+?)\s*\)(\s*\?)/g, '(all(equal($1, $2)))$3')
+  out = out.replace(/\(\s*([^()]+?)\s*!=\s*(vec[234]\([^()]*\))\s*\)(\s*\?)/g, '(any(notEqual($1, $2)))$3')
+  out = out.replace(/\(\s*(vec[234]\([^()]*\))\s*!=\s*([^()]+?)\s*\)(\s*\?)/g, '(any(notEqual($1, $2)))$3')
+  return out
+}
+
 function splitTopLevel (s) {
   const out = []; let depth = 0, cur = ''
   for (const ch of s) {
@@ -173,6 +189,7 @@ function transpile (src) {
   // 1b. rename MSL-reserved identifiers across the whole source (keeps lifted names consistent).
   body = renameReserved(body)
   body = constIntToDefine(body)
+  body = fixVecBoolTernary(body)
   body = flattenStructArrays(body)
 
   // flag uniform arrays (audio waveform/spectrum — out of scope) before generic uniform parse.
@@ -258,7 +275,7 @@ function cleanAndRename (src) {
     }
     kept.push(lines[i])
   }
-  return constIntToDefine(renameReserved(kept.join('\n')))
+  return fixVecBoolTernary(constIntToDefine(renameReserved(kept.join('\n'))))
 }
 
 // lift sampler + push-constant uniforms from a stage body, deduped across stages by name.

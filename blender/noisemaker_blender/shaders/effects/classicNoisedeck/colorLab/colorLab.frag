@@ -255,7 +255,7 @@ void main() {
         if (bright < 0.12) {
             color.rgb = vec3(0.0);
         } else if (bright < 0.24) {
-            color.rgb *= (coord.xy == vec2(1.0)) ? vec3(1.0) : vec3(0.0);
+            color.rgb *= (all(equal(coord.xy, vec2(1.0)))) ? vec3(1.0) : vec3(0.0);
         } else if (bright < 0.36) {
             color.rgb *= (coord.xy == vec2(1.0) || coord.xy == vec2(3.0)) ? vec3(1.0) : vec3(0.0);
         } else if (bright < 0.48) {
@@ -265,7 +265,7 @@ void main() {
         } else if (bright < 0.72) {
             color.rgb *= (coord.xy == vec2(1.0) || coord.xy == vec2(3.0)) ? vec3(0.0) : vec3(1.0);
         } else if (bright < 0.84) {
-            color.rgb *= (coord.xy == vec2(1.0)) ? vec3(0.0) : vec3(1.0);
+            color.rgb *= (all(equal(coord.xy, vec2(1.0)))) ? vec3(0.0) : vec3(1.0);
         }
     }
 

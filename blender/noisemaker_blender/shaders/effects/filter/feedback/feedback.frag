@@ -86,10 +86,10 @@ vec4 blend(vec4 color1, vec4 color2, int mode, float factor) {
         middle = min(color1 + color2, 1.0);
     } else if (mode == 2) {
         // color burn
-        middle = (color2 == vec4(0.0)) ? color2 : max((1.0 - ((1.0 - color1) / color2)), vec4(0.0));
+        middle = (all(equal(color2, vec4(0.0)))) ? color2 : max((1.0 - ((1.0 - color1) / color2)), vec4(0.0));
     } else if (mode == 3) {
         // color dodge
-        middle = (color2 == vec4(1.0)) ? color2 : min(color1 / (1.0 - color2), vec4(1.0));
+        middle = (all(equal(color2, vec4(1.0)))) ? color2 : min(color1 / (1.0 - color2), vec4(1.0));
     } else if (mode == 4) {
         // darken
         middle = min(color1, color2);
@@ -103,7 +103,7 @@ vec4 blend(vec4 color1, vec4 color2, int mode, float factor) {
         middle.a = max(color1.a, color2.a);
     } else if (mode == 7) {
         // glow
-        middle = (color2 == vec4(1.0)) ? color2 : min(color1 * color1 / (1.0 - color2), vec4(1.0));
+        middle = (all(equal(color2, vec4(1.0)))) ? color2 : min(color1 * color1 / (1.0 - color2), vec4(1.0));
     } else if (mode == 8) {
         // hard light
         middle = vec4(blendOverlay(color2.r, color1.r), blendOverlay(color2.g, color1.g), blendOverlay(color2.b, color1.b), mix(color1.a, color2.a, 0.5));
@@ -128,7 +128,7 @@ vec4 blend(vec4 color1, vec4 color2, int mode, float factor) {
         middle = min(color1, color2) - max(color1, color2) + vec4(1.0);
     } else if (mode == 15) {
         // reflect
-        middle = (color1 == vec4(1.0)) ? color1 : min(color2 * color2 / (1.0 - color1), vec4(1.0));
+        middle = (all(equal(color1, vec4(1.0)))) ? color1 : min(color2 * color2 / (1.0 - color1), vec4(1.0));
     } else if (mode == 16) {
         // screen
         middle = 1.0 - ((1.0 - color1) * (1.0 - color2));

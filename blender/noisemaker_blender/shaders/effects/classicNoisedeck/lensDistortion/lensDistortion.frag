@@ -241,7 +241,7 @@ void main() {
     // end aberration
 
     // apply tint (this was the "reflect" mode from blendo)
-    color.rgb = mix(color.rgb, (color.rgb == vec3(1.0)) ? color.rgb : min(tint * tint / (1.0 - color.rgb), vec3(1.0)), alpha * 0.01);
+    color.rgb = mix(color.rgb, (all(equal(color.rgb, vec3(1.0)))) ? color.rgb : min(tint * tint / (1.0 - color.rgb), vec3(1.0)), alpha * 0.01);
     color.a = max(color.a, alpha * 0.01);
 
 	// vignette
