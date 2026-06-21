@@ -21,6 +21,7 @@ ADDON = os.path.join(os.path.dirname(HARNESS), "noisemaker_blender")
 sys.path.insert(0, os.path.dirname(ADDON))
 from noisemaker_blender.backend.gpu_backend import GpuBackend          # noqa: E402
 from noisemaker_blender.runtime import graph_loader, pipeline, pngio   # noqa: E402
+from noisemaker_blender.compiler import compile_graph                  # noqa: E402
 
 
 def run():
@@ -37,7 +38,12 @@ def run():
     shaders_root = os.path.join(ADDON, "shaders", "effects")
     for job in jobs:
         try:
-            graph = graph_loader.load(job["graph"])
+            # "dsl" job -> compile the DSL to a graph in-process (in-Blender Python compiler,
+            # no external reference engine); "graph" job -> load a pre-exported graph.json.
+            if "dsl" in job:
+                graph = graph_loader.Graph(compile_graph(open(job["dsl"]).read()))
+            else:
+                graph = graph_loader.load(job["graph"])
             be = GpuBackend(shaders_root, size)
             if sample_every:
                 sample_idx = set(range(sample_every - 1, frames, sample_every)) | {frames - 1}
