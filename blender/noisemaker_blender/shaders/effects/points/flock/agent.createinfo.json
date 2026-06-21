@@ -1,0 +1,92 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "separation"
+    ],
+    [
+      "FLOAT",
+      "alignment"
+    ],
+    [
+      "FLOAT",
+      "cohesion"
+    ],
+    [
+      "FLOAT",
+      "perceptionRadius"
+    ],
+    [
+      "FLOAT",
+      "separationRadius"
+    ],
+    [
+      "FLOAT",
+      "maxSpeed"
+    ],
+    [
+      "FLOAT",
+      "maxForce"
+    ],
+    [
+      "INT",
+      "boundaryMode"
+    ],
+    [
+      "FLOAT",
+      "wallMargin"
+    ],
+    [
+      "FLOAT",
+      "noiseWeight"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "xyzTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "velTex"
+    ],
+    [
+      2,
+      "FLOAT_2D",
+      "rgbaTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "outXYZ"
+    ],
+    [
+      1,
+      "VEC4",
+      "outVel"
+    ],
+    [
+      2,
+      "VEC4",
+      "outRGBA"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": [
+    "MRT (3) — staged"
+  ]
+}

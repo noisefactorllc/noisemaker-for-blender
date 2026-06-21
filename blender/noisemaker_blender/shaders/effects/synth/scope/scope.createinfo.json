@@ -1,0 +1,42 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "VEC3",
+      "lineColor"
+    ],
+    [
+      "FLOAT",
+      "lineThickness"
+    ],
+    [
+      "FLOAT",
+      "gain"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": [
+    "UNIFORM_ARRAY (audioWaveform) — audio/media, skipped"
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "FLOAT",
+      "scaleAmt"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "INT",
+      "blendMode"
+    ],
+    [
+      "FLOAT",
+      "mixAmt"
+    ],
+    [
+      "FLOAT",
+      "hueRotation"
+    ],
+    [
+      "FLOAT",
+      "intensity"
+    ],
+    [
+      "FLOAT",
+      "distortion"
+    ],
+    [
+      "FLOAT",
+      "aberration"
+    ],
+    [
+      "FLOAT",
+      "refractAAmt"
+    ],
+    [
+      "FLOAT",
+      "refractBAmt"
+    ],
+    [
+      "FLOAT",
+      "refractADir"
+    ],
+    [
+      "FLOAT",
+      "refractBDir"
+    ],
+    [
+      "BOOL",
+      "resetState"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "selfTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 80,
+  "ubo": false,
+  "notes": []
+}

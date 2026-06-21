@@ -1,0 +1,78 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "VEC3",
+      "diffuseColor"
+    ],
+    [
+      "VEC3",
+      "specularColor"
+    ],
+    [
+      "FLOAT",
+      "specularIntensity"
+    ],
+    [
+      "FLOAT",
+      "shininess"
+    ],
+    [
+      "VEC3",
+      "ambientColor"
+    ],
+    [
+      "VEC3",
+      "lightDirection"
+    ],
+    [
+      "FLOAT",
+      "normalStrength"
+    ],
+    [
+      "FLOAT",
+      "smoothing"
+    ],
+    [
+      "FLOAT",
+      "renderScale"
+    ],
+    [
+      "FLOAT",
+      "reflection"
+    ],
+    [
+      "FLOAT",
+      "refraction"
+    ],
+    [
+      "FLOAT",
+      "aberration"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 128,
+  "ubo": false,
+  "notes": []
+}

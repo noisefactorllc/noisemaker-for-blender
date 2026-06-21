@@ -1,0 +1,56 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "aspect"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "oscType"
+    ],
+    [
+      "INT",
+      "frequency"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "INT",
+      "seed"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": []
+}

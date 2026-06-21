@@ -1,0 +1,67 @@
+{
+  "pushConstants": [
+    [
+      "INT",
+      "loopAOffset"
+    ],
+    [
+      "INT",
+      "loopBOffset"
+    ],
+    [
+      "FLOAT",
+      "loopAScale"
+    ],
+    [
+      "FLOAT",
+      "loopBScale"
+    ],
+    [
+      "FLOAT",
+      "speedA"
+    ],
+    [
+      "FLOAT",
+      "speedB"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "volumeSize"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "renderScale"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ],
+    [
+      1,
+      "VEC4",
+      "geoOut"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": [
+    "MRT (2) — staged"
+  ]
+}

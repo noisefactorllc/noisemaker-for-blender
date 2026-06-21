@@ -1,0 +1,100 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "aspect"
+    ],
+    [
+      "FLOAT",
+      "scale"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "FLOAT",
+      "thickness"
+    ],
+    [
+      "FLOAT",
+      "smoothness"
+    ],
+    [
+      "INT",
+      "symmetry"
+    ],
+    [
+      "INT",
+      "layers"
+    ],
+    [
+      "INT",
+      "shape"
+    ],
+    [
+      "FLOAT",
+      "layerSpacing"
+    ],
+    [
+      "FLOAT",
+      "twist"
+    ],
+    [
+      "FLOAT",
+      "shapeGrowth"
+    ],
+    [
+      "BOOL",
+      "bindu"
+    ],
+    [
+      "INT",
+      "animation"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "pulseDepth"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "VEC3",
+      "fgColor"
+    ],
+    [
+      "VEC3",
+      "bgColor"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 128,
+  "ubo": false,
+  "notes": []
+}

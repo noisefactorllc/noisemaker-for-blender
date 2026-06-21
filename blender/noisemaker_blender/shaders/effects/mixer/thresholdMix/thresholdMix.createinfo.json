@@ -1,0 +1,83 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "INT",
+      "mode"
+    ],
+    [
+      "INT",
+      "quantize"
+    ],
+    [
+      "INT",
+      "mapSource"
+    ],
+    [
+      "FLOAT",
+      "threshold"
+    ],
+    [
+      "FLOAT",
+      "range"
+    ],
+    [
+      "FLOAT",
+      "thresholdR"
+    ],
+    [
+      "FLOAT",
+      "rangeR"
+    ],
+    [
+      "FLOAT",
+      "thresholdG"
+    ],
+    [
+      "FLOAT",
+      "rangeG"
+    ],
+    [
+      "FLOAT",
+      "thresholdB"
+    ],
+    [
+      "FLOAT",
+      "rangeB"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "tex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 80,
+  "ubo": false,
+  "notes": []
+}

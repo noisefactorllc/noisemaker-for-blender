@@ -1,0 +1,69 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "FLOAT",
+      "muG"
+    ],
+    [
+      "FLOAT",
+      "sigmaG"
+    ],
+    [
+      "FLOAT",
+      "repulsion"
+    ],
+    [
+      "FLOAT",
+      "dt"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "xyzTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "velTex"
+    ],
+    [
+      2,
+      "FLOAT_2D",
+      "rgbaTex"
+    ],
+    [
+      3,
+      "FLOAT_2D",
+      "fieldTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "outXYZ"
+    ],
+    [
+      1,
+      "VEC4",
+      "outVel"
+    ],
+    [
+      2,
+      "VEC4",
+      "outRGBA"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 32,
+  "ubo": false,
+  "notes": [
+    "MRT (3) — staged"
+  ]
+}

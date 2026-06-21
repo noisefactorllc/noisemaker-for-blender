@@ -1,0 +1,74 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "INT",
+      "hslEnable"
+    ],
+    [
+      "FLOAT",
+      "hslHueCenter"
+    ],
+    [
+      "FLOAT",
+      "hslHueRange"
+    ],
+    [
+      "FLOAT",
+      "hslSatMin"
+    ],
+    [
+      "FLOAT",
+      "hslSatMax"
+    ],
+    [
+      "FLOAT",
+      "hslLumMin"
+    ],
+    [
+      "FLOAT",
+      "hslLumMax"
+    ],
+    [
+      "FLOAT",
+      "hslFeather"
+    ],
+    [
+      "FLOAT",
+      "hslHueShift"
+    ],
+    [
+      "FLOAT",
+      "hslSatAdjust"
+    ],
+    [
+      "FLOAT",
+      "hslLumAdjust"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": []
+}

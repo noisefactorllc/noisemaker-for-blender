@@ -1,0 +1,77 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "stride"
+    ],
+    [
+      "FLOAT",
+      "strideDeviation"
+    ],
+    [
+      "FLOAT",
+      "kink"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "lifetime"
+    ],
+    [
+      "FLOAT",
+      "density"
+    ],
+    [
+      "INT",
+      "volumeSize"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "stateTex1"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "stateTex2"
+    ],
+    [
+      2,
+      "FLOAT_2D",
+      "stateTex3"
+    ],
+    [
+      3,
+      "FLOAT_2D",
+      "mixerTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "outState1"
+    ],
+    [
+      1,
+      "VEC4",
+      "outState2"
+    ],
+    [
+      2,
+      "VEC4",
+      "outState3"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 32,
+  "ubo": false,
+  "notes": [
+    "MRT (3) — staged"
+  ]
+}

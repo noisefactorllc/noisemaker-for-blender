@@ -1,0 +1,114 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "xScale"
+    ],
+    [
+      "FLOAT",
+      "yScale"
+    ],
+    [
+      "INT",
+      "octaves"
+    ],
+    [
+      "BOOL",
+      "ridges"
+    ],
+    [
+      "FLOAT",
+      "refractAmt"
+    ],
+    [
+      "FLOAT",
+      "kaleido"
+    ],
+    [
+      "FLOAT",
+      "loopScale"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "INT",
+      "paletteMode"
+    ],
+    [
+      "VEC3",
+      "paletteOffset"
+    ],
+    [
+      "VEC3",
+      "paletteAmp"
+    ],
+    [
+      "VEC3",
+      "paletteFreq"
+    ],
+    [
+      "VEC3",
+      "palettePhase"
+    ],
+    [
+      "INT",
+      "cyclePalette"
+    ],
+    [
+      "FLOAT",
+      "rotatePalette"
+    ],
+    [
+      "FLOAT",
+      "repeatPalette"
+    ],
+    [
+      "FLOAT",
+      "hueRange"
+    ],
+    [
+      "FLOAT",
+      "hueRotation"
+    ],
+    [
+      "BOOL",
+      "wrap"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 176,
+  "ubo": true,
+  "notes": [
+    "PUSH_OVER_128 (176B) — UBO path (staged)"
+  ]
+}

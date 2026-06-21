@@ -1,0 +1,102 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "INT",
+      "colorMode"
+    ],
+    [
+      "FLOAT",
+      "offsetR"
+    ],
+    [
+      "FLOAT",
+      "offsetG"
+    ],
+    [
+      "FLOAT",
+      "offsetB"
+    ],
+    [
+      "FLOAT",
+      "ampR"
+    ],
+    [
+      "FLOAT",
+      "ampG"
+    ],
+    [
+      "FLOAT",
+      "ampB"
+    ],
+    [
+      "FLOAT",
+      "freqR"
+    ],
+    [
+      "FLOAT",
+      "freqG"
+    ],
+    [
+      "FLOAT",
+      "freqB"
+    ],
+    [
+      "FLOAT",
+      "phaseR"
+    ],
+    [
+      "FLOAT",
+      "phaseG"
+    ],
+    [
+      "FLOAT",
+      "phaseB"
+    ],
+    [
+      "FLOAT",
+      "repeat"
+    ],
+    [
+      "FLOAT",
+      "offset"
+    ],
+    [
+      "FLOAT",
+      "alpha"
+    ],
+    [
+      "INT",
+      "rotation"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 96,
+  "ubo": false,
+  "notes": []
+}

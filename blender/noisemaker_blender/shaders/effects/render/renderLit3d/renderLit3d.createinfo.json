@@ -1,0 +1,114 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "threshold"
+    ],
+    [
+      "INT",
+      "invert"
+    ],
+    [
+      "INT",
+      "volumeSize"
+    ],
+    [
+      "INT",
+      "shape"
+    ],
+    [
+      "INT",
+      "orbitSpeed"
+    ],
+    [
+      "VEC3",
+      "cameraPosition"
+    ],
+    [
+      "VEC3",
+      "bgColor"
+    ],
+    [
+      "FLOAT",
+      "bgAlpha"
+    ],
+    [
+      "VEC3",
+      "lightDirection"
+    ],
+    [
+      "VEC3",
+      "diffuseColor"
+    ],
+    [
+      "FLOAT",
+      "diffuseIntensity"
+    ],
+    [
+      "VEC3",
+      "specularColor"
+    ],
+    [
+      "FLOAT",
+      "specularIntensity"
+    ],
+    [
+      "FLOAT",
+      "shininess"
+    ],
+    [
+      "VEC3",
+      "ambientColor"
+    ],
+    [
+      "FLOAT",
+      "rimIntensity"
+    ],
+    [
+      "FLOAT",
+      "rimPower"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "volumeCache"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ],
+    [
+      1,
+      "VEC4",
+      "geoOut"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 176,
+  "ubo": true,
+  "notes": [
+    "MRT (2) — staged",
+    "PUSH_OVER_128 (176B) — UBO path (staged)"
+  ]
+}

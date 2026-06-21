@@ -1,0 +1,78 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "scale"
+    ],
+    [
+      "FLOAT",
+      "cellScale"
+    ],
+    [
+      "FLOAT",
+      "cellSmooth"
+    ],
+    [
+      "FLOAT",
+      "variation"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "refractAmt"
+    ],
+    [
+      "FLOAT",
+      "direction"
+    ],
+    [
+      "INT",
+      "wrap"
+    ],
+    [
+      "FLOAT",
+      "effectWidth"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 80,
+  "ubo": false,
+  "notes": []
+}

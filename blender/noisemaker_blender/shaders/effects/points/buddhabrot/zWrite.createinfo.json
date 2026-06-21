@@ -1,0 +1,35 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "VEC2",
+      "resolution"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "xyzTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "velTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 16,
+  "ubo": false,
+  "notes": []
+}

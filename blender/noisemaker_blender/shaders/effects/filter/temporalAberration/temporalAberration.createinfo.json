@@ -1,0 +1,74 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "redDelay"
+    ],
+    [
+      "FLOAT",
+      "greenDelay"
+    ],
+    [
+      "FLOAT",
+      "blueDelay"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "h1"
+    ],
+    [
+      2,
+      "FLOAT_2D",
+      "h2"
+    ],
+    [
+      3,
+      "FLOAT_2D",
+      "h3"
+    ],
+    [
+      4,
+      "FLOAT_2D",
+      "h4"
+    ],
+    [
+      5,
+      "FLOAT_2D",
+      "h5"
+    ],
+    [
+      6,
+      "FLOAT_2D",
+      "h6"
+    ],
+    [
+      7,
+      "FLOAT_2D",
+      "h7"
+    ],
+    [
+      8,
+      "FLOAT_2D",
+      "h8"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 16,
+  "ubo": false,
+  "notes": []
+}

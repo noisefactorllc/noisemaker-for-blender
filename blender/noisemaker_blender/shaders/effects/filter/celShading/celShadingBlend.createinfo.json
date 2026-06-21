@@ -1,0 +1,48 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "VEC3",
+      "edgeColor"
+    ],
+    [
+      "FLOAT",
+      "mixAmount"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "colorTex"
+    ],
+    [
+      2,
+      "FLOAT_2D",
+      "edgeTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 32,
+  "ubo": false,
+  "notes": []
+}

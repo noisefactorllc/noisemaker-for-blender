@@ -1,0 +1,116 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "typeCount"
+    ],
+    [
+      "FLOAT",
+      "attractionScale"
+    ],
+    [
+      "FLOAT",
+      "repulsionScale"
+    ],
+    [
+      "FLOAT",
+      "minRadius"
+    ],
+    [
+      "FLOAT",
+      "maxRadius"
+    ],
+    [
+      "FLOAT",
+      "maxSpeed"
+    ],
+    [
+      "FLOAT",
+      "friction"
+    ],
+    [
+      "INT",
+      "boundaryMode"
+    ],
+    [
+      "FLOAT",
+      "matrixSeed"
+    ],
+    [
+      "BOOL",
+      "symmetricForces"
+    ],
+    [
+      "BOOL",
+      "useTypeColor"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "xyzTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "velTex"
+    ],
+    [
+      2,
+      "FLOAT_2D",
+      "rgbaTex"
+    ],
+    [
+      3,
+      "FLOAT_2D",
+      "dataTex"
+    ],
+    [
+      4,
+      "FLOAT_2D",
+      "forceMatrix"
+    ],
+    [
+      5,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "outXYZ"
+    ],
+    [
+      1,
+      "VEC4",
+      "outVel"
+    ],
+    [
+      2,
+      "VEC4",
+      "outRGBA"
+    ],
+    [
+      3,
+      "VEC4",
+      "outData"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": [
+    "MRT (4) — staged"
+  ]
+}

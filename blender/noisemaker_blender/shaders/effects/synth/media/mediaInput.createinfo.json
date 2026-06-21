@@ -1,0 +1,70 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "imageSize"
+    ],
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "position"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "FLOAT",
+      "scaleAmt"
+    ],
+    [
+      "FLOAT",
+      "offsetX"
+    ],
+    [
+      "FLOAT",
+      "offsetY"
+    ],
+    [
+      "INT",
+      "tiling"
+    ],
+    [
+      "INT",
+      "flip"
+    ],
+    [
+      "VEC3",
+      "bgColor"
+    ],
+    [
+      "FLOAT",
+      "bgAlpha"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "imageTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": []
+}

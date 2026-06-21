@@ -1,0 +1,104 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "degree"
+    ],
+    [
+      "FLOAT",
+      "relaxation"
+    ],
+    [
+      "FLOAT",
+      "iterations"
+    ],
+    [
+      "FLOAT",
+      "tolerance"
+    ],
+    [
+      "FLOAT",
+      "poi"
+    ],
+    [
+      "FLOAT",
+      "centerHiX"
+    ],
+    [
+      "FLOAT",
+      "centerHiY"
+    ],
+    [
+      "FLOAT",
+      "centerLoX"
+    ],
+    [
+      "FLOAT",
+      "centerLoY"
+    ],
+    [
+      "FLOAT",
+      "zoomSpeed"
+    ],
+    [
+      "FLOAT",
+      "zoomDepth"
+    ],
+    [
+      "FLOAT",
+      "degreeSpeed"
+    ],
+    [
+      "FLOAT",
+      "degreeRange"
+    ],
+    [
+      "FLOAT",
+      "relaxSpeed"
+    ],
+    [
+      "FLOAT",
+      "relaxRange"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "FLOAT",
+      "outputMode"
+    ],
+    [
+      "FLOAT",
+      "invert"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 112,
+  "ubo": false,
+  "notes": []
+}

@@ -1,0 +1,103 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "deltaTime"
+    ],
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "weight"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "BOOL",
+      "resetState"
+    ],
+    [
+      "FLOAT",
+      "n1v1"
+    ],
+    [
+      "FLOAT",
+      "n1v2"
+    ],
+    [
+      "FLOAT",
+      "n1v3"
+    ],
+    [
+      "FLOAT",
+      "n1v4"
+    ],
+    [
+      "FLOAT",
+      "n2v1"
+    ],
+    [
+      "FLOAT",
+      "n2v2"
+    ],
+    [
+      "FLOAT",
+      "n1r1"
+    ],
+    [
+      "FLOAT",
+      "n1r2"
+    ],
+    [
+      "FLOAT",
+      "n1r3"
+    ],
+    [
+      "FLOAT",
+      "n1r4"
+    ],
+    [
+      "FLOAT",
+      "n2r1"
+    ],
+    [
+      "FLOAT",
+      "n2r2"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "bufTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "seedTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 80,
+  "ubo": false,
+  "notes": []
+}

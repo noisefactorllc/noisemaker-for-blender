@@ -1,0 +1,70 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "nm_kernel"
+    ],
+    [
+      "FLOAT",
+      "size"
+    ],
+    [
+      "FLOAT",
+      "renderScale"
+    ],
+    [
+      "FLOAT",
+      "blend"
+    ],
+    [
+      "FLOAT",
+      "invert"
+    ],
+    [
+      "FLOAT",
+      "channel"
+    ],
+    [
+      "FLOAT",
+      "threshold"
+    ],
+    [
+      "FLOAT",
+      "amount"
+    ],
+    [
+      "FLOAT",
+      "mixAmt"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {
+    "kernel": "nm_kernel"
+  },
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": [
+    "ALIASED kernel"
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "aspect"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "scale"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "INT",
+      "octaves"
+    ],
+    [
+      "INT",
+      "colorMode"
+    ],
+    [
+      "INT",
+      "ridges"
+    ],
+    [
+      "INT",
+      "warpIterations"
+    ],
+    [
+      "FLOAT",
+      "warpScale"
+    ],
+    [
+      "FLOAT",
+      "warpIntensity"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 80,
+  "ubo": false,
+  "notes": []
+}

@@ -1,0 +1,1 @@
+"""noisemaker-blender addon package."""

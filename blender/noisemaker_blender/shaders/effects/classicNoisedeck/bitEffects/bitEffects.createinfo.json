@@ -1,0 +1,72 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "n"
+    ],
+    [
+      "FLOAT",
+      "scale"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "tiles"
+    ],
+    [
+      "FLOAT",
+      "complexity"
+    ],
+    [
+      "FLOAT",
+      "hueRange"
+    ],
+    [
+      "FLOAT",
+      "hueRotation"
+    ],
+    [
+      "FLOAT",
+      "baseHueRange"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 80,
+  "ubo": false,
+  "notes": []
+}

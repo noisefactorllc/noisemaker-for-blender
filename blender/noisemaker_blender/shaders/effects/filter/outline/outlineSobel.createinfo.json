@@ -1,0 +1,42 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "sobelMetric"
+    ],
+    [
+      "FLOAT",
+      "thickness"
+    ],
+    [
+      "FLOAT",
+      "renderScale"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "valueTexture"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 32,
+  "ubo": false,
+  "notes": []
+}

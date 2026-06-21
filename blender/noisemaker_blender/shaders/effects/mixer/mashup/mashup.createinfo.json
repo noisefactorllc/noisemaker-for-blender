@@ -1,0 +1,74 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "INT",
+      "layers"
+    ],
+    [
+      "FLOAT",
+      "smoothness"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "source"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "layer0_tex"
+    ],
+    [
+      2,
+      "FLOAT_2D",
+      "layer1_tex"
+    ],
+    [
+      3,
+      "FLOAT_2D",
+      "layer2_tex"
+    ],
+    [
+      4,
+      "FLOAT_2D",
+      "layer3_tex"
+    ],
+    [
+      5,
+      "FLOAT_2D",
+      "layer4_tex"
+    ],
+    [
+      6,
+      "FLOAT_2D",
+      "layer5_tex"
+    ],
+    [
+      7,
+      "FLOAT_2D",
+      "layer6_tex"
+    ],
+    [
+      8,
+      "FLOAT_2D",
+      "layer7_tex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 16,
+  "ubo": false,
+  "notes": []
+}

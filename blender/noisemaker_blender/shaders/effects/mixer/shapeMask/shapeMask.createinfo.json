@@ -1,0 +1,75 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "INT",
+      "shape"
+    ],
+    [
+      "FLOAT",
+      "radius"
+    ],
+    [
+      "FLOAT",
+      "edgeSmooth"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "FLOAT",
+      "posX"
+    ],
+    [
+      "FLOAT",
+      "posY"
+    ],
+    [
+      "INT",
+      "invert"
+    ],
+    [
+      "INT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "tex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": []
+}

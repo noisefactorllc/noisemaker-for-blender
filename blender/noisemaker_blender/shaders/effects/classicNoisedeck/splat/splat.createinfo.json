@@ -1,0 +1,98 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "BOOL",
+      "enabled"
+    ],
+    [
+      "BOOL",
+      "useSpecks"
+    ],
+    [
+      "INT",
+      "splatSource"
+    ],
+    [
+      "FLOAT",
+      "scale"
+    ],
+    [
+      "FLOAT",
+      "cutoff"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "seed"
+    ],
+    [
+      "VEC3",
+      "splatColor"
+    ],
+    [
+      "INT",
+      "mode"
+    ],
+    [
+      "FLOAT",
+      "speckScale"
+    ],
+    [
+      "FLOAT",
+      "speckCutoff"
+    ],
+    [
+      "FLOAT",
+      "speckSpeed"
+    ],
+    [
+      "FLOAT",
+      "speckSeed"
+    ],
+    [
+      "VEC3",
+      "speckColor"
+    ],
+    [
+      "INT",
+      "speckMode"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 112,
+  "ubo": false,
+  "notes": []
+}

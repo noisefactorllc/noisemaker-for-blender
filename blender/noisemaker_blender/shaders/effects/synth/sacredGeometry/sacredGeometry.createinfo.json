@@ -1,0 +1,84 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "aspect"
+    ],
+    [
+      "FLOAT",
+      "scale"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "FLOAT",
+      "thickness"
+    ],
+    [
+      "FLOAT",
+      "smoothness"
+    ],
+    [
+      "INT",
+      "geometry"
+    ],
+    [
+      "INT",
+      "rings"
+    ],
+    [
+      "INT",
+      "starPoints"
+    ],
+    [
+      "INT",
+      "animation"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "pulseDepth"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "VEC3",
+      "fgColor"
+    ],
+    [
+      "VEC3",
+      "bgColor"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 112,
+  "ubo": false,
+  "notes": []
+}

@@ -1,0 +1,78 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "temperature"
+    ],
+    [
+      "FLOAT",
+      "tint"
+    ],
+    [
+      "FLOAT",
+      "exposure"
+    ],
+    [
+      "FLOAT",
+      "contrast"
+    ],
+    [
+      "FLOAT",
+      "highlights"
+    ],
+    [
+      "FLOAT",
+      "shadows"
+    ],
+    [
+      "FLOAT",
+      "whites"
+    ],
+    [
+      "FLOAT",
+      "blacks"
+    ],
+    [
+      "FLOAT",
+      "saturation"
+    ],
+    [
+      "FLOAT",
+      "curveShadows"
+    ],
+    [
+      "FLOAT",
+      "curveMidtones"
+    ],
+    [
+      "FLOAT",
+      "curveHighlights"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": []
+}

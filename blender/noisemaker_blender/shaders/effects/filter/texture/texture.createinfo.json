@@ -1,0 +1,36 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "alpha"
+    ],
+    [
+      "FLOAT",
+      "scale"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 16,
+  "ubo": false,
+  "notes": [
+    "FRAGMENT_VARYING (in …) — needs interface info, staged"
+  ]
+}

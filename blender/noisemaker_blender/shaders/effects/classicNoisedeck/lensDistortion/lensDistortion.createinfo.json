@@ -1,0 +1,102 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "BOOL",
+      "aspectLens"
+    ],
+    [
+      "INT",
+      "shape"
+    ],
+    [
+      "VEC3",
+      "tint"
+    ],
+    [
+      "FLOAT",
+      "alpha"
+    ],
+    [
+      "FLOAT",
+      "vignetteAmt"
+    ],
+    [
+      "FLOAT",
+      "distortion"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "loopScale"
+    ],
+    [
+      "FLOAT",
+      "aberration"
+    ],
+    [
+      "FLOAT",
+      "hueRotation"
+    ],
+    [
+      "FLOAT",
+      "hueRange"
+    ],
+    [
+      "INT",
+      "mode"
+    ],
+    [
+      "BOOL",
+      "modulate"
+    ],
+    [
+      "INT",
+      "blendMode"
+    ],
+    [
+      "FLOAT",
+      "saturation"
+    ],
+    [
+      "FLOAT",
+      "passthru"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 112,
+  "ubo": false,
+  "notes": []
+}

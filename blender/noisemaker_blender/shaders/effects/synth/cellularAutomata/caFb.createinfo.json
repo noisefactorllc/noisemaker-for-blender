@@ -1,0 +1,71 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "deltaTime"
+    ],
+    [
+      "INT",
+      "frame"
+    ],
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "INT",
+      "ruleIndex"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "weight"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "BOOL",
+      "resetState"
+    ],
+    [
+      "BOOL",
+      "useCustom"
+    ],
+    [
+      "INT",
+      "source"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "bufTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "tex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 64,
+  "ubo": false,
+  "notes": []
+}

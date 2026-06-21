@@ -1,0 +1,101 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "INT",
+      "blendMode"
+    ],
+    [
+      "FLOAT",
+      "loopScale"
+    ],
+    [
+      "INT",
+      "paletteMode"
+    ],
+    [
+      "VEC3",
+      "paletteOffset"
+    ],
+    [
+      "VEC3",
+      "paletteAmp"
+    ],
+    [
+      "VEC3",
+      "paletteFreq"
+    ],
+    [
+      "VEC3",
+      "palettePhase"
+    ],
+    [
+      "INT",
+      "animate"
+    ],
+    [
+      "INT",
+      "cyclePalette"
+    ],
+    [
+      "FLOAT",
+      "rotatePalette"
+    ],
+    [
+      "FLOAT",
+      "repeatPalette"
+    ],
+    [
+      "FLOAT",
+      "levels"
+    ],
+    [
+      "BOOL",
+      "wrap"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "tex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 144,
+  "ubo": true,
+  "notes": [
+    "PUSH_OVER_128 (144B) — UBO path (staged)"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "INT",
+      "volumeSize"
+    ],
+    [
+      "INT",
+      "ruleIndex"
+    ],
+    [
+      "INT",
+      "neighborMode"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "density"
+    ],
+    [
+      "FLOAT",
+      "weight"
+    ],
+    [
+      "BOOL",
+      "resetState"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "stateTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "seedTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 48,
+  "ubo": false,
+  "notes": []
+}

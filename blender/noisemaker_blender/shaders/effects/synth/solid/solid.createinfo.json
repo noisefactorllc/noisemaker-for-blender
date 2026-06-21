@@ -1,0 +1,24 @@
+{
+  "pushConstants": [
+    [
+      "VEC3",
+      "color"
+    ],
+    [
+      "FLOAT",
+      "alpha"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 16,
+  "ubo": false,
+  "notes": []
+}

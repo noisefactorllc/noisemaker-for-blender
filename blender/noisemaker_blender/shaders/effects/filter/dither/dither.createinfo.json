@@ -1,0 +1,62 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "INT",
+      "ditherType"
+    ],
+    [
+      "FLOAT",
+      "threshold"
+    ],
+    [
+      "FLOAT",
+      "matrixScale"
+    ],
+    [
+      "FLOAT",
+      "renderScale"
+    ],
+    [
+      "INT",
+      "palette"
+    ],
+    [
+      "INT",
+      "levels"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "mixAmount"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 48,
+  "ubo": false,
+  "notes": []
+}

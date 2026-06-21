@@ -1,0 +1,72 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "INT",
+      "gradientType"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "INT",
+      "repeat"
+    ],
+    [
+      "INT",
+      "colorCount"
+    ],
+    [
+      "VEC3",
+      "color1"
+    ],
+    [
+      "VEC3",
+      "color2"
+    ],
+    [
+      "VEC3",
+      "color3"
+    ],
+    [
+      "VEC3",
+      "color4"
+    ],
+    [
+      "INT",
+      "seed"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 128,
+  "ubo": false,
+  "notes": []
+}

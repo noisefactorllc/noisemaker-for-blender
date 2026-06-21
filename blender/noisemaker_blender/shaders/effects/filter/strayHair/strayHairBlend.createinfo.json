@@ -1,0 +1,43 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "alpha"
+    ],
+    [
+      "IVEC2",
+      "tileOffset"
+    ],
+    [
+      "IVEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "renderScale"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "overlayTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 32,
+  "ubo": false,
+  "notes": []
+}

@@ -1,0 +1,38 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "INT",
+      "wrap"
+    ],
+    [
+      "INT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 16,
+  "ubo": false,
+  "notes": []
+}

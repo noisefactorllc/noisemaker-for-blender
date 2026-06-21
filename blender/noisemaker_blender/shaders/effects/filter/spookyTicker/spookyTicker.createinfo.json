@@ -1,0 +1,48 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "renderScale"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "alpha"
+    ],
+    [
+      "INT",
+      "rows"
+    ],
+    [
+      "INT",
+      "seed"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 32,
+  "ubo": false,
+  "notes": [
+    "FRAGMENT_VARYING (in …) — needs interface info, staged"
+  ]
+}

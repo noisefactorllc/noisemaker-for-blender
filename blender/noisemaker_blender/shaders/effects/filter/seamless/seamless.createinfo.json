@@ -1,0 +1,34 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "blend"
+    ],
+    [
+      "FLOAT",
+      "repeat"
+    ],
+    [
+      "INT",
+      "curve"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "inputTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 16,
+  "ubo": false,
+  "notes": []
+}

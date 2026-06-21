@@ -1,0 +1,100 @@
+{
+  "pushConstants": [
+    [
+      "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
+      "tileOffset"
+    ],
+    [
+      "VEC2",
+      "fullResolution"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
+      "FLOAT",
+      "cReal"
+    ],
+    [
+      "FLOAT",
+      "cImag"
+    ],
+    [
+      "INT",
+      "poi"
+    ],
+    [
+      "INT",
+      "outputMode"
+    ],
+    [
+      "FLOAT",
+      "centerX"
+    ],
+    [
+      "FLOAT",
+      "centerY"
+    ],
+    [
+      "FLOAT",
+      "rotation"
+    ],
+    [
+      "INT",
+      "iterations"
+    ],
+    [
+      "FLOAT",
+      "stripeFreq"
+    ],
+    [
+      "INT",
+      "trapShape"
+    ],
+    [
+      "FLOAT",
+      "lightAngle"
+    ],
+    [
+      "INT",
+      "cPath"
+    ],
+    [
+      "FLOAT",
+      "cSpeed"
+    ],
+    [
+      "FLOAT",
+      "cRadius"
+    ],
+    [
+      "BOOL",
+      "invert"
+    ],
+    [
+      "FLOAT",
+      "zoomSpeed"
+    ],
+    [
+      "FLOAT",
+      "zoomDepth"
+    ]
+  ],
+  "samplers": [],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 96,
+  "ubo": false,
+  "notes": []
+}

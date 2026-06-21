@@ -1,0 +1,31 @@
+{
+  "pushConstants": [],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "preparedTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "rankTex"
+    ],
+    [
+      2,
+      "FLOAT_2D",
+      "brightestTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 0,
+  "ubo": false,
+  "notes": []
+}

@@ -1,0 +1,31 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "inputIntensity"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "mixerTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "trailTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "fragColor"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 16,
+  "ubo": false,
+  "notes": []
+}
