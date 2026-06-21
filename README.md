@@ -38,7 +38,8 @@ and [`PORTING-GUIDE.md`](PORTING-GUIDE.md).
 | **navierStokes** parity | ✅ **ssim 0.999** (smooth input @ speed 55 & 145 = the continuous-solver bar) |
 | breadth compile-fixes (palette struct-array, const-int→#define) | ✅ palette (was fail); classicNoisedeck PUSH_OVER_128 → UBO path staged |
 | **Integration target** (32 passes: perlin3d+agents+billboards+blur+navierStokes+palette/lighting+bloom/lens/vignette) | ✅ **renders end-to-end** (ssim 0.496; structure/colour match — chaotic-precision gap) |
-| 20-program blaster corpus scorecard | 🔄 (19/20 renderable; B5oBsA uses non-reference effects) |
+| **Agent behaviors** (life/hydraulic/attractor/lenia/mnca) | ✅ **all structurally render**; life was 8×8-clamped to black → fixed (pooled-slot envelope + §10.7 swap); residual = chaotic/exp precision wall |
+| 20-program blaster corpus scorecard | 🔄 mean ssim **0.55** (was 0.48); 5≥0.9, 3 byte-identical; B5oBsA non-reference (skip), zp_G3w loopBegin/loopEnd unhandled |
 | P5 integration (bake-to-Image, node tree) | ⏳ |
 | P6 in-Blender DSL compiler; classicNoisedeck UBO; attractor/lenia/life | staged |
 

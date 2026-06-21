@@ -1,23 +1,37 @@
+# Corpus parity scorecard — 1800f recipe (NM_TIMESTEP=0.0016667, NM_TIME=0.25), 256x256.
+# Regenerate: render each c_<n>.graph.json in its OWN Blender process (caches/GPU mem
+# accumulate across jobs in one process -> crash), then: blender-python parity/scorecard.py c_
+#
+# Two backend fixes since the prior run (mean 0.48 -> 0.55):
+#  d535fa6  pooled-slot envelope sizing + per-pass logical viewport
+#           -> life programs were 8x8-clamped to black/flat; now real renders.
+#           1Hjbig 0.00->0.77, 8xAerw 0.00->0.42, 0BgVzw 0.004->0.10, JSBacg real lava.
+#  82a098a  exact reference §10.7 end-of-frame swap (state persist vs display swap)
+#           -> lenia density unbounded-accumulation fixed (field stable, was saturating).
+# NOTE: ssim is brutal on chaotic textures — JSBacg/0BgVzw/lenia are now STRUCTURALLY
+# correct (real molten/particle fields) but score low because fine detail diverges
+# (Blender-MSL transcendentals != reference ANGLE; the documented platform wall).
+
 program              ssim  maxdiff  meandiff  note
 ------------------------------------------------------------
-c_MQ2ojg           1.0000      1.0     0.000  
-c_bRUa1g           1.0000      0.0     0.000  
-c_kQ_2mw           1.0000      0.0     0.000  
-c_po0FqQ           1.0000      4.0     0.006  
-c_bcmaJw           0.9294    238.0    13.423  
-c_2ifcpA           0.8638    240.0    20.407  
-c_kRK7A            0.8434    189.0    18.546  
-c_GyzQxg           0.5155    255.0     9.829  
-c_u_8aBg           0.4956    255.0    19.480  
-c_awB68w           0.3110    241.0    38.266  
-c_7d_cA            0.2031    106.0    15.235  
-c_8jayhg           0.1812    255.0    60.090  
-c_raF8Lw           0.1614    255.0    61.250  
-c_unqOuw           0.1010    255.0    72.418  
-c_JSBacg           0.0227    241.0    35.107  
-c_0BgVzw           0.0036    223.0    23.432  
-c_8xAerw           0.0000    255.0   166.453  
-c_1Hjbig           0.0000    255.0   234.749  
-c_zp_G3w                -        -         -  NO CANDIDATE
+c_MQ2ojg           1.0000      1.0     0.000  byte-identical
+c_bRUa1g           1.0000      0.0     0.000  byte-identical
+c_kQ_2mw           1.0000      0.0     0.000  byte-identical
+c_po0FqQ           1.0000      4.0     0.006  navierStokes (maxdiff=sim variance)
+c_bcmaJw           0.9294    238.0    13.423  attractor+life
+c_2ifcpA           0.8638    240.0    20.407
+c_kRK7A            0.8434    189.0    18.546
+c_1Hjbig           0.7728    255.0    16.041  life (was 0.00 — envelope fix)
+c_GyzQxg           0.5155    255.0     9.829
+c_u_8aBg           0.4956    255.0    19.480
+c_8xAerw           0.4184    255.0    39.664  life (was 0.00 — envelope fix)
+c_awB68w           0.3110    241.0    38.266  attractor+life
+c_8jayhg           0.1812    255.0    60.090  hydraulic (chrome char matches; chaotic)
+c_7d_cA            0.1773    112.0    15.368  lenia (field fixed; output exp-limited)
+c_raF8Lw           0.1614    255.0    61.250  mnca (continuous CA; precision-limited)
+c_0BgVzw           0.1032    255.0    72.083  flock+life (was 0.004; chaotic over-bloom)
+c_unqOuw           0.1010    255.0    72.418  hydraulic (chaotic)
+c_JSBacg           0.0157    255.0    34.230  life (real lava now; chaotic fine detail)
+c_zp_G3w                -        -         -  NO CANDIDATE (loopBegin/loopEnd unhandled)
 ------------------------------------------------------------
-graded 18 | ssim mean 0.4795 median 0.4033 | >=0.9: 5  >=0.99: 4  byte(<2 maxdiff): 3
+graded 18 | ssim mean 0.5494 median 0.5055 | >=0.9: 5  >=0.99: 4  byte(<2 maxdiff): 3
