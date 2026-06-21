@@ -175,6 +175,23 @@ def run():
                   % ("OK" if d == 0 else "BAD", d, name, note))
             if d != 0:
                 fails.append("sweep %s: bake != pipeline (max-diff=%d)" % (name, d))
+
+            # INVARIANT C: the in-addon compiler is a render-level drop-in for the external
+            # tool — render(compile_graph(dsl)) == render(load(<name>.graph.json)). Stronger
+            # than structural graph-parity (which treats int==float as equal): catches any
+            # type-level discrepancy in the in-memory dict that would change the render.
+            gjson = os.path.join(REPO, "parity", "out", name + ".graph.json")
+            if os.path.exists(gjson):
+                beC = GpuBackend(shaders_root, SIZE)
+                a_json = pipeline.render(beC, graph_loader.load(gjson),
+                                         time=TIME, frames=fr, timestep=ts)
+                beC.free()
+                dc = int(np.abs(a_direct.astype(int) - a_json.astype(int)).max())
+                print("  sweep %-4s C(compile_graph==graph.json) max-diff=%d  [%s]"
+                      % ("OK" if dc == 0 else "BAD", dc, name))
+                if dc != 0:
+                    fails.append("sweep %s: compile_graph render != graph.json render "
+                                 "(max-diff=%d)" % (name, dc))
         except Exception as e:
             fails.append("sweep %s: %r" % (name, e))
 

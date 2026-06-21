@@ -42,7 +42,7 @@ and [`PORTING-GUIDE.md`](PORTING-GUIDE.md).
 | **loopBegin/loopEnd** feedback construct (zp_G3w) | ✅ renders (ssim 0.69) — fixed `vecN==vecN` ternary → `all(equal())` (Blender MSL rejects bvecN conditions) |
 | 20-program blaster corpus scorecard | 🔄 **19/19 renderable** (B5oBsA non-reference, skip); mean ssim **0.56** (was 0.48); 5≥0.9, 3 byte-identical |
 | **In-Blender DSL compiler** (lexer→parser→validate→expand→graph, stdlib-only) | ✅ **byte-identical to the reference** (`compile_graph` == `tools/export-graph.mjs`); gates lex/parse/compile **20/20**, expand/graph **19/19**; addon needs no external engine to author or compile |
-| **P5 integration surface** (bake-to-Image operator + CUSTOM node tree + N-panels) | ✅ **gated byte-exact** (`parity/integration.sh`): DSL→operator→Image == reference golden (max-diff 0, ssim 1.0); breadth-checked across single/multi-pass, multi-surface, and stateful (frames+timestep) shapes + graceful error paths |
+| **P5 integration surface** (bake-to-Image operator + CUSTOM node tree + N-panels) | ✅ **gated byte-exact** (`parity/integration.sh`): DSL→operator→Image == reference golden (max-diff 0, ssim 1.0); breadth-checked across single/multi-pass, multi-surface, and stateful (frames+timestep) shapes, render-level compiler drop-in (`compile_graph`==`graph.json`), and graceful error paths |
 | P6 classicNoisedeck UBO; attractor/lenia/life chaotic-precision | staged |
 
 **Out of scope:** media plugin (MIDI/audio inputs).
