@@ -1,12 +1,13 @@
-"""GpuBackend — the noisemaker render-graph executor on Blender's `gpu` module (Metal).
+"""GpuBackend — noisemaker render-graph executor on Blender's `gpu` module (Metal).
 
-Primitives the pipeline drives: offscreen management, shader compile (from transpiled
-.frag + .createinfo.json), effect/blit pass execution, float readback. All surfaces are
-linear RGBA16F (no sRGB); readback flattens the 3-D Buffer, flips rows to top-down, and
-quantizes round(v*255). See docs/BLENDER-PLATFORM-NOTES.md and PORTING-GUIDE.md.
+Implements reference/04 §10: double-buffered global_* surfaces, resolveDimension for
+downsampled state (zoom), three-tier ping-pong (the pipeline drives within-frame /
+per-iteration / end-of-frame swaps via swap_after_write + persist). All surfaces linear
+RGBA16F; readback flattens the 3-D Buffer, flips to top-down, quantizes round(v*255).
 """
 import os
 import json
+import math
 
 import gpu
 import numpy as np
@@ -16,56 +17,133 @@ from gpu_extras.batch import batch_for_shader
 from . import shader_build
 
 _FS_TRI = {"pos": [(-1.0, -1.0), (3.0, -1.0), (-1.0, 3.0)]}
+_BLIT_FRAG = ("#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))),"
+              " ivec2(0), textureSize((s),0)-ivec2(1)), 0))\n"
+              "void main(){ fragColor = nmTex(src, gl_FragCoord.xy / resolution); }\n")
+_BLIT_DESC = {"pushConstants": [["VEC2", "resolution"]], "samplers": [[0, "FLOAT_2D", "src"]],
+              "fragmentOut": [[0, "VEC4", "fragColor"]], "uniformAliases": {}}
 
-# Built-in passthrough copy (blit). Straight 1:1 texel copy at NEAREST.
-_BLIT_FRAG = "void main(){ fragColor = texture(src, gl_FragCoord.xy / resolution); }\n"
-_BLIT_DESC = {
-    "pushConstants": [["VEC2", "resolution"]],
-    "samplers": [[0, "FLOAT_2D", "src"]],
-    "fragmentOut": [[0, "VEC4", "fragColor"]],
-    "uniformAliases": {},
-}
+
+def _is_state_surface(name):
+    # display surfaces are o0..o7; everything else (sims, particles) is persistent state.
+    return not (len(name) == 2 and name[0] == "o" and name[1].isdigit())
+
+
+class _Surface:
+    __slots__ = ("read", "write")
+
+    def __init__(self, read, write):
+        self.read = read
+        self.write = write
 
 
 class GpuBackend:
     def __init__(self, shaders_root, size=256):
         self.shaders_root = shaders_root
         self.size = size
-        self.offscreens = {}      # phys_id -> GPUOffScreen
-        self._shader_cache = {}   # (relpath, defines_key) -> (shader, descriptor, rev_alias)
-        self._batch_cache = {}    # shader -> batch
+        self.surfaces = {}        # surfaceName -> _Surface (offscreen pair), for global_*
+        self.pool = {}            # phys_id -> GPUOffScreen, for pooled textures
+        self.frame_read = {}      # surfaceName -> GPUOffScreen (current frame binding)
+        self.frame_write = {}
+        self._shader_cache = {}
+        self._batch_cache = {}
 
-    # ---- offscreens -------------------------------------------------------
-    def ensure_offscreen(self, phys_id, w=None, h=None):
-        if phys_id not in self.offscreens:
-            self.offscreens[phys_id] = GPUOffScreen(w or self.size, h or self.size, format='RGBA16F')
-        return self.offscreens[phys_id]
+    # ---- dimension resolution (reference/04 §resolveDimension) -------------
+    def resolve_dim(self, spec, uniforms):
+        s = self.size
+        if isinstance(spec, (int, float)) and not isinstance(spec, bool):
+            return max(1, int(math.floor(spec)))
+        if isinstance(spec, str):
+            if spec in ("screen", "auto"):
+                return s
+            if spec.endswith("%"):
+                return max(1, int(math.floor(s * float(spec[:-1]) / 100.0)))
+            return s
+        if isinstance(spec, dict):
+            if spec.get("param") is not None:
+                val = uniforms.get(spec["param"], spec.get("paramDefault", 64))
+                if spec.get("multiply") is not None:
+                    val *= spec["multiply"]
+                if spec.get("power") is not None:
+                    val = val ** spec["power"]
+                if (spec.get("power") is not None or spec.get("multiply") is not None) \
+                        and uniforms.get(spec["param"]) is None and spec.get("default") is not None:
+                    val = spec["default"]
+                return max(1, int(math.floor(val)))
+            if spec.get("screenDivide") is not None:
+                div = uniforms.get(spec["screenDivide"], spec.get("default", 1)) or 1
+                return max(1, int(round(s / div)))
+            if spec.get("scale") is not None:
+                return max(1, int(math.floor(s * spec["scale"])))
+        return s
+
+    # ---- surface/pool setup ----------------------------------------------
+    def setup(self, graph, uniforms):
+        texspecs = dict(graph.textures)
+        for p in graph.passes:
+            for tid in list(p.get("inputs", {}).values()) + list(p.get("outputs", {}).values()):
+                texspecs.setdefault(tid, {"width": "screen", "height": "screen"})
+        for tid, spec in texspecs.items():
+            w = self.resolve_dim(spec.get("width", "screen"), uniforms)
+            h = self.resolve_dim(spec.get("height", "screen"), uniforms)
+            if tid.startswith("global_"):
+                name = tid[len("global_"):]
+                if name not in self.surfaces:
+                    self.surfaces[name] = _Surface(GPUOffScreen(w, h, format='RGBA16F'),
+                                                   GPUOffScreen(w, h, format='RGBA16F'))
+            else:
+                phys = graph.phys(tid)
+                if phys not in self.pool:
+                    self.pool[phys] = GPUOffScreen(w, h, format='RGBA16F')
+
+    def frame_begin(self):
+        for name, s in self.surfaces.items():
+            self.frame_read[name] = s.read
+            self.frame_write[name] = s.write
+
+    def frame_persist(self):
+        # end-of-frame (reference/04 §10.7): keep the latest bindings so sims/particles continue.
+        for name, s in self.surfaces.items():
+            s.read = self.frame_read[name]
+            s.write = self.frame_write[name]
+
+    def _read(self, tid, graph):
+        if tid.startswith("global_"):
+            return self.frame_read[tid[len("global_"):]]
+        return self.pool[graph.phys(tid)]
+
+    def _write(self, tid, graph):
+        if tid.startswith("global_"):
+            return self.frame_write[tid[len("global_"):]]
+        return self.pool[graph.phys(tid)]
+
+    def swap_after_write(self, tid):
+        if tid.startswith("global_"):
+            n = tid[len("global_"):]
+            self.frame_read[n], self.frame_write[n] = self.frame_write[n], self.frame_read[n]
 
     def free(self):
-        for off in self.offscreens.values():
+        for s in self.surfaces.values():
+            s.read.free(); s.write.free()
+        for off in self.pool.values():
             off.free()
-        self.offscreens.clear()
+        self.surfaces.clear(); self.pool.clear()
 
     # ---- shaders ----------------------------------------------------------
-    def _load_descriptor(self, namespace, func, prog):
-        base = os.path.join(self.shaders_root, namespace, func, prog)
-        if not os.path.exists(base + ".frag"):
-            raise FileNotFoundError("no shader for %s/%s/%s" % (namespace, func, prog))
-        frag = open(base + ".frag").read()
-        desc = json.load(open(base + ".createinfo.json"))
-        return frag, desc, namespace + "/" + func + "/" + prog
-
     def compile(self, namespace, func, prog, defines):
         defines = defines or {}
         if namespace is None and func == "blit":
             frag, desc, rel = _BLIT_FRAG, _BLIT_DESC, "blit"
         else:
-            frag, desc, rel = self._load_descriptor(namespace, func, prog)
+            base = os.path.join(self.shaders_root, namespace, func, prog)
+            frag = open(base + ".frag").read()
+            desc = json.load(open(base + ".createinfo.json"))
+            rel = namespace + "/" + func + "/" + prog
         key = (rel, tuple(sorted(defines.items())))
         if key not in self._shader_cache:
             shader = shader_build.build_shader(frag, desc, defines)
-            rev_alias = {v: k for k, v in desc.get("uniformAliases", {}).items()}
-            self._shader_cache[key] = (shader, desc, rev_alias)
+            rev = {v: k for k, v in desc.get("uniformAliases", {}).items()}
+            self._shader_cache[key] = (shader, desc, rev)
         return self._shader_cache[key]
 
     def _batch(self, shader):
@@ -73,7 +151,6 @@ class GpuBackend:
             self._batch_cache[shader] = batch_for_shader(shader, 'TRIS', _FS_TRI)
         return self._batch_cache[shader]
 
-    # ---- uniform binding --------------------------------------------------
     @staticmethod
     def _set_uniform(shader, ctype, name, value):
         if value is None:
@@ -90,60 +167,42 @@ class GpuBackend:
             elif ctype == "BOOL":
                 shader.uniform_bool(name, [bool(value)])
         except ValueError:
-            pass  # push-constant optimized out of this define-variant — fine.
+            pass
 
     # ---- pass execution ---------------------------------------------------
-    def execute_effect(self, p, graph, engine):
-        shader, desc, rev_alias = self.compile(p.get("namespace"), p["func"], p["progName"], p.get("defines"))
-        merged = dict(engine)
-        merged.update(p.get("uniforms", {}))
+    def execute(self, p, graph, engine):
+        pt = p.get("passType")
+        if pt == "blit":
+            self._draw(self.compile(None, "blit", "blit", None),
+                       {"resolution": [float(self.size), float(self.size)]},
+                       {"src": p["inputs"]["src"]},
+                       list(p["outputs"].values())[0], graph)
+        elif pt == "effect":
+            merged = dict(engine)
+            merged.update(p.get("uniforms", {}))
+            self._draw(self.compile(p.get("namespace"), p["func"], p["progName"], p.get("defines")),
+                       merged, p.get("inputs", {}), list(p["outputs"].values())[0], graph)
 
-        out_texids = list(p.get("outputs", {}).values())
-        target = self.ensure_offscreen(graph.phys(out_texids[0]))
+    def _draw(self, compiled, merged, inputs, out_tid, graph):
+        shader, desc, rev = compiled
+        target = self._write(out_tid, graph)
         with target.bind():
-            fb = gpu.state.active_framebuffer_get()
-            fb.clear(color=(0.0, 0.0, 0.0, 0.0))
+            gpu.state.active_framebuffer_get().clear(color=(0.0, 0.0, 0.0, 0.0))
             shader.bind()
             for ctype, name in desc.get("pushConstants", []):
-                graph_name = rev_alias.get(name, name)
-                self._set_uniform(shader, ctype, name, merged.get(graph_name))
+                self._set_uniform(shader, ctype, name, merged.get(rev.get(name, name)))
             for slot, stype, name in desc.get("samplers", []):
-                graph_name = rev_alias.get(name, name)
-                tex_id = p.get("inputs", {}).get(graph_name)
-                if tex_id is not None:
-                    src = self.ensure_offscreen(graph.phys(tex_id))
-                    shader.uniform_sampler(name, src.texture_color)
+                tid = inputs.get(rev.get(name, name))
+                if tid is not None:
+                    shader.uniform_sampler(name, self._read(tid, graph).texture_color)
             self._batch(shader).draw(shader)
-
-    def execute_blit(self, p, graph, engine):
-        shader, desc, _ = self.compile(None, "blit", "blit", None)
-        src_id = p.get("inputs", {}).get("src")
-        dst_id = list(p.get("outputs", {}).values())[0]
-        target = self.ensure_offscreen(graph.phys(dst_id))
-        src = self.ensure_offscreen(graph.phys(src_id))
-        with target.bind():
-            fb = gpu.state.active_framebuffer_get()
-            fb.clear(color=(0.0, 0.0, 0.0, 0.0))
-            shader.bind()
-            shader.uniform_float("resolution", (float(self.size), float(self.size)))
-            shader.uniform_sampler("src", src.texture_color)
-            self._batch(shader).draw(shader)
-
-    def execute(self, p, graph, engine):
-        if p.get("passType") == "blit":
-            self.execute_blit(p, graph, engine)
-        elif p.get("passType") == "effect":
-            self.execute_effect(p, graph, engine)
-        # other pass types (points/compute/repeat) staged.
 
     # ---- readback ---------------------------------------------------------
-    def read(self, phys_id):
-        off = self.offscreens[phys_id]
-        w = h = self.size
+    def read_surface(self, name):
+        off = self.frame_read[name]
+        w, h = off.width, off.height
         with off.bind():
-            fb = gpu.state.active_framebuffer_get()
-            buf = fb.read_color(0, 0, w, h, 4, 0, 'FLOAT')
+            buf = gpu.state.active_framebuffer_get().read_color(0, 0, w, h, 4, 0, 'FLOAT')
         buf.dimensions = w * h * 4
-        arr = np.array(buf, dtype=np.float32).reshape(h, w, 4)
-        arr = arr[::-1]  # GL row0=bottom -> top-down to match goldens
+        arr = np.array(buf, dtype=np.float32).reshape(h, w, 4)[::-1]
         return np.round(np.clip(arr, 0.0, 1.0) * 255.0).astype(np.uint8)

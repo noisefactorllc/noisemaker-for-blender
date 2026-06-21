@@ -32,8 +32,10 @@ and [`PORTING-GUIDE.md`](PORTING-GUIDE.md).
 | P1 shader transpiler | ✅ 249/249 transpiled; **194 compile on Metal** (rest: staged MRT/UBO/varying) |
 | P2 backend + **Tier-1 parity gate** | ✅ **8/8 pass** (7 byte-identical, blur ±1) |
 | P4 single-pass sweep | ✅ **61/64 rendered pass** (NEAREST+CLAMP via texelFetch); 2 stateful→P3, 1 crt |
-| P3 full executor (feedback/ping-pong/iteration/blend) | ⏳ navierStokes, points/agents |
+| P3 executor: double-buffered surfaces, 3-tier ping-pong, iteration (`repeat`), `resolveDimension`, timed stateful sampling (30s/5s) | ✅ built; runs navierStokes (evolves, 20-iter pressure solve, zoom→64px) |
+| P3 stateful-sim **parity** (navierStokes/CA seeding+convergence) | 🔄 last-mile (shader dynamics; ssim gap) |
 | P4b breadth: compile-fail effects (palette, classicNoisedeck…) | ⏳ |
+| points/agents (MRT + drawMode:points), 3D, integration target golden | ⏳ |
 | P5 integration (bake-to-Image, node tree) | ⏳ |
 | P6 in-Blender DSL compiler; MRT/points/3D | staged |
 
