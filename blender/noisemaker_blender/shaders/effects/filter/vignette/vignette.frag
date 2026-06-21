@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Radial vignette with brightness blend
  */
@@ -28,7 +29,7 @@ void main() {
     vec2 uv = gl_FragCoord.xy / tileDims;
     vec2 globalUV = (gl_FragCoord.xy + tileOffset) / dims;
 
-    vec4 texel = texture(inputTex, uv);
+    vec4 texel = nmTex(inputTex, uv);
 
     float mask = computeVignetteMask(globalUV, dims);
     

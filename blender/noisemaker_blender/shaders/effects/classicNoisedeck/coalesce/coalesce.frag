@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Coalesce compositing shader.
  * Provides blend modes plus a refractive cloaking mix that cross-samples both synth inputs.
@@ -24,8 +25,8 @@ vec4 cloak(vec2 st) {
     float ra = map(refractAAmt, 0.0, 100.0, 0.0, 0.125);
     float rb = map(refractBAmt, 0.0, 100.0, 0.0, 0.125);
 
-    vec4 leftColor = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
-    vec4 rightColor = texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
+    vec4 leftColor = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 rightColor = nmTex(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
 
     // When the mixer is all the way to the left, we see left refracted by right
     vec2 leftUV = vec2(st);
@@ -34,7 +35,7 @@ vec4 cloak(vec2 st) {
     leftUV.y += sin(rightLen * TAU) * ra;
 
     vec2 leftLocalUV = (leftUV * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0));
-    vec4 leftRefracted = texture(inputTex, fract(leftLocalUV));
+    vec4 leftRefracted = nmTex(inputTex, fract(leftLocalUV));
 
     // When the mixer is all the way to the right, we see right refracted by left
     vec2 rightUV = vec2(st);
@@ -43,7 +44,7 @@ vec4 cloak(vec2 st) {
     rightUV.y += sin(leftLen * TAU) * rb;
 
     vec2 rightLocalUV = (rightUV * fullResolution - tileOffset) / vec2(textureSize(tex, 0));
-    vec4 rightRefracted = texture(tex, fract(rightLocalUV));
+    vec4 rightRefracted = nmTex(tex, fract(rightLocalUV));
 
     // As the mixer approaches midpoint, mix the two refracted outputs using the same
     // logic as the "reflect" mode in coalesce.
@@ -247,8 +248,8 @@ void main() {
         float ra = map(refractAAmt, 0.0, 100.0, 0.0, 0.125);
         float rb = map(refractBAmt, 0.0, 100.0, 0.0, 0.125);
 
-        vec4 leftColor = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
-        vec4 rightColor = texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
+        vec4 leftColor = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+        vec4 rightColor = nmTex(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
 
         // refract a->b
         vec2 leftUV = vec2(st);
@@ -257,7 +258,7 @@ void main() {
         leftUV.y += sin(rightLen * TAU) * ra;
         
         vec2 leftLocalUV = (leftUV * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0));
-        vec4 color1 = texture(inputTex, fract(leftLocalUV));
+        vec4 color1 = nmTex(inputTex, fract(leftLocalUV));
 
         // refract b->a
         vec2 rightUV = vec2(st);
@@ -266,7 +267,7 @@ void main() {
         rightUV.y += sin(leftLen * TAU) * rb;
 
         vec2 rightLocalUV = (rightUV * fullResolution - tileOffset) / vec2(textureSize(tex, 0));
-        vec4 color2 = texture(tex, fract(rightLocalUV));
+        vec4 color2 = nmTex(tex, fract(rightLocalUV));
 
         color.rgb = blend(color1, color2, blendMode, mixAmt);
         color.a = max(color1.a, color2.a);

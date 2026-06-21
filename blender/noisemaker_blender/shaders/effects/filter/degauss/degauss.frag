@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Degauss: simulate a CRT-style degaussing wobble by lens-warping
 // each color channel independently. Based on the Python
 // implementation in effects.degauss(), which repeatedly invokes

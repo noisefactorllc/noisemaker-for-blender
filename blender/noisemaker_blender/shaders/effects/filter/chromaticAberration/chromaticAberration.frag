@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Chromatic aberration effect.
  */
@@ -22,12 +23,12 @@ void main() {
     float aberrationOffset = map(aberrationAmt, 0.0, 100.0, 0.0, 0.05) * centerDist * PI * 0.5;
 
     float redOffset = mix(clamp(uv.x + aberrationOffset, 0.0, 1.0), uv.x, uv.x);
-    vec4 red = texture(inputTex, ((vec2(redOffset, uv.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
+    vec4 red = nmTex(inputTex, ((vec2(redOffset, uv.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
 
-    vec4 green = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 green = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
 
     float blueOffset = mix(uv.x, clamp(uv.x - aberrationOffset, 0.0, 1.0), uv.x);
-    vec4 blue = texture(inputTex, ((vec2(blueOffset, uv.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
+    vec4 blue = nmTex(inputTex, ((vec2(blueOffset, uv.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
 
     // chromatic aberration - extract color fringing edges only
     vec3 aberrated = vec3(red.r, green.g, blue.b);

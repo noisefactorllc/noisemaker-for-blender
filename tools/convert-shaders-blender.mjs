@@ -145,8 +145,20 @@ function transpile (src) {
   const ubo = bytes > 128
   if (ubo) notes.push(`PUSH_OVER_128 (${bytes}B) — UBO path (staged)`)
 
+  // 5. force NEAREST+CLAMP sampling. Blender's gpu module has NO sampler-state API and defaults
+  // to LINEAR/REPEAT, but the reference creates every surface NEAREST + CLAMP_TO_EDGE (load-bearing
+  // for warp/resample effects). Rewrite each 2-arg texture(s,uv) to an exact texelFetch (all 567
+  // reference calls are 2-arg; texelFetch/textureSize are already used by the reference directly).
+  let nearestPreamble = ''
+  if (samplers.length) {
+    body = body.replace(/\btexture\s*\(/g, 'nmTex(')
+    nearestPreamble =
+      '#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))),'
+      + ' ivec2(0), textureSize((s),0)-ivec2(1)), 0))\n'
+  }
+
   // tidy: collapse the runs of blank lines the deletions leave behind.
-  const frag = body.replace(/\n{3,}/g, '\n\n').trim() + '\n'
+  const frag = nearestPreamble + body.replace(/\n{3,}/g, '\n\n').trim() + '\n'
   const descriptor = { pushConstants, samplers, fragmentOut, uniformAliases, std140Bytes: bytes, ubo, notes }
   return { frag, descriptor, notes }
 }

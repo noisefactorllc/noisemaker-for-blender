@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /**
  * Remap - GLSL nm_fragment shader
  *
@@ -53,14 +54,14 @@ float getZoneAlpha(int z) {
 }
 
 vec4 sampleZone(int z, vec2 uv) {
-    if (z == 0) return texture(zone0_tex, uv);
-    if (z == 1) return texture(zone1_tex, uv);
-    if (z == 2) return texture(zone2_tex, uv);
-    if (z == 3) return texture(zone3_tex, uv);
-    if (z == 4) return texture(zone4_tex, uv);
-    if (z == 5) return texture(zone5_tex, uv);
-    if (z == 6) return texture(zone6_tex, uv);
-    return texture(zone7_tex, uv);
+    if (z == 0) return nmTex(zone0_tex, uv);
+    if (z == 1) return nmTex(zone1_tex, uv);
+    if (z == 2) return nmTex(zone2_tex, uv);
+    if (z == 3) return nmTex(zone3_tex, uv);
+    if (z == 4) return nmTex(zone4_tex, uv);
+    if (z == 5) return nmTex(zone5_tex, uv);
+    if (z == 6) return nmTex(zone6_tex, uv);
+    return nmTex(zone7_tex, uv);
 }
 
 bool pointInZone(vec2 p, int zoneIdx) {

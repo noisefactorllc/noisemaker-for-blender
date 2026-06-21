@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Cell noise shader.
  * Generates Worley-style distance fields for use as displacement or masks.
@@ -272,7 +273,7 @@ void main() {
     vec2 texCoord = globalCoord / fullResolution;
 
     if (texInfluence > 0) {
-        vec3 texRGB = texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0))).rgb;
+        vec3 texRGB = nmTex(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0))).rgb;
 
         texLuminosity = luminance(texRGB);
 

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 const float PI = 3.141592653589793;
 
 vec2 applyWrap(vec2 coord, vec2 size) {
@@ -33,7 +34,7 @@ void main() {
     srcCoord += center;
     
     vec2 wrappedUV = applyWrap(srcCoord, texSize);
-    vec4 color = texture(inputTex, wrappedUV);
+    vec4 color = nmTex(inputTex, wrappedUV);
     
     if (darkest) {
         color = vec4(vec3(1.0) - color.rgb, color.a);

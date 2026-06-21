@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Ordered dithering effect
  * Applies various dithering patterns and color palettes for retro aesthetics
@@ -432,7 +433,7 @@ void main() {
     ivec2 texSize = textureSize(inputTex, 0);
     vec2 uv = gl_FragCoord.xy / vec2(texSize);
 
-    vec4 color = texture(inputTex, uv);
+    vec4 color = nmTex(inputTex, uv);
 
     // Use global pixel coordinate for dither pattern so it aligns across tiles
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;

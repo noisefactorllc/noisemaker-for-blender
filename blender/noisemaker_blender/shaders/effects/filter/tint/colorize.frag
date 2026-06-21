@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 vec3 rgb_to_hsv(vec3 rgb) {
     float r = rgb.x, g = rgb.y, b = rgb.z;
     float max_c = max(max(r, g), b);
@@ -35,7 +36,7 @@ vec3 hsv_to_rgb(vec3 hsv) {
 void main() {
   vec2 globalCoord = gl_FragCoord.xy + tileOffset;
   vec2 st = gl_FragCoord.xy / vec2(max(textureSize(inputTex, 0), ivec2(1)));
-  vec4 base = texture(inputTex, st);
+  vec4 base = nmTex(inputTex, st);
   vec3 base_rgb = clamp(base.rgb, 0.0, 1.0);
 
   int m = int(mode);

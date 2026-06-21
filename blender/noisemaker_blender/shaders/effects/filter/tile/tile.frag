@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 const float PI = 3.14159265359;
 const float TAU = 6.28318530718;
 
@@ -75,7 +76,7 @@ void main() {
 
     if (symmetry == 3) {
         // Hex tiling with 6-fold rotational symmetry
-        // Offset pans the entire texture (applied before hex grid computation)
+        // Offset pans the entire nmTex(applied before hex grid computation)
         vec2 local = hexCoord((st + vec2(offsetX, offsetY)) * rep);
         local = local / scale;
         st = rotationalFold(local + 0.5, 6);
@@ -107,5 +108,5 @@ void main() {
     // Wrap for seamless tiling across tile boundaries
     vec2 localUV = fract(st);
 
-    fragColor = vec4(texture(inputTex, localUV).rgb, 1.0);
+    fragColor = vec4(nmTex(inputTex, localUV).rgb, 1.0);
 }

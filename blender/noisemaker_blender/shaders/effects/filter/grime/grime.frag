@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Grime - dusty speckles and grime overlay
  *
@@ -128,7 +129,7 @@ void main() {
     vec2 globalCoord = v_texCoord * tileSize + tileOffset;
     vec2 globalUV = globalCoord / fullResolution;
     vec2 px = 1.0 / fullResolution;
-    vec4 base_color = texture(inputTex, v_texCoord);
+    vec4 base_color = nmTex(inputTex, v_texCoord);
 
     float str = max(strength, 0.0);
     float s = seed;

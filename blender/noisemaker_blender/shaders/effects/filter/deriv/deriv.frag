@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Derivative-based edge detection
  * Computes image derivatives to highlight edges
@@ -16,10 +17,10 @@ void main() {
     float radiusPixels = amount * renderScale;
     radiusPixels = min(radiusPixels, 256.0);
     
-    vec4 color = texture(inputTex, localUV);
+    vec4 color = nmTex(inputTex, localUV);
     vec3 center = desaturate(color.rgb);
-    vec3 right = desaturate(texture(inputTex, localUV + vec2(radiusPixels, 0.0) * texelSize).rgb);
-    vec3 bottom = desaturate(texture(inputTex, localUV + vec2(0.0, radiusPixels) * texelSize).rgb);
+    vec3 right = desaturate(nmTex(inputTex, localUV + vec2(radiusPixels, 0.0) * texelSize).rgb);
+    vec3 bottom = desaturate(nmTex(inputTex, localUV + vec2(0.0, radiusPixels) * texelSize).rgb);
     
     vec3 dx = center - right;
     vec3 dy = center - bottom;

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Glyph Map effect
  * Converts image to ASCII/glyph art using hardcoded 5x7 glyph bitmaps
@@ -305,7 +306,7 @@ void main() {
     vec2 cellCenter = (cellIndex + 0.5) * csf;
     vec2 sampleUV = (cellCenter - tileOffset) / resolution;
     if (isTileRendering) { sampleUV = clamp(sampleUV, 0.0, 1.0); }
-    vec4 srcColor = texture(inputTex, sampleUV);
+    vec4 srcColor = nmTex(inputTex, sampleUV);
 
     float luma = dot(srcColor.rgb, vec3(0.299, 0.587, 0.114));
 

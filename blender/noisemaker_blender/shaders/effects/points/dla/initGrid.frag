@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // DLA - Initialize and decay anchor grid
 
 float hash21(vec2 p) {
@@ -16,7 +17,7 @@ void main() {
     }
     
     // Sample previous grid value
-    vec4 prevGrid = texture(gridTex, uv);
+    vec4 prevGrid = nmTex(gridTex, uv);
     float prev = prevGrid.a;
     vec3 prevColor = prevGrid.rgb;
     

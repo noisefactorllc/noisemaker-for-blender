@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Sharpen convolution effect
  * Enhances image detail and edges
@@ -10,7 +11,7 @@ void main() {
     vec2 uv = globalCoord / fullResolution;
     vec2 texelSize = 1.0 / resolution;
     
-    vec4 origColor = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 origColor = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
     
     // Sharpen nm_kernel
     // -1  0 -1
@@ -35,7 +36,7 @@ void main() {
     vec3 conv = vec3(0.0);
     
     for (int i = 0; i < 9; i++) {
-        vec3 texSample = texture(inputTex, ((uv + offsets[i] * amount * renderScale) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
+        vec3 texSample = nmTex(inputTex, ((uv + offsets[i] * amount * renderScale) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
         conv += texSample * nm_kernel[i];
     }
     

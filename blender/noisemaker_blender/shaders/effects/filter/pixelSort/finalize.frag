@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 const float PI = 3.141592653589793;
 
 vec2 applyWrap(vec2 coord, vec2 size) {
@@ -30,9 +31,9 @@ void main() {
     
     srcCoord += center;
     
-    vec4 originalColor = texture(originalTex, gl_FragCoord.xy / resolution);
+    vec4 originalColor = nmTex(originalTex, gl_FragCoord.xy / resolution);
     vec2 wrappedUV = applyWrap(srcCoord, texSize);
-    vec4 sortedColor = texture(inputTex, wrappedUV);
+    vec4 sortedColor = nmTex(inputTex, wrappedUV);
     
     vec4 working_source = originalColor;
     vec4 working_sorted = sortedColor;

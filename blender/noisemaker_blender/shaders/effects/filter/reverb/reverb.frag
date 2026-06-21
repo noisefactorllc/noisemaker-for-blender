@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Reverb effect: blend input with multiple scaled-down versions of itself.
 // Iterations control how many octaves of scaling are blended.
 
@@ -22,7 +23,7 @@ void main() {
     vec2 globalUV = globalCoord / fullResolution;
     vec2 localUV = gl_FragCoord.xy / vec2(dims);
 
-    vec4 original = texture(inputTex, localUV);
+    vec4 original = nmTex(inputTex, localUV);
     vec4 current = original;
 
     if (ridges) {
@@ -40,7 +41,7 @@ void main() {
         vec2 wrappedGlobalUV = applyWrap(warpedGlobalUV);
         vec2 sampledLocalUV = fract((wrappedGlobalUV * fullResolution - tileOffset) / vec2(dims));
         
-        vec4 scaled = texture(inputTex, sampledLocalUV);
+        vec4 scaled = nmTex(inputTex, sampledLocalUV);
 
         if (ridges) {
             scaled = ridge_transform(scaled);

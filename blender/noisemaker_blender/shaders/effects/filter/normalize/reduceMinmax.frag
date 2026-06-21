@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Reduce pass for intermediate min/max textures
 // Input has min in .r, max in .g (from previous reduce pass)
 // Samples 16x16 block and outputs new min/max

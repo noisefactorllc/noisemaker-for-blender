@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Cellular automata feedback pass.
  *
@@ -132,7 +133,7 @@ int countNeighbors(vec2 uv, vec2 texelSize) {
         for (int x = -1; x <= 1; x++) {
             if (x == 0 && y == 0) continue;
             vec2 offset = vec2(float(x), float(y)) * texelSize;
-            float n = texture(bufTex, uv + offset).r;
+            float n = nmTex(bufTex, uv + offset).r;
             count += int(n > 0.5);
         }
     }
@@ -144,10 +145,10 @@ void main() {
     vec2 uv = gl_FragCoord.xy / texSize;
     vec2 texelSize = 1.0 / texSize;
 
-    float state = texture(bufTex, uv).r;
+    float state = nmTex(bufTex, uv).r;
     
     // Sample all 4 channels to check if nm_buffer is truly empty
-    vec4 bufState = texture(bufTex, uv);
+    vec4 bufState = nmTex(bufTex, uv);
     bool bufferIsEmpty = (bufState.r == 0.0 && bufState.g == 0.0 && bufState.b == 0.0 && bufState.a == 0.0);
 
     // Initialize when reset button pressed or when nm_buffer is completely empty (first load)
@@ -158,7 +159,7 @@ void main() {
         return;
     }
 
-    vec3 prevFrame = texture(tex, uv).rgb;
+    vec3 prevFrame = nmTex(tex, uv).rgb;
     float prevLum = lum(prevFrame);
 
     int neighbors = countNeighbors(uv, texelSize);

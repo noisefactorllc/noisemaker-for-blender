@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Reaction-diffusion display shader.
  * Converts the feedback nm_buffer into output colors with optional palette cycling for animated looks.
@@ -29,17 +30,17 @@ vec4 quadratic(sampler2D tex, vec2 uv, vec2 texelSize) {
     vec2 f = fract(texCoord - 0.5);
     
     // Sample 3x3 grid centered on the interpolation point
-    vec4 v00 = texture(tex, (baseCoord + vec2(-0.5, -0.5)) * texelSize);
-    vec4 v10 = texture(tex, (baseCoord + vec2( 0.5, -0.5)) * texelSize);
-    vec4 v20 = texture(tex, (baseCoord + vec2( 1.5, -0.5)) * texelSize);
+    vec4 v00 = nmTex(tex, (baseCoord + vec2(-0.5, -0.5)) * texelSize);
+    vec4 v10 = nmTex(tex, (baseCoord + vec2( 0.5, -0.5)) * texelSize);
+    vec4 v20 = nmTex(tex, (baseCoord + vec2( 1.5, -0.5)) * texelSize);
     
-    vec4 v01 = texture(tex, (baseCoord + vec2(-0.5,  0.5)) * texelSize);
-    vec4 v11 = texture(tex, (baseCoord + vec2( 0.5,  0.5)) * texelSize);
-    vec4 v21 = texture(tex, (baseCoord + vec2( 1.5,  0.5)) * texelSize);
+    vec4 v01 = nmTex(tex, (baseCoord + vec2(-0.5,  0.5)) * texelSize);
+    vec4 v11 = nmTex(tex, (baseCoord + vec2( 0.5,  0.5)) * texelSize);
+    vec4 v21 = nmTex(tex, (baseCoord + vec2( 1.5,  0.5)) * texelSize);
     
-    vec4 v02 = texture(tex, (baseCoord + vec2(-0.5,  1.5)) * texelSize);
-    vec4 v12 = texture(tex, (baseCoord + vec2( 0.5,  1.5)) * texelSize);
-    vec4 v22 = texture(tex, (baseCoord + vec2( 1.5,  1.5)) * texelSize);
+    vec4 v02 = nmTex(tex, (baseCoord + vec2(-0.5,  1.5)) * texelSize);
+    vec4 v12 = nmTex(tex, (baseCoord + vec2( 0.5,  1.5)) * texelSize);
+    vec4 v22 = nmTex(tex, (baseCoord + vec2( 1.5,  1.5)) * texelSize);
     
     // Interpolate rows
     vec4 y0 = quadratic3(v00, v10, v20, f.x);
@@ -75,34 +76,34 @@ vec4 bicubic(sampler2D tex, vec2 uv, vec2 texelSize) {
     
     // Sample 4×4 grid
     vec4 row0 = bicubic4(
-        texture(tex, (baseCoord + vec2(-0.5, -0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 0.5, -0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 1.5, -0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 2.5, -0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2(-0.5, -0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 0.5, -0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 1.5, -0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 2.5, -0.5)) * texelSize),
         f.x
     );
     
     vec4 row1 = bicubic4(
-        texture(tex, (baseCoord + vec2(-0.5,  0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 0.5,  0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 1.5,  0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 2.5,  0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2(-0.5,  0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 0.5,  0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 1.5,  0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 2.5,  0.5)) * texelSize),
         f.x
     );
     
     vec4 row2 = bicubic4(
-        texture(tex, (baseCoord + vec2(-0.5,  1.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 0.5,  1.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 1.5,  1.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 2.5,  1.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2(-0.5,  1.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 0.5,  1.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 1.5,  1.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 2.5,  1.5)) * texelSize),
         f.x
     );
     
     vec4 row3 = bicubic4(
-        texture(tex, (baseCoord + vec2(-0.5,  2.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 0.5,  2.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 1.5,  2.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 2.5,  2.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2(-0.5,  2.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 0.5,  2.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 1.5,  2.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 2.5,  2.5)) * texelSize),
         f.x
     );
     
@@ -142,17 +143,17 @@ vec4 catmullRom3x3(sampler2D tex, vec2 uv, vec2 texelSize) {
     vec2 f = fract(texCoord - 1.0);
     
     // Sample 3×3 grid
-    vec4 v00 = texture(tex, (baseCoord + vec2(-0.5, -0.5)) * texelSize);
-    vec4 v10 = texture(tex, (baseCoord + vec2( 0.5, -0.5)) * texelSize);
-    vec4 v20 = texture(tex, (baseCoord + vec2( 1.5, -0.5)) * texelSize);
+    vec4 v00 = nmTex(tex, (baseCoord + vec2(-0.5, -0.5)) * texelSize);
+    vec4 v10 = nmTex(tex, (baseCoord + vec2( 0.5, -0.5)) * texelSize);
+    vec4 v20 = nmTex(tex, (baseCoord + vec2( 1.5, -0.5)) * texelSize);
     
-    vec4 v01 = texture(tex, (baseCoord + vec2(-0.5,  0.5)) * texelSize);
-    vec4 v11 = texture(tex, (baseCoord + vec2( 0.5,  0.5)) * texelSize);
-    vec4 v21 = texture(tex, (baseCoord + vec2( 1.5,  0.5)) * texelSize);
+    vec4 v01 = nmTex(tex, (baseCoord + vec2(-0.5,  0.5)) * texelSize);
+    vec4 v11 = nmTex(tex, (baseCoord + vec2( 0.5,  0.5)) * texelSize);
+    vec4 v21 = nmTex(tex, (baseCoord + vec2( 1.5,  0.5)) * texelSize);
     
-    vec4 v02 = texture(tex, (baseCoord + vec2(-0.5,  1.5)) * texelSize);
-    vec4 v12 = texture(tex, (baseCoord + vec2( 0.5,  1.5)) * texelSize);
-    vec4 v22 = texture(tex, (baseCoord + vec2( 1.5,  1.5)) * texelSize);
+    vec4 v02 = nmTex(tex, (baseCoord + vec2(-0.5,  1.5)) * texelSize);
+    vec4 v12 = nmTex(tex, (baseCoord + vec2( 0.5,  1.5)) * texelSize);
+    vec4 v22 = nmTex(tex, (baseCoord + vec2( 1.5,  1.5)) * texelSize);
     
     // Interpolate rows using Catmull-Rom
     vec4 y0 = catmullRom3(v00, v10, v20, f.x);
@@ -172,34 +173,34 @@ vec4 catmullRom4x4(sampler2D tex, vec2 uv, vec2 texelSize) {
     
     // Sample 4×4 grid and interpolate rows directly
     vec4 row0 = catmullRom4(
-        texture(tex, (baseCoord + vec2(-0.5, -0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 0.5, -0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 1.5, -0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 2.5, -0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2(-0.5, -0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 0.5, -0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 1.5, -0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 2.5, -0.5)) * texelSize),
         f.x
     );
     
     vec4 row1 = catmullRom4(
-        texture(tex, (baseCoord + vec2(-0.5,  0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 0.5,  0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 1.5,  0.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 2.5,  0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2(-0.5,  0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 0.5,  0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 1.5,  0.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 2.5,  0.5)) * texelSize),
         f.x
     );
     
     vec4 row2 = catmullRom4(
-        texture(tex, (baseCoord + vec2(-0.5,  1.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 0.5,  1.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 1.5,  1.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 2.5,  1.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2(-0.5,  1.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 0.5,  1.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 1.5,  1.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 2.5,  1.5)) * texelSize),
         f.x
     );
     
     vec4 row3 = catmullRom4(
-        texture(tex, (baseCoord + vec2(-0.5,  2.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 0.5,  2.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 1.5,  2.5)) * texelSize),
-        texture(tex, (baseCoord + vec2( 2.5,  2.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2(-0.5,  2.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 0.5,  2.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 1.5,  2.5)) * texelSize),
+        nmTex(tex, (baseCoord + vec2( 2.5,  2.5)) * texelSize),
         f.x
     );
     
@@ -220,7 +221,7 @@ void main() {
     // updating module metadata and defaults.
     if (smoothing == 0) {
         // nm_constant
-        state = texture(fbTex, globalCoord / fullResolution).g;
+        state = nmTex(fbTex, globalCoord / fullResolution).g;
     } else if (smoothing == 2) {
         // hermite (smoothstep)
         vec2 texSize = vec2(textureSize(fbTex, 0));
@@ -316,7 +317,7 @@ void main() {
     float blend = inputIntensity * 0.01;
     if (blend > 0.0) {
         vec2 inputUv = globalCoord / fullResolution;
-        vec3 inputColor = texture(inputTex, inputUv).rgb;
+        vec3 inputColor = nmTex(inputTex, inputUv).rgb;
         rdColor = mix(rdColor, inputColor, blend);
     }
 

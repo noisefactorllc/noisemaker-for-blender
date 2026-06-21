@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Preview mesh data as a visualization
 // Renders positions/normals as colors for debugging
 
@@ -9,10 +10,10 @@ void main() {
     // Tile-local UV for sampling the mesh textures
     vec2 uv = globalCoord / fullResolution;
 
-    // Sample mesh data using texture() for proper UV sampling
+    // Sample mesh data using nmTex() for proper UV sampling
     // The mesh textures are smaller than output, so use UV coordinates
-    vec4 pos = texture(positionsTex, gl_FragCoord.xy / vec2(textureSize(positionsTex, 0)));
-    vec4 normal = texture(normalsTex, gl_FragCoord.xy / vec2(textureSize(normalsTex, 0)));
+    vec4 pos = nmTex(positionsTex, gl_FragCoord.xy / vec2(textureSize(positionsTex, 0)));
+    vec4 normal = nmTex(normalsTex, gl_FragCoord.xy / vec2(textureSize(normalsTex, 0)));
 
     // Visualize: left half shows positions, right half shows normals
     vec3 color;

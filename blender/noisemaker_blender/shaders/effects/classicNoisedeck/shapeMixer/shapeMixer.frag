@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Shape mixer shader.
  * Combines procedural shapes and mixes them with the input feed under configurable blend modes.
@@ -669,8 +670,8 @@ void main() {
     vec4 color = vec4(0.0, 0.0, 1.0, 1.0);
     vec2 st = globalCoord / fullResolution;
 
-    vec4 color1 = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
-    vec4 color2 = texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
+    vec4 color1 = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 color2 = nmTex(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
 
     float freq = 1.0;
     if (LOOP_OFFSET == 350) {

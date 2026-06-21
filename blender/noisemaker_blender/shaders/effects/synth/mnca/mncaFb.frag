@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Multi-neighbourhood cellular automata feedback pass.
  *
@@ -28,7 +29,7 @@ float neighborsAvgCircle(vec2 uv, vec2 texelSize) {
             if (abs(x) == 3 && abs(y) > 1) continue;
             if (abs(y) == 3 && abs(x) > 1) continue;
             vec2 offset = vec2(float(x), float(y)) * texelSize;
-            float n = texture(bufTex, uv + offset).r;
+            float n = nmTex(bufTex, uv + offset).r;
             total += n;
         }
     }
@@ -53,7 +54,7 @@ float neighborsAvgRing(vec2 uv, vec2 texelSize) {
             if (abs(x) == 5 && abs(y) > 5) continue;
             if (abs(x) > 2  && abs(y) > 6) continue;
             vec2 offset = vec2(float(x), float(y)) * texelSize;
-            float n = texture(bufTex, uv + offset).r;
+            float n = nmTex(bufTex, uv + offset).r;
             total += n;
         }
     }
@@ -88,10 +89,10 @@ void main() {
     vec2 uv = gl_FragCoord.xy / texSize;
     vec2 texelSize = 1.0 / texSize;
 
-    float state = texture(bufTex, uv).r;
+    float state = nmTex(bufTex, uv).r;
     
     // Sample all 4 channels to check if nm_buffer is truly empty
-    vec4 bufState = texture(bufTex, uv);
+    vec4 bufState = nmTex(bufTex, uv);
     bool bufferIsEmpty = (bufState.r == 0.0 && bufState.g == 0.0 && bufState.b == 0.0 && bufState.a == 0.0);
 
     // Initialize when reset button pressed or when nm_buffer is completely empty (first load)
@@ -102,7 +103,7 @@ void main() {
         return;
     }
 
-    vec3 prevFrame = texture(seedTex, uv).rgb;
+    vec3 prevFrame = nmTex(seedTex, uv).rgb;
     float prevLum = lum(prevFrame);
 
     float newState = state;

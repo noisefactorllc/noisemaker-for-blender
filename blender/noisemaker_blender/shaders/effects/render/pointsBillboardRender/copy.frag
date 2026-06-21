@@ -1,6 +1,7 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Copy Pass - Blit source to destination (for ping-pong correction)
 
 void main() {
     vec2 uv = gl_FragCoord.xy / resolution;
-    fragColor = texture(sourceTex, uv);
+    fragColor = nmTex(sourceTex, uv);
 }

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Grain: blend the source image with animated value noise.
 // Mirrors noisemaker.effects.grain, which calls value.values()
 // using simplex-based value noise with bicubic interpolation.

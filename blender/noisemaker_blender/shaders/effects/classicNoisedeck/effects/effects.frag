@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * General effects shader.
  * Provides color inversion, emboss, edge, and blur effects as a serial pipeline tuned for realtime toggling.
@@ -205,7 +206,7 @@ vec3 posterize(vec3 color, float lev) {
 
 vec3 pixellate(vec2 uv, float size) {
     if (size < 1.0) {
-        return texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0))).rgb;
+        return nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0))).rgb;
     }
 
     size *= 4.0;
@@ -215,7 +216,7 @@ vec3 pixellate(vec2 uv, float size) {
     uv -= 0.5;
     vec2 coord = vec2(dx * floor(uv.x / dx), dy * floor(uv.y / dy));
     coord += 0.5;
-    return texture(inputTex, coord).rgb;
+    return nmTex(inputTex, coord).rgb;
 }
 
 vec3 desaturate(vec3 color) {
@@ -241,7 +242,7 @@ vec3 convolve(vec2 uv, float nm_kernel[9], bool divide) {
 
     for(int i = 0; i < 9; i++){
         //nm_sample a 3x3 grid of pixels
-        vec3 color = texture(inputTex, ((uv + offset[i] * effectAmt) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
+        vec3 color = nmTex(inputTex, ((uv + offset[i] * effectAmt) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
 
         // multiply the color by the nm_kernel value and add it to our conv total
         conv += color * nm_kernel[i];
@@ -444,7 +445,7 @@ vec3 cga(vec4 color, vec2 st) {
 	d = ar / amount;
 	float sy = floor( st.y / d ) * d;
 
-	vec4 base = texture( inputTex, vec2( sx, sy ) );
+	vec4 base = nmTex( inputTex, vec2( sx, sy ) );
 
 	float lum = .2126 * base.r + .7152 * base.g + .0722 * base.b;
 	float o = floor( 6. * lum );
@@ -523,12 +524,12 @@ vec3 subpixel(vec2 st, float scale) {
 vec3 bloom(vec2 st) {
     vec3 sum = vec3(0.0);
     vec3 color = vec3(0.0);
-    vec3 orig = texture(inputTex, st).rgb;
+    vec3 orig = nmTex(inputTex, st).rgb;
     float strength = map(effectAmt, 0.0, 20.0, 0.0, 0.25);
 
     for (int i = -4; i < 4; i++) {
         for (int j = -3; j < 3; j++) {
-            sum += texture(inputTex, st + vec2(j, i) * 0.004).rgb * strength;
+            sum += nmTex(inputTex, st + vec2(j, i) * 0.004).rgb * strength;
         }
     }
 
@@ -558,7 +559,7 @@ vec3 zoomBlur(vec2 st) {
         float percent = (t + offset) / 40.0;
         float weight = 4.0 * (percent - percent * percent);
         float strength = map(effectAmt, 0.0, 20.0, 0.0, 1.0);
-        vec4 tex = texture(inputTex, st + toCenter * percent * strength);
+        vec4 tex = nmTex(inputTex, st + toCenter * percent * strength);
         color += tex.rgb * weight;
         total += weight;
     }
@@ -671,7 +672,7 @@ void main() {
     float blendy = periodicFunction(time - offsets(uv));
 
     vec2 origUV = uv;
-    vec4 origcolor = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 origcolor = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
     color = origcolor;
 
 #if EFFECT != 0

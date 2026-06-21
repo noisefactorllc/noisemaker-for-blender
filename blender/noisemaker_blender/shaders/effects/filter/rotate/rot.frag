@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Rotate image 0..1 (0..360 degrees)
  */
@@ -41,5 +42,5 @@ void main() {
         uv = clamp(uv, 0.0, 1.0);
     }
 
-    fragColor = texture(inputTex, uv);
+    fragColor = nmTex(inputTex, uv);
 }

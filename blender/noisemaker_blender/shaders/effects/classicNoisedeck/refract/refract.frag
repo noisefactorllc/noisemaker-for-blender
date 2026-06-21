@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Refract shader.
  * Applies noise-based UV perturbations to refract the input feed.
@@ -32,7 +33,7 @@ vec3 convolve(vec2 uv, float nm_kernel[9], bool divide) {
 
     for(int i = 0; i < 9; i++){
         //nm_sample a 3x3 grid of pixels
-        vec3 color = texture(inputTex, localUV + offset[i] * floor(map(amount, 0.0, 100.0, 0.0, 20.0))).rgb;
+        vec3 color = nmTex(inputTex, localUV + offset[i] * floor(map(amount, 0.0, 100.0, 0.0, 20.0))).rgb;
 
         // multiply the color by the nm_kernel value and add it to our conv total
         conv += color * nm_kernel[i];
@@ -177,7 +178,7 @@ void main() {
 
     // Convert global UV to local UV for sampling inputTex
     vec2 localUV = (uv * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0));
-    vec4 inputColor = texture(inputTex, localUV);
+    vec4 inputColor = nmTex(inputTex, localUV);
     float brightness = desaturate(inputColor.rgb) + direction / 360.0;
 
     // In tiling mode, clamp displacement to overlap budget
@@ -208,7 +209,7 @@ void main() {
 
     // Convert warped global UV to local UV for sampling
     vec2 warpedLocalUV = (uv * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0));
-    color = texture(inputTex, warpedLocalUV);
+    color = nmTex(inputTex, warpedLocalUV);
 
     color.rgb = blend(inputColor, color);
 

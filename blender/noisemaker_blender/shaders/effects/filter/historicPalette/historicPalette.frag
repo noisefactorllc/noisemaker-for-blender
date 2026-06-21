@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Historic Palette effect - apply historical art color palettes
  * Maps luminance to 5-color palettes inspired by art history movements
@@ -234,7 +235,7 @@ void main() {
     vec2 uv = gl_FragCoord.xy / texSize;
 
     // Get input color
-    vec4 inputColor = texture(inputTex, uv);
+    vec4 inputColor = nmTex(inputTex, uv);
 
     // Clamp palette index to valid range
     int idx = clamp(paletteIndex, 0, PALETTE_COUNT - 1);

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Glitch processor shader.
  * Uses deterministic noise fields to drive scanline shears, snow bursts, and channel offsets.
@@ -165,14 +166,14 @@ vec4 glitch(vec2 st) {
 
     float redOffset = mix(clamp(lensedCoords.x + aberrationOffset, 0.0, 1.0), lensedCoords.x, lensedCoords.x);
     vec2 localUV_red = fract((vec2(redOffset, lensedCoords.y) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
-    vec4 red = texture(inputTex, localUV_red);
+    vec4 red = nmTex(inputTex, localUV_red);
 
     vec2 localUV_green = fract((lensedCoords * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
-    vec4 green = texture(inputTex, localUV_green);
+    vec4 green = nmTex(inputTex, localUV_green);
 
     float blueOffset = mix(lensedCoords.x, clamp(lensedCoords.x - aberrationOffset, 0.0, 1.0), lensedCoords.x);
     vec2 localUV_blue = fract((vec2(blueOffset, lensedCoords.y) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
-    vec4 blue = texture(inputTex, localUV_blue);
+    vec4 blue = nmTex(inputTex, localUV_blue);
 
     return vec4(red.r, green.g, blue.b, green.a);
 }

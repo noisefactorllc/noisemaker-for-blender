@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Mashup — GLSL nm_fragment shader
  *
@@ -24,14 +25,14 @@ float getLuminosity(vec3 color) {
 }
 
 vec4 sampleLayer(int i, vec2 uv) {
-    if (i == 0) return texture(layer0_tex, uv);
-    if (i == 1) return texture(layer1_tex, uv);
-    if (i == 2) return texture(layer2_tex, uv);
-    if (i == 3) return texture(layer3_tex, uv);
-    if (i == 4) return texture(layer4_tex, uv);
-    if (i == 5) return texture(layer5_tex, uv);
-    if (i == 6) return texture(layer6_tex, uv);
-    return texture(layer7_tex, uv);
+    if (i == 0) return nmTex(layer0_tex, uv);
+    if (i == 1) return nmTex(layer1_tex, uv);
+    if (i == 2) return nmTex(layer2_tex, uv);
+    if (i == 3) return nmTex(layer3_tex, uv);
+    if (i == 4) return nmTex(layer4_tex, uv);
+    if (i == 5) return nmTex(layer5_tex, uv);
+    if (i == 6) return nmTex(layer6_tex, uv);
+    return nmTex(layer7_tex, uv);
 }
 
 int layerActive(int i) {
@@ -54,7 +55,7 @@ float bandWeight(float lum, float boundary) {
 
 void main() {
     vec2 uv = gl_FragCoord.xy / resolution;
-    vec4 controlColor = texture(source, uv);
+    vec4 controlColor = nmTex(source, uv);
     float lum = getLuminosity(controlColor.rgb);
 
     int n = clamp(layers, 2, MAX_LAYERS);

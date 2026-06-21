@@ -1,5 +1,6 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Final stats pass: reduce the entire reduce1 texture to a single min/max value
-// Input: reduce1 texture (already contains min in .r, max in .g from pyramid reduction)
+// Input: reduce1 nmTex(already contains min in .r, max in .g from pyramid reduction)
 // Output: 1x1 texture with global min/max
 
 void main() {
@@ -8,7 +9,7 @@ void main() {
     float minVal = 100000.0;
     float maxVal = -100000.0;
     
-    // Scan entire reduced texture (should be small after 2x 4:1 reductions)
+    // Scan entire reduced nmTex(should be small after 2x 4:1 reductions)
     for (int y = 0; y < inSize.y; y++) {
         for (int x = 0; x < inSize.x; x++) {
             vec4 color = texelFetch(inputTex, ivec2(x, y), 0);

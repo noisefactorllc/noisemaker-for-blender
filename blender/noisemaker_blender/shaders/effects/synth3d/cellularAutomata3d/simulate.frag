@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * 3D Cellular Automata simulation shader (GLSL)
  * Implements various 3D CA rules with Moore (26) or Von Neumann (6) neighborhoods

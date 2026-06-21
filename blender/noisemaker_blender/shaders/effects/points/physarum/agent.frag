@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Common Agent Architecture inputs
 
 // MRT outputs
@@ -30,14 +31,14 @@ float luminance(vec3 color) {
 
 // Sample trail at normalized UV
 float sampleTrail(vec2 uv) {
-    return luminance(texture(trailTex, uv).rgb);
+    return luminance(nmTex(trailTex, uv).rgb);
 }
 
 // Sample input texture for external field attraction
 float sampleExternalField(vec2 uv, float weight) {
     if (weight <= 0.0) return 0.0;
     float blend = clamp(weight * 0.01, 0.0, 1.0);
-    return luminance(texture(inputTex, uv).rgb) * blend * 0.05;
+    return luminance(nmTex(inputTex, uv).rgb) * blend * 0.05;
 }
 
 void main() {
@@ -103,7 +104,7 @@ void main() {
     float speedScale = 1.0;
     float blend = clamp(inputWeight * 0.01, 0.0, 1.0);
     if (blend > 0.0) {
-        float localInput = luminance(texture(inputTex, pos).rgb);
+        float localInput = luminance(nmTex(inputTex, pos).rgb);
         // Invert: slow in bright, fast in dark
         speedScale = mix(1.0, mix(1.8, 0.35, localInput), blend);
     }

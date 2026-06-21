@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Flip/Mirror effect
  * Apply horizontal/vertical flipping and various mirroring modes
@@ -75,5 +76,5 @@ void main() {
     }
 
     vec2 localUV = fract((warpedUV * fullResolution - tileOffset) / vec2(texSize));
-    fragColor = texture(inputTex, localUV);
+    fragColor = nmTex(inputTex, localUV);
 }

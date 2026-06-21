@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Reaction-diffusion feedback shader.
  * Runs the Gray-Scott update step on the low-resolution feedback nm_buffer with adjustable feed/kill constants.
@@ -9,15 +10,15 @@
 vec3 lp(sampler2D tex, vec2 uv, vec2 size) {
 	vec3 val = vec3(0.0);
 
-	val += texture(tex, (uv + vec2(-1, -1)) / size).rgb * 0.05;
-	val += texture(tex, (uv + vec2(0, -1)) / size).rgb * 0.2;
-	val += texture(tex, (uv + vec2(1, -1)) / size).rgb * 0.05;
-	val += texture(tex, (uv + vec2(-1, 0)) / size).rgb * 0.2;
-	val += texture(tex, (uv + vec2(0, 0)) / size).rgb * -1.0;
-	val += texture(tex, (uv + vec2(1, 0)) / size).rgb * 0.2;
-	val += texture(tex, (uv + vec2(-1, 1)) / size).rgb * 0.05;
-	val += texture(tex, (uv + vec2(0, 1)) / size).rgb * 0.2;
-	val += texture(tex, (uv + vec2(1, 1)) / size).rgb * 0.05;
+	val += nmTex(tex, (uv + vec2(-1, -1)) / size).rgb * 0.05;
+	val += nmTex(tex, (uv + vec2(0, -1)) / size).rgb * 0.2;
+	val += nmTex(tex, (uv + vec2(1, -1)) / size).rgb * 0.05;
+	val += nmTex(tex, (uv + vec2(-1, 0)) / size).rgb * 0.2;
+	val += nmTex(tex, (uv + vec2(0, 0)) / size).rgb * -1.0;
+	val += nmTex(tex, (uv + vec2(1, 0)) / size).rgb * 0.2;
+	val += nmTex(tex, (uv + vec2(-1, 1)) / size).rgb * 0.05;
+	val += nmTex(tex, (uv + vec2(0, 1)) / size).rgb * 0.2;
+	val += nmTex(tex, (uv + vec2(1, 1)) / size).rgb * 0.05;
 
 	return val;
 }
@@ -38,7 +39,7 @@ float hash(vec2 p) {
 
 void main() {
     ivec2 texSize = textureSize(bufTex, 0);
-    vec4 tex = texture(bufTex, gl_FragCoord.xy/vec2(texSize));
+    vec4 tex = nmTex(bufTex, gl_FragCoord.xy/vec2(texSize));
 	float a = tex.r;
 	float b = tex.g;
 
@@ -62,7 +63,7 @@ void main() {
 
     vec2 prevFrameCoord = gl_FragCoord.xy/vec2(texSize);
 
-    vec3 prevFrame = texture(inputTex, prevFrameCoord).rgb;
+    vec3 prevFrame = nmTex(inputTex, prevFrameCoord).rgb;
 
     float prevLum = lum(prevFrame);
 

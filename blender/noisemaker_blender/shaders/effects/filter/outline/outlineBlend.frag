@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Outline blend pass - darken base where edges are detected
 
 void main() {
@@ -10,8 +11,8 @@ void main() {
 
     vec2 uv = gl_FragCoord.xy / vec2(dimensions);
     
-    vec4 base = texture(inputTex, uv);
-    vec4 edges = texture(edgesTexture, uv);
+    vec4 base = nmTex(inputTex, uv);
+    vec4 edges = nmTex(edgesTexture, uv);
 
     // Edge strength from luminance
     float strength = clamp(edges.r, 0.0, 1.0);

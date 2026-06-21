@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Distortion mixer shader
  * Applies displacement, reflection, and refraction effects between two surfaces
@@ -44,7 +45,7 @@ vec3 calculateNormal(vec2 uv, vec2 texelSize, sampler2D mapTex) {
     float dy = 0.0;
     
     for (int i = 0; i < 9; i++) {
-        vec3 texSample = texture(mapTex, uv + offsets[i]).rgb;
+        vec3 texSample = nmTex(mapTex, uv + offsets[i]).rgb;
         float height = getLuminosity(texSample);
         dx += height * sobel_x[i];
         dy += height * sobel_y[i];
@@ -79,7 +80,7 @@ vec2 wrapCoords(vec2 st) {
 
 // Displacement effect based on color luminosity
 vec4 applyDisplacement(vec2 uv, sampler2D mapTex, sampler2D targetTex) {
-    vec4 mapColor = texture(mapTex, uv);
+    vec4 mapColor = nmTex(mapTex, uv);
     float len = length(mapColor.rgb);
     
     vec2 offset;
@@ -92,13 +93,13 @@ vec4 applyDisplacement(vec2 uv, sampler2D mapTex, sampler2D targetTex) {
         vec2 dx = dFdx(displacedUV);
         vec2 dy = dFdy(displacedUV);
         vec4 col = vec4(0.0);
-        col += texture(targetTex, displacedUV + dx * -0.375 + dy * -0.125);
-        col += texture(targetTex, displacedUV + dx *  0.125 + dy * -0.375);
-        col += texture(targetTex, displacedUV + dx *  0.375 + dy *  0.125);
-        col += texture(targetTex, displacedUV + dx * -0.125 + dy *  0.375);
+        col += nmTex(targetTex, displacedUV + dx * -0.375 + dy * -0.125);
+        col += nmTex(targetTex, displacedUV + dx *  0.125 + dy * -0.375);
+        col += nmTex(targetTex, displacedUV + dx *  0.375 + dy *  0.125);
+        col += nmTex(targetTex, displacedUV + dx * -0.125 + dy *  0.375);
         return col * 0.25;
     } else {
-        return texture(targetTex, displacedUV);
+        return nmTex(targetTex, displacedUV);
     }
 }
 
@@ -112,13 +113,13 @@ vec4 applyRefraction(vec2 uv, vec2 texelSize, sampler2D mapTex, sampler2D target
         vec2 dx = dFdx(refractedUV);
         vec2 dy = dFdy(refractedUV);
         vec4 col = vec4(0.0);
-        col += texture(targetTex, refractedUV + dx * -0.375 + dy * -0.125);
-        col += texture(targetTex, refractedUV + dx *  0.125 + dy * -0.375);
-        col += texture(targetTex, refractedUV + dx *  0.375 + dy *  0.125);
-        col += texture(targetTex, refractedUV + dx * -0.125 + dy *  0.375);
+        col += nmTex(targetTex, refractedUV + dx * -0.375 + dy * -0.125);
+        col += nmTex(targetTex, refractedUV + dx *  0.125 + dy * -0.375);
+        col += nmTex(targetTex, refractedUV + dx *  0.375 + dy *  0.125);
+        col += nmTex(targetTex, refractedUV + dx * -0.125 + dy *  0.375);
         return col * 0.25;
     } else {
-        return texture(targetTex, refractedUV);
+        return nmTex(targetTex, refractedUV);
     }
 }
 
@@ -155,32 +156,32 @@ vec4 applyReflection(vec2 uv, vec2 globalUV, vec2 texelSize, sampler2D mapTex, s
         vec2 o3 = dx *  0.375 + dy *  0.125;
         vec2 o4 = dx * -0.125 + dy *  0.375;
 
-        r += texture(targetTex, redUV + o1).r;
-        r += texture(targetTex, redUV + o2).r;
-        r += texture(targetTex, redUV + o3).r;
-        r += texture(targetTex, redUV + o4).r;
+        r += nmTex(targetTex, redUV + o1).r;
+        r += nmTex(targetTex, redUV + o2).r;
+        r += nmTex(targetTex, redUV + o3).r;
+        r += nmTex(targetTex, redUV + o4).r;
 
-        g += texture(targetTex, greenUV + o1).g;
-        g += texture(targetTex, greenUV + o2).g;
-        g += texture(targetTex, greenUV + o3).g;
-        g += texture(targetTex, greenUV + o4).g;
+        g += nmTex(targetTex, greenUV + o1).g;
+        g += nmTex(targetTex, greenUV + o2).g;
+        g += nmTex(targetTex, greenUV + o3).g;
+        g += nmTex(targetTex, greenUV + o4).g;
 
-        b += texture(targetTex, blueUV + o1).b;
-        b += texture(targetTex, blueUV + o2).b;
-        b += texture(targetTex, blueUV + o3).b;
-        b += texture(targetTex, blueUV + o4).b;
+        b += nmTex(targetTex, blueUV + o1).b;
+        b += nmTex(targetTex, blueUV + o2).b;
+        b += nmTex(targetTex, blueUV + o3).b;
+        b += nmTex(targetTex, blueUV + o4).b;
 
-        a += texture(targetTex, alphaUV + o1).a;
-        a += texture(targetTex, alphaUV + o2).a;
-        a += texture(targetTex, alphaUV + o3).a;
-        a += texture(targetTex, alphaUV + o4).a;
+        a += nmTex(targetTex, alphaUV + o1).a;
+        a += nmTex(targetTex, alphaUV + o2).a;
+        a += nmTex(targetTex, alphaUV + o3).a;
+        a += nmTex(targetTex, alphaUV + o4).a;
 
         return vec4(r, g, b, a) * 0.25;
     } else {
-        float redChannel = texture(targetTex, redUV).r;
-        float greenChannel = texture(targetTex, greenUV).g;
-        float blueChannel = texture(targetTex, blueUV).b;
-        float alphaChannel = texture(targetTex, alphaUV).a;
+        float redChannel = nmTex(targetTex, redUV).r;
+        float greenChannel = nmTex(targetTex, greenUV).g;
+        float blueChannel = nmTex(targetTex, blueUV).b;
+        float alphaChannel = nmTex(targetTex, alphaUV).a;
 
         return vec4(redChannel, greenChannel, blueChannel, alphaChannel);
     }

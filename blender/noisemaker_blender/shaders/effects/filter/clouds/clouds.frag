@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Clouds - Cloud texture overlay
  *
@@ -76,7 +77,7 @@ void main() {
     vec2 uv = gl_FragCoord.xy / tileDims;
     vec2 globalUV = (gl_FragCoord.xy + tileOffset) / resolution;
 
-    vec4 inputColor = texture(inputTex, uv);
+    vec4 inputColor = nmTex(inputTex, uv);
 
     // Scale UV for cloud size, aspect-correct, offset by seed
     float aspect = fullResolution.x / fullResolution.y;

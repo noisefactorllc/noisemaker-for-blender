@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Cel Shading - Color Pass
  * sRGB-aware color quantization with diffuse shading
@@ -48,7 +49,7 @@ void main() {
     ivec2 texSize = textureSize(inputTex, 0);
     vec2 uv = gl_FragCoord.xy / vec2(texSize);
 
-    vec4 origColor = texture(inputTex, uv);
+    vec4 origColor = nmTex(inputTex, uv);
     float lev = float(levels);
 
     // Apply diffuse shading based on light direction

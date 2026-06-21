@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Posterize: sRGB-aware color quantization with adjustable gamma
  */
@@ -46,7 +47,7 @@ vec3 pow_vec3(vec3 value, float exponent) {
 void main() {
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;
     vec2 uv = gl_FragCoord.xy / vec2(textureSize(inputTex, 0));
-    vec4 texel = texture(inputTex, uv);
+    vec4 texel = nmTex(inputTex, uv);
 
     float levels_raw = max(levels, 0.0);
     float levels_quantized = max(round(levels_raw), MIN_LEVELS);

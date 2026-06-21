@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Particle Life agent pass - Common Agent Architecture middleware
 // Combined force evaluation + integration in single pass
 // Reads from global_xyz/vel/rgba + internal data, writes back all 4
@@ -272,7 +273,7 @@ void main() {
     if (useTypeColor) {
         outRGBA = vec4(typeColor(int(typeId), typeCount), 1.0);
     } else {
-        outRGBA = texture(inputTex, pos);
+        outRGBA = nmTex(inputTex, pos);
     }
     
     outData = vec4(typeId, mass, 0.0, 1.0);

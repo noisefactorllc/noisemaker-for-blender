@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Kernel convolution pass
 // Applies K(r) gaussian shell nm_kernel to the density field
 
@@ -42,7 +43,7 @@ void main() {
 
             // Sample density at neighbor (wrap around edges)
             vec2 sampleUV = fract(uv + vec2(float(dx), float(dy)) * texelSize);
-            float density = texture(densityTex, sampleUV).r;
+            float density = nmTex(densityTex, sampleUV).r;
 
             // Apply nm_kernel weight
             float kVal = nm_kernel(r, muK, sigmaK) * wK;

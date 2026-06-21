@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Focus blur (depth of field) mixer shader
  * Reconstructs a faux depth nm_buffer from luminance to drive circle-of-confusion blurs
@@ -19,7 +20,7 @@ float computeBlurFactor(float depth) {
 // Apply depth of field blur
 vec4 applyFocusBlur(sampler2D sceneTex, sampler2D depthTex, vec2 uv) {
     // Sample depth texture and compute luminosity as depth proxy
-    vec4 depthSample = texture(depthTex, gl_FragCoord.xy / vec2(textureSize(depthTex, 0)));
+    vec4 depthSample = nmTex(depthTex, gl_FragCoord.xy / vec2(textureSize(depthTex, 0)));
     float depth = getLuminosity(depthSample.rgb);
     
     // Calculate blur amount based on distance from focal plane
@@ -38,7 +39,7 @@ vec4 applyFocusBlur(sampler2D sceneTex, sampler2D depthTex, vec2 uv) {
             float sigma2 = 2.0 * blurFactor * blurFactor;
             float weight = exp(-dist2 / max(sigma2, 0.001));
             
-            color += texture(sceneTex, ((uv + offset) * fullResolution - tileOffset) / vec2(textureSize(sceneTex, 0))) * weight;
+            color += nmTex(sceneTex, ((uv + offset) * fullResolution - tileOffset) / vec2(textureSize(sceneTex, 0))) * weight;
             totalWeight += weight;
         }
     }
@@ -61,7 +62,7 @@ void main() {
     }
     
     // Preserve maximum alpha from both sources
-    color.a = max(texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0))).a, texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0))).a);
+    color.a = max(nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0))).a, nmTex(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0))).a);
     
     fragColor = color;
 }

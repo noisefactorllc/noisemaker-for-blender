@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Glowing Edge - single-pass effect that computes Sobel edges and applies glow
 
 float luminance(vec3 rgb) {
@@ -25,17 +26,17 @@ void main() {
     vec2 texel = width / resolution;
 
     // Sample base color
-    vec4 base = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 base = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
 
     // Sample 3x3 neighborhood for Sobel
-    float tl = luminance(texture(inputTex, ((uv + vec2(-texel.x, -texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
-    float tc = luminance(texture(inputTex, ((uv + vec2(0.0, -texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
-    float tr = luminance(texture(inputTex, ((uv + vec2(texel.x, -texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
-    float ml = luminance(texture(inputTex, ((uv + vec2(-texel.x, 0.0)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
-    float mr = luminance(texture(inputTex, ((uv + vec2(texel.x, 0.0)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
-    float bl = luminance(texture(inputTex, ((uv + vec2(-texel.x, texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
-    float bc = luminance(texture(inputTex, ((uv + vec2(0.0, texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
-    float br = luminance(texture(inputTex, ((uv + vec2(texel.x, texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
+    float tl = luminance(nmTex(inputTex, ((uv + vec2(-texel.x, -texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
+    float tc = luminance(nmTex(inputTex, ((uv + vec2(0.0, -texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
+    float tr = luminance(nmTex(inputTex, ((uv + vec2(texel.x, -texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
+    float ml = luminance(nmTex(inputTex, ((uv + vec2(-texel.x, 0.0)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
+    float mr = luminance(nmTex(inputTex, ((uv + vec2(texel.x, 0.0)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
+    float bl = luminance(nmTex(inputTex, ((uv + vec2(-texel.x, texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
+    float bc = luminance(nmTex(inputTex, ((uv + vec2(0.0, texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
+    float br = luminance(nmTex(inputTex, ((uv + vec2(texel.x, texel.y)) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb);
 
     // Sobel kernels
     float gx = -tl - 2.0*ml - bl + tr + 2.0*mr + br;

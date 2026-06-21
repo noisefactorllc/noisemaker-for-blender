@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Shadow / Glow mixer shader
  *
@@ -19,7 +20,7 @@ void main() {
     vec2 uv = globalCoord / fullResolution;
 
     // Base image is the non-mask source
-    vec4 baseColor = (maskSource == 0) ? texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0))) : texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 baseColor = (maskSource == 0) ? nmTex(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0))) : nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
 
     // Mask UV shifted by shadow offset, scaled for print resolution
     vec2 maskUV = uv - vec2(offsetX, offsetY) * 0.1 * renderScale;
@@ -47,8 +48,8 @@ void main() {
                 // hide: treat out-of-bounds as empty
                 if (localUV.x >= 0.0 && localUV.x <= 1.0 && localUV.y >= 0.0 && localUV.y <= 1.0) {
                     vec4 maskSample = (maskSource == 0)
-                        ? texture(inputTex, localUV)
-                        : texture(tex, localUV);
+                        ? nmTex(inputTex, localUV)
+                        : nmTex(tex, localUV);
                     thresholded = step(threshold, getChannel(maskSample, sourceChannel));
                 }
             } else {
@@ -64,8 +65,8 @@ void main() {
                     wrappedUV = clamp(localUV, 0.0, 1.0);
                 }
                 vec4 maskSample = (maskSource == 0)
-                    ? texture(inputTex, wrappedUV)
-                    : texture(tex, wrappedUV);
+                    ? nmTex(inputTex, wrappedUV)
+                    : nmTex(tex, wrappedUV);
                 thresholded = step(threshold, getChannel(maskSample, sourceChannel));
             }
 
@@ -86,8 +87,8 @@ void main() {
 
     // Composite mask source (foreground) on top of the shadow
     vec4 fgSample = (maskSource == 0)
-        ? texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)))
-        : texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
+        ? nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)))
+        : nmTex(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
     float fgMask = step(threshold, getChannel(fgSample, sourceChannel));
     vec3 result = mix(withShadow, fgSample.rgb, fgMask);
 

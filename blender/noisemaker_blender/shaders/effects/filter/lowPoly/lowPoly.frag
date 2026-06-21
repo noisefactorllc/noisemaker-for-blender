@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Low Poly - Voronoi-based low-polygon art style
  * Generates deterministic seed points, finds nearest Voronoi cell,
@@ -90,7 +91,7 @@ void main() {
     // Convert nearest point from aspect-corrected global UV to tile-local UV for sampling
     vec2 globalUV_sample = vec2(nearestPoint.x / aspect, nearestPoint.y);
     vec2 localUV_sample = (globalUV_sample * resolution - tileOffset) / tileDims;
-    vec4 cellColor = texture(inputTex, localUV_sample);
+    vec4 cellColor = nmTex(inputTex, localUV_sample);
 
     vec3 result;
     if (mode == 0) {
@@ -110,6 +111,6 @@ void main() {
     }
 
     // Alpha blend with original
-    vec4 original = texture(inputTex, uv);
+    vec4 original = nmTex(inputTex, uv);
     fragColor = vec4(mix(original.rgb, result, alpha), original.a);
 }

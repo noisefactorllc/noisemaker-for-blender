@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Lens distortion shader.
  * Applies barrel, pincushion, and chromatic aberration warps using calibrated coefficients.
@@ -190,12 +191,12 @@ void main() {
     float aberrationOffset = map(aberration, 0.0, 100.0, 0.0, 0.05) * centerDist * PI * 0.5;
 
     float redOffset = mix(clamp(lensedCoords.x + aberrationOffset, 0.0, 1.0), lensedCoords.x, lensedCoords.x);
-    vec4 red = texture(inputTex, vec2(redOffset, lensedCoords.y));
+    vec4 red = nmTex(inputTex, vec2(redOffset, lensedCoords.y));
 
-    vec4 green = texture(inputTex, lensedCoords);
+    vec4 green = nmTex(inputTex, lensedCoords);
 
     float blueOffset = mix(lensedCoords.x, clamp(lensedCoords.x - aberrationOffset, 0.0, 1.0), lensedCoords.x);
-    vec4 blue = texture(inputTex, vec2(blueOffset, lensedCoords.y));
+    vec4 blue = nmTex(inputTex, vec2(blueOffset, lensedCoords.y));
 
     //color = vec4(red.r, green.g, blue.b, color.a);
 

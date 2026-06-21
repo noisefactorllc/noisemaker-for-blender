@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Bloom N-tap gather pass
  * Samples bright texture with configurable radially symmetric nm_kernel
@@ -46,7 +47,7 @@ void main() {
         
         // Sample with clamped UV (edge handling)
         vec2 sampleUV = clamp(uv + offset * radiusUV, vec2(0.0), vec2(1.0));
-        vec3 sampleColor = texture(inputTex, sampleUV).rgb;
+        vec3 sampleColor = nmTex(inputTex, sampleUV).rgb;
         
         bloomAccum += sampleColor * weight;
         weightSum += weight;

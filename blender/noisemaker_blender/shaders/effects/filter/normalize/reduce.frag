@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Initial reduce pass: nm_sample 16x16 block from original image, compute local min/max
 // Output: .r = min, .g = max
 // This reduces the texture by 16x in each dimension

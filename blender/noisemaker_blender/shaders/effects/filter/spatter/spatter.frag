@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Spatter: Multi-layer procedural paint spatter effect.
  *
@@ -129,7 +130,7 @@ void main() {
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;
     ivec2 dims = textureSize(inputTex, 0);
     vec2 uv = gl_FragCoord.xy / vec2(dims);
-    vec4 base = texture(inputTex, uv);
+    vec4 base = nmTex(inputTex, uv);
 
     // Use global UV for noise pattern so it tiles correctly at large resolutions
     vec2 fullRes = fullResolution.x > 0.0 ? fullResolution : vec2(dims);

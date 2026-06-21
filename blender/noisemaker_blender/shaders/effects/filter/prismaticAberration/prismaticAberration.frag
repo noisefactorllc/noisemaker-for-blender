@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Prismatic aberration effect.
  * Ported from classicNoisedeck/lensDistortion.
@@ -96,15 +97,15 @@ void main() {
     float redOffset = mix(clamp(lensedCoords.x + aberrationOffset, 0.0, 1.0), lensedCoords.x, lensedCoords.x);
     vec2 redUV = vec2(redOffset, lensedCoords.y);
     vec2 redLocalUV = (redUV * fullResolution - tileOffset) * texelSize;
-    vec4 red = texture(inputTex, redLocalUV);
+    vec4 red = nmTex(inputTex, redLocalUV);
 
     vec2 greenLocalUV = (lensedCoords * fullResolution - tileOffset) * texelSize;
-    vec4 green = texture(inputTex, greenLocalUV);
+    vec4 green = nmTex(inputTex, greenLocalUV);
 
     float blueOffset = mix(lensedCoords.x, clamp(lensedCoords.x - aberrationOffset, 0.0, 1.0), lensedCoords.x);
     vec2 blueUV = vec2(blueOffset, lensedCoords.y);
     vec2 blueLocalUV = (blueUV * fullResolution - tileOffset) * texelSize;
-    vec4 blue = texture(inputTex, blueLocalUV);
+    vec4 blue = nmTex(inputTex, blueLocalUV);
 
     // from aberration
     vec3 hsv = vec3(1.0);

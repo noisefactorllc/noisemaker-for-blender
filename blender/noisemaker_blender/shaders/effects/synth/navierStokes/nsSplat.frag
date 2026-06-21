@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Navier-Stokes external-force / source pass.
  * On first frame or reset: seeds the velocity field with several coherent vortex blobs (curl
@@ -26,7 +27,7 @@ void main() {
     vec2 fragCoord = gl_FragCoord.xy;
     vec2 uv = fragCoord / vec2(texSize);
 
-    vec4 prev = texture(bufTex, uv);
+    vec4 prev = nmTex(bufTex, uv);
 
     // First-frame nm_buffer is all zeros (including A, which is initialized to 0 by the runtime).
     // We detect this and seed initial conditions on the first frame OR when the user hits reset.
@@ -65,9 +66,9 @@ void main() {
     float iDye = clamp(inputDye, 0.0, 100.0) * 0.01;
     if (iForce > 0.0 || iDye > 0.0) {
         vec2 texel = 1.0 / vec2(texSize);
-        float lc = lum(texture(inputTex, uv).rgb);
-        float lr = lum(texture(inputTex, uv + vec2(texel.x, 0.0)).rgb);
-        float lu = lum(texture(inputTex, uv + vec2(0.0, texel.y)).rgb);
+        float lc = lum(nmTex(inputTex, uv).rgb);
+        float lr = lum(nmTex(inputTex, uv + vec2(texel.x, 0.0)).rgb);
+        float lu = lum(nmTex(inputTex, uv + vec2(0.0, texel.y)).rgb);
         vec2 grad = vec2(lr - lc, lu - lc);
         vel += grad * iForce * 50.0;
         dye += lc * iDye * dt * 60.0;

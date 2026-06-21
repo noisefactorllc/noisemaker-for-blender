@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Zoom/radial blur effect
  * Creates a radial blur emanating from the center
@@ -38,7 +39,7 @@ void main() {
     for (float t = 0.0; t <= 40.0; t++) {
         float percent = (t + offset) / 40.0;
         float weight = 4.0 * (percent - percent * percent);
-        vec4 tex = texture(inputTex, uv + toCenter * percent * strength);
+        vec4 tex = nmTex(inputTex, uv + toCenter * percent * strength);
         color += tex.rgb * weight;
         total += weight;
     }

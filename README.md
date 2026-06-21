@@ -31,8 +31,9 @@ and [`PORTING-GUIDE.md`](PORTING-GUIDE.md).
 | P0 scaffold + GPU de-risk | ✅ (`blender/harness/spike_*.py`) |
 | P1 shader transpiler | ✅ 249/249 transpiled; **194 compile on Metal** (rest: staged MRT/UBO/varying) |
 | P2 backend + **Tier-1 parity gate** | ✅ **8/8 pass** (7 byte-identical, blur ±1) |
-| P3 full executor (feedback/ping-pong/blend) | ⏳ |
-| P4 corpus parity sweep (+ stateful 30s/5s) | ⏳ |
+| P4 single-pass sweep | ✅ **61/64 rendered pass** (NEAREST+CLAMP via texelFetch); 2 stateful→P3, 1 crt |
+| P3 full executor (feedback/ping-pong/iteration/blend) | ⏳ navierStokes, points/agents |
+| P4b breadth: compile-fail effects (palette, classicNoisedeck…) | ⏳ |
 | P5 integration (bake-to-Image, node tree) | ⏳ |
 | P6 in-Blender DSL compiler; MRT/points/3D | staged |
 

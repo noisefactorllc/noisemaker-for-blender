@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 float clamp01(float x) {
     return clamp(x, 0.0, 1.0);
 }
@@ -124,8 +125,8 @@ float distanceMetric(vec2 p, vec2 corner, int m) {
 void main() {
     vec2 st = gl_FragCoord.xy / resolution;
 
-    vec4 edgeColor = texture(inputTex, st);
-    vec4 centerColor = texture(tex, st);
+    vec4 edgeColor = nmTex(inputTex, st);
+    vec4 centerColor = nmTex(tex, st);
 
     float minRes = min(fullResolution.x, fullResolution.y);
 

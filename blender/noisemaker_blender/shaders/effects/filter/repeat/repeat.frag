@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 void main(){
   // Compute global coordinate
   vec2 globalCoord = gl_FragCoord.xy + tileOffset;
@@ -38,5 +39,5 @@ void main(){
       localUV = clamp(localUV, 0.0, 1.0);
   }
   
-  fragColor = vec4(texture(inputTex, localUV).rgb, 1.0);
+  fragColor = vec4(nmTex(inputTex, localUV).rgb, 1.0);
 }

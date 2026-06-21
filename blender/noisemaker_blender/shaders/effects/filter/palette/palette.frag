@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Palette effect - apply cosine color palettes
  * Uses luminance to nm_sample from one of 56 cosine palettes
@@ -484,7 +485,7 @@ void main() {
     vec2 uv = gl_FragCoord.xy / texSize;
 
     // Get input color
-    vec4 inputColor = texture(inputTex, uv);
+    vec4 inputColor = nmTex(inputTex, uv);
 
     // Index 0 is passthrough
     if (paletteIndex <= 0 || paletteIndex > PALETTE_COUNT) {

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 void main() {
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;
     vec2 uv = globalCoord / fullResolution;
@@ -7,7 +8,7 @@ void main() {
     vec2 scrollUv = vec2(uv.x - scrollAmount, uv.y);
     vec4 prev = vec4(0.0);
     if (scrollUv.x >= 0.0) {
-        prev = texture(feedbackTex, scrollUv);
+        prev = nmTex(feedbackTex, scrollUv);
         prev *= 0.997;
     }
 
@@ -32,7 +33,7 @@ void main() {
     for (int dk = -spread; dk <= spread; dk++) {
         int k = clamp(key + dk, 0, 127);
         vec2 gridUv = vec2((float(k) + 0.5) / 128.0, (float(channel) + 0.5) / 16.0);
-        vec4 noteData = texture(noteGridTex, gridUv);
+        vec4 noteData = nmTex(noteGridTex, gridUv);
         if (noteData.g > 0.5) {
             maxVel = max(maxVel, noteData.r);
         }

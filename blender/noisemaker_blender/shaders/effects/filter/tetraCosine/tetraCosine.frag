@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /**
  * Tetra Cosine Gradient - GLSL Fragment Shader
  *
@@ -117,7 +118,7 @@ void main() {
     vec2 uv = gl_FragCoord.xy / texSize;
 
     // Get input color
-    vec4 inputColor = texture(inputTex, uv);
+    vec4 inputColor = nmTex(inputTex, uv);
 
     // Calculate luminance as the t value
     float lum = dot(inputColor.rgb, vec3(0.299, 0.587, 0.114));

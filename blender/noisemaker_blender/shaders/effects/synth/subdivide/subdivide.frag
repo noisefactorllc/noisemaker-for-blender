@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Recursive grid subdivision with shapes
  */
@@ -222,7 +223,7 @@ void main() {
         } else {
             texUv = clamp(texUv, 0.0, 1.0);
         }
-        vec3 inputColor = texture(inputTex, texUv).rgb;
+        vec3 inputColor = nmTex(inputTex, texUv).rgb;
         result = mix(result, inputColor, blend);
     }
 

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Spiral distortion
  */
@@ -74,12 +75,12 @@ void main() {
         vec2 dx = dFdx(sampleUV);
         vec2 dy = dFdy(sampleUV);
         vec4 col = vec4(0.0);
-        col += texture(inputTex, sampleUV + dx * -0.375 + dy * -0.125);
-        col += texture(inputTex, sampleUV + dx *  0.125 + dy * -0.375);
-        col += texture(inputTex, sampleUV + dx *  0.375 + dy *  0.125);
-        col += texture(inputTex, sampleUV + dx * -0.125 + dy *  0.375);
+        col += nmTex(inputTex, sampleUV + dx * -0.375 + dy * -0.125);
+        col += nmTex(inputTex, sampleUV + dx *  0.125 + dy * -0.375);
+        col += nmTex(inputTex, sampleUV + dx *  0.375 + dy *  0.125);
+        col += nmTex(inputTex, sampleUV + dx * -0.125 + dy *  0.375);
         fragColor = col * 0.25;
     } else {
-        fragColor = texture(inputTex, sampleUV);
+        fragColor = nmTex(inputTex, sampleUV);
     }
 }

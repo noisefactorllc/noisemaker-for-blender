@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Vaseline - N-tap blur with edge-weighted blending
 // Uses golden angle spiral nm_kernel for smooth, non-blocky blur
 
@@ -46,7 +47,7 @@ void main() {
 
         vec2 sampleGlobalUV = clamp(uv + offset * radiusUV, vec2(0.0), vec2(1.0));
         vec2 sampleLocalUV = (sampleGlobalUV * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0));
-        blurAccum += texture(inputTex, sampleLocalUV).rgb * weight;
+        blurAccum += nmTex(inputTex, sampleLocalUV).rgb * weight;
         weightSum += weight;
     }
 

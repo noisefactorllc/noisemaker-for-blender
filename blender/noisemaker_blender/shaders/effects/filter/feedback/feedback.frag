@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Feedback post-processing shader.
  * Offers blend modes alongside hue, distortion, and brightness controls for the accumulated feedback nm_buffer.
@@ -37,8 +38,8 @@ vec4 cloak(vec2 st) {
     float ra = map(refractAAmt, 0.0, 100.0, 0.0, 0.125);
     float rb = map(refractBAmt, 0.0, 100.0, 0.0, 0.125);
 
-    vec4 leftColor = texture(inputTex, st);
-    vec4 rightColor = texture(selfTex, st);
+    vec4 leftColor = nmTex(inputTex, st);
+    vec4 rightColor = nmTex(selfTex, st);
 
     // When the mixer is all the way to the left, we see left refracted by right
     vec2 leftUV = vec2(st);
@@ -46,7 +47,7 @@ vec4 cloak(vec2 st) {
     leftUV.x += cos(rightLen * TAU) * ra;
     leftUV.y += sin(rightLen * TAU) * ra;
 
-    vec4 leftRefracted = texture(inputTex, fract(leftUV));
+    vec4 leftRefracted = nmTex(inputTex, fract(leftUV));
 
     // When the mixer is all the way to the right, we see right refracted by left
     vec2 rightUV = vec2(st);
@@ -54,7 +55,7 @@ vec4 cloak(vec2 st) {
     rightUV.x += cos(leftLen * TAU) * rb;
     rightUV.y += sin(leftLen * TAU) * rb;
 
-    vec4 rightRefracted = texture(selfTex, fract(rightUV));
+    vec4 rightRefracted = nmTex(selfTex, fract(rightUV));
 
     // As the mixer approaches midpoint, mix the two refracted outputs using the same
     // logic as the "reflect" mode in coalesce.
@@ -270,12 +271,12 @@ vec4 getImage(vec2 st) {
     // Sample selfTex directly without Y flip
 
     float redOffset = mix(clamp(st.x + aberrationOffset, 0.0, 1.0), st.x, st.x);
-    vec4 red = texture(selfTex, vec2(redOffset, st.y));
+    vec4 red = nmTex(selfTex, vec2(redOffset, st.y));
 
-    vec4 green = texture(selfTex, st);
+    vec4 green = nmTex(selfTex, st);
 
     float blueOffset = mix(st.x, clamp(st.x - aberrationOffset, 0.0, 1.0), st.x);
-    vec4 blue = texture(selfTex, vec2(blueOffset, st.y));
+    vec4 blue = nmTex(selfTex, vec2(blueOffset, st.y));
 
     vec4 tex = vec4(red.r, green.g, blue.b, 1.0);
     tex.rgb = tex.rgb * tex.a;
@@ -288,7 +289,7 @@ void main() {
     
     // If resetState is true, bypass feedback and return input directly
     if (resetState) {
-        fragColor = texture(inputTex, uv);
+        fragColor = nmTex(inputTex, uv);
         return;
     }
 
@@ -301,8 +302,8 @@ void main() {
         float ra = map(refractAAmt, 0.0, 100.0, 0.0, 0.125);
         float rb = map(refractBAmt, 0.0, 100.0, 0.0, 0.125);
 
-        vec4 leftColor = texture(inputTex, uv);
-        vec4 rightColor = texture(selfTex, uv);
+        vec4 leftColor = nmTex(inputTex, uv);
+        vec4 rightColor = nmTex(selfTex, uv);
 
         // refract a->b
         vec2 leftUV = vec2(uv);
@@ -316,7 +317,7 @@ void main() {
         rightUV.x += cos(leftLen * TAU) * rb;
         rightUV.y += sin(leftLen * TAU) * rb;
 
-        color = blend(texture(inputTex, leftUV), getImage(rightUV), blendMode, mixAmt * 0.01);
+        color = blend(nmTex(inputTex, leftUV), getImage(rightUV), blendMode, mixAmt * 0.01);
     }
 
     // hue rotation

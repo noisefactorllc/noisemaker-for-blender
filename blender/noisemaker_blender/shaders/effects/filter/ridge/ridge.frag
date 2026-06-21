@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Ridge effect.
 // Parameterized ridge transform with configurable midpoint level.
 
@@ -12,7 +13,7 @@ void main() {
     ivec2 dims = textureSize(inputTex, 0);
     vec2 uv = gl_FragCoord.xy / vec2(dims);
 
-    vec4 texel = texture(inputTex, uv);
+    vec4 texel = nmTex(inputTex, uv);
 
     // Apply ridge transform
     vec4 ridged = ridge_transform(texel, level);

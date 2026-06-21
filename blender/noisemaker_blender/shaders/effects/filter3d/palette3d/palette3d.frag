@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Palette3D effect - apply cosine color palettes to a 3D volume
  * 3D port of filter/palette: recolors a volume atlas per-voxel by luminance
@@ -483,7 +484,7 @@ void main() {
     vec2 uv = gl_FragCoord.xy / texSize;
 
     // Get input color
-    vec4 inputColor = texture(inputTex3d, uv);
+    vec4 inputColor = nmTex(inputTex3d, uv);
 
     // Index 0 is passthrough
     if (paletteIndex <= 0 || paletteIndex > PALETTE_COUNT) {

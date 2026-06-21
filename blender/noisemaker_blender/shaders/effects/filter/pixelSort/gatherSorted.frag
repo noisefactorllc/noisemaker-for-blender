@@ -1,5 +1,6 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // GPGPU Pass 4: Gather sorted pixels with alignment
-// Input: prepared texture (original colors), rank texture, brightest texture
+// Input: prepared nmTex(original colors), rank texture, brightest texture
 // Output: Sorted row with brightest pixel aligned to its original position
 // Uses approximate rank matching for efficiency
 

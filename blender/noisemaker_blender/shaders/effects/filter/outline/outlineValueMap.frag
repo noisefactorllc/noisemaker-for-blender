@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Outline value map pass - convert input to luminance for edge detection
 
 float srgbToLinear(float value) {
@@ -35,7 +36,7 @@ void main() {
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;
     ivec2 dimensions = textureSize(inputTex, 0);
     vec2 uv = (gl_FragCoord.xy - vec2(0.5)) / vec2(max(dimensions.x, 1), max(dimensions.y, 1));
-    vec4 texel = texture(inputTex, uv);
+    vec4 texel = nmTex(inputTex, uv);
     float value = valueMapComponent(texel);
     fragColor = vec4(value, value, value, texel.a);
 }

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Media input shader.
  * Normalizes camera or video textures and exposes crop controls while preserving aspect ratio.
@@ -167,7 +168,7 @@ vec4 getImage(vec2 st) {
        }
     }
 
-    vec4 text = texture(imageTex, st);
+    vec4 text = nmTex(imageTex, st);
 
     if (st.x < 0.0 || st.x > 1.0 || st.y < 0.0 || st.y > 1.0) {
         // Don't draw texture if out of coordinate bounds

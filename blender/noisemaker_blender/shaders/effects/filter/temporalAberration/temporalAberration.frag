@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Temporal Chromatic Aberration - read pass.
  *
@@ -15,20 +16,20 @@ void main() {
     ivec2 texSize = textureSize(inputTex, 0);
     vec2 uv = gl_FragCoord.xy / vec2(texSize);
 
-    vec4 cur = texture(inputTex, uv);
+    vec4 cur = nmTex(inputTex, uv);
 
     // slots[0] = live (delay 0); slots[1..8] = history (delay 1..8) with empty -> live.
     vec4 slots[9];
     slots[0] = cur;
     vec4 s;
-    s = texture(h1, uv); slots[1] = (s.a < 0.5) ? cur : s;
-    s = texture(h2, uv); slots[2] = (s.a < 0.5) ? cur : s;
-    s = texture(h3, uv); slots[3] = (s.a < 0.5) ? cur : s;
-    s = texture(h4, uv); slots[4] = (s.a < 0.5) ? cur : s;
-    s = texture(h5, uv); slots[5] = (s.a < 0.5) ? cur : s;
-    s = texture(h6, uv); slots[6] = (s.a < 0.5) ? cur : s;
-    s = texture(h7, uv); slots[7] = (s.a < 0.5) ? cur : s;
-    s = texture(h8, uv); slots[8] = (s.a < 0.5) ? cur : s;
+    s = nmTex(h1, uv); slots[1] = (s.a < 0.5) ? cur : s;
+    s = nmTex(h2, uv); slots[2] = (s.a < 0.5) ? cur : s;
+    s = nmTex(h3, uv); slots[3] = (s.a < 0.5) ? cur : s;
+    s = nmTex(h4, uv); slots[4] = (s.a < 0.5) ? cur : s;
+    s = nmTex(h5, uv); slots[5] = (s.a < 0.5) ? cur : s;
+    s = nmTex(h6, uv); slots[6] = (s.a < 0.5) ? cur : s;
+    s = nmTex(h7, uv); slots[7] = (s.a < 0.5) ? cur : s;
+    s = nmTex(h8, uv); slots[8] = (s.a < 0.5) ? cur : s;
 
     float dr = clamp(redDelay, 0.0, 8.0);
     int ir0 = int(floor(dr));

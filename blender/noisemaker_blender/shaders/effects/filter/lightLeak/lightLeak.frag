@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Light Leak: Voronoi-based colored light leak with wormhole distortion,
  * bloom approximation, screen blend, center mask, and vaseline blur.

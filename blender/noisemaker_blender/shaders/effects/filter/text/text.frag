@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Text overlay shader
  * Blends pre-rendered text texture over input with matte background
@@ -7,8 +8,8 @@ void main() {
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;
     vec2 st = globalCoord / fullResolution;
 
-    vec4 inputColor = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
-    vec4 text = texture(textTex, gl_FragCoord.xy / vec2(textureSize(textTex, 0)));
+    vec4 inputColor = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 text = nmTex(textTex, gl_FragCoord.xy / vec2(textureSize(textTex, 0)));
 
     // Text presence from canvas alpha
     float textPresence = text.a;

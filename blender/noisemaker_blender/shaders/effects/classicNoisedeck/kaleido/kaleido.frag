@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Kaleidoscope shader.
  * Samples the input feed with mirrored wedges to generate kaleidoscopic symmetry.
@@ -560,7 +561,7 @@ vec3 convolve(vec2 uv, float nm_kernel[9], bool divide) {
 
     for(int i = 0; i < 9; i++){
         //nm_sample a 3x3 grid of pixels
-        vec3 color = texture(inputTex, uv + offset[i] * effectWidth).rgb;
+        vec3 color = nmTex(inputTex, uv + offset[i] * effectWidth).rgb;
 
         // multiply the color by the nm_kernel value and add it to our conv total
         conv += color * nm_kernel[i];
@@ -726,7 +727,7 @@ vec3 pixellate(vec2 uv, float size) {
 	float dx = size * (1.0 / resolution.x);
 	float dy = size * (1.0 / resolution.y);
 	vec2 coord = vec2(dx * floor(uv.x / dx), dy * floor(uv.y / dy));
-	return texture(inputTex, coord).rgb;
+	return nmTex(inputTex, coord).rgb;
 }
 
 float getMetric(vec2 st) {
@@ -875,7 +876,7 @@ void main() {
 	float blendy = periodicFunction(t) * map(abs(speed), 0.0, 100.0, 0.0, 2.0);
 
 	uv = kaleidoscope(uv, kaleido, blendy);
-	color = texture(inputTex, uv);
+	color = nmTex(inputTex, uv);
 
 #if KERNEL != 0
     if (effectWidth != 0.0) {

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 float map(float value, float inMin, float inMax, float outMin, float outMax) {
     return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
 }
@@ -21,8 +22,8 @@ void main() {
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;
     vec2 st = globalCoord / fullResolution;
 
-    vec4 color1 = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
-    vec4 color2 = texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
+    vec4 color1 = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 color2 = nmTex(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
 
     vec3 a = rgb2hsv(color1.rgb);
     vec3 b = rgb2hsv(color2.rgb);

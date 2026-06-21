@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Reindex Pass 1 (Stats): compute lightness range per 8x8 tile.
 
 const float F32_MAX = 3.402823466e38;

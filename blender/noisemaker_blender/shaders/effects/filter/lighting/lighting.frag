@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * 3D lighting effect for 2D textures
  * Calculates surface normals from luminosity using Sobel convolution
@@ -41,7 +42,7 @@ vec3 calculateNormal(vec2 uv, vec2 texelSize) {
     float dy = 0.0;
     
     for (int i = 0; i < 9; i++) {
-        vec3 texSample = texture(inputTex, ((uv + offsets[i]) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
+        vec3 texSample = nmTex(inputTex, ((uv + offsets[i]) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
         float height = getLuminosity(texSample);
         dx += height * sobel_x[i];
         dy += height * sobel_y[i];
@@ -60,7 +61,7 @@ vec3 calculateNormal(vec2 uv, vec2 texelSize) {
 // Apply refraction effect based on surface normal
 vec4 applyRefraction(vec2 uv, vec3 normal) {
     vec2 refractionOffset = normal.xy * (refraction * 0.0125);
-    return texture(inputTex, ((uv + refractionOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
+    return nmTex(inputTex, ((uv + refractionOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
 }
 
 // Apply reflection effect with chromatic aberration
@@ -79,10 +80,10 @@ vec4 applyReflection(vec2 uv, vec2 globalUV, vec3 normal) {
     vec2 greenOffset = reflectionOffset;
     vec2 blueOffset = reflectionOffset * (1.0 - aberration * 0.0075);
     
-    float redChannel = texture(inputTex, ((uv + redOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).r;
-    float greenChannel = texture(inputTex, ((uv + greenOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).g;
-    float blueChannel = texture(inputTex, ((uv + blueOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).b;
-    float alphaChannel = texture(inputTex, ((uv + reflectionOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).a;
+    float redChannel = nmTex(inputTex, ((uv + redOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).r;
+    float greenChannel = nmTex(inputTex, ((uv + greenOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).g;
+    float blueChannel = nmTex(inputTex, ((uv + blueOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).b;
+    float alphaChannel = nmTex(inputTex, ((uv + reflectionOffset) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).a;
     
     return vec4(redChannel, greenChannel, blueChannel, alphaChannel);
 }
@@ -97,7 +98,7 @@ void main() {
     vec2 texelSize = 1.0 / resolution;
     
     // Get original color
-    vec4 origColor = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 origColor = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
     
     // Calculate surface normal
     vec3 normal = calculateNormal(uv, texelSize);

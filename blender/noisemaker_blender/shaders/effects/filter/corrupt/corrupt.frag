@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Scanline-based data corruption.
  * All corruption operates along horizontal scanlines, simulating linear
@@ -172,7 +173,7 @@ void main() {
     }
 
     // Sample color from input
-    vec3 color = texture(inputTex, sampleUv).rgb;
+    vec3 color = nmTex(inputTex, sampleUv).rgb;
 
     // Channel separation
     if (channelShift > 0.0 && isCorrupt) {
@@ -182,8 +183,8 @@ void main() {
         float bShift = (chHash.y - 0.5) * chAmt * 0.08;
         vec2 rUv = vec2(fract(sampleUv.x + rShift), sampleUv.y);
         vec2 bUv = vec2(fract(sampleUv.x + bShift), sampleUv.y);
-        color.r = texture(inputTex, rUv).r;
-        color.b = texture(inputTex, bUv).b;
+        color.r = nmTex(inputTex, rUv).r;
+        color.b = nmTex(inputTex, bUv).b;
     }
 
     // Bit corruption

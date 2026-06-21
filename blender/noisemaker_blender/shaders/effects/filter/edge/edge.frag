@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Edge detection with multiple kernels, sizes, and blend modes
  */
@@ -41,7 +42,7 @@ void main() {
     vec2 resolution = vec2(texSize);
     vec2 texelSize = 1.0 / resolution;
 
-    vec4 origColor = texture(inputTex, gl_FragCoord.xy * texelSize);
+    vec4 origColor = nmTex(inputTex, gl_FragCoord.xy * texelSize);
 
     int kernelType = int(nm_kernel);
     int radius = min(int((size + 1.0) * renderScale), 256);
@@ -63,7 +64,7 @@ void main() {
 
             vec2 sampleCoord = gl_FragCoord.xy + vec2(float(dx), float(dy));
             vec2 localUV = sampleCoord * texelSize;
-            vec3 s = texture(inputTex, localUV).rgb;
+            vec3 s = nmTex(inputTex, localUV).rgb;
 
             if (useLuma) {
                 conv += vec3(dot(s, LUMA)) * w;

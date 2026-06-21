@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Blend weight function.
  * For a coordinate t in [0, 1], returns how much to blend
@@ -30,10 +31,10 @@ void main() {
     float wy = edgeWeight(st.y, blend);
 
     // Sample original and three wrapped positions
-    vec4 c00 = texture(inputTex, st);
-    vec4 c10 = texture(inputTex, fract(st + vec2(0.5, 0.0)));
-    vec4 c01 = texture(inputTex, fract(st + vec2(0.0, 0.5)));
-    vec4 c11 = texture(inputTex, fract(st + vec2(0.5, 0.5)));
+    vec4 c00 = nmTex(inputTex, st);
+    vec4 c10 = nmTex(inputTex, fract(st + vec2(0.5, 0.0)));
+    vec4 c01 = nmTex(inputTex, fract(st + vec2(0.0, 0.5)));
+    vec4 c11 = nmTex(inputTex, fract(st + vec2(0.5, 0.5)));
 
     // Bilinear blend using edge weights
     vec4 mx0 = mix(c00, c10, wx);

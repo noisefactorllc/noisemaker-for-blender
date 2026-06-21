@@ -1,10 +1,11 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /* Color replacement.
    Matches input pixels by euclidean RGB distance to targetColor, then
    independently remaps RGB toward replaceColor and rescales alpha. */
 void main() {
   vec2 globalCoord = gl_FragCoord.xy + tileOffset;
   vec2 st = gl_FragCoord.xy / vec2(max(textureSize(inputTex, 0), ivec2(1)));
-  vec4 src = texture(inputTex, st);
+  vec4 src = nmTex(inputTex, st);
 
   // Normalized euclidean RGB distance (0 = exact match, 1 = max distance).
   float dist = length(src.rgb - targetColor) / 1.7320508;

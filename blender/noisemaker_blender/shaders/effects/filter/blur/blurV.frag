@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Vertical Gaussian blur pass
  */
@@ -12,7 +13,7 @@ void main() {
 
     int radius = int(radiusY * renderScale);
     if (radius <= 0) {
-        fragColor = texture(inputTex, uv);
+        fragColor = nmTex(inputTex, uv);
         return;
     }
     
@@ -27,7 +28,7 @@ void main() {
         float x = float(i);
         float weight = exp(-(x * x) / (2.0 * sigma2));
         vec2 offset = vec2(0.0, float(i) * texelSize.y);
-        sum += texture(inputTex, uv + offset) * weight;
+        sum += nmTex(inputTex, uv + offset) * weight;
         weightSum += weight;
     }
     

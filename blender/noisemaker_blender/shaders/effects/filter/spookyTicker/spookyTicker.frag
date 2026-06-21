@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Spooky ticker - scrolling bank_ocr digit rows at the bottom of the screen
 
 in vec2 v_texCoord;
@@ -77,7 +78,7 @@ void main() {
     int ROW_GAP = max(int(float(BASE_ROW_GAP) * renderScale), 1);
 
     vec2 dims = vec2(textureSize(inputTex, 0));
-    vec4 src = texture(inputTex, v_texCoord);
+    vec4 src = nmTex(inputTex, v_texCoord);
 
     float t = time * speed;
     uint baseSeed = hash_mix(uint(seed) * 7919u);

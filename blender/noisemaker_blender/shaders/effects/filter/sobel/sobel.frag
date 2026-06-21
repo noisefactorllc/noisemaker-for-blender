@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Sobel edge detection effect
  * Classic Sobel operator for edge detection
@@ -10,7 +11,7 @@ void main() {
     vec2 uv = globalCoord / fullResolution;
     vec2 texelSize = 1.0 / resolution;
     
-    vec4 origColor = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 origColor = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
     
     // Sobel X nm_kernel
     float sobel_x[9];
@@ -39,7 +40,7 @@ void main() {
     vec3 convY = vec3(0.0);
     
     for (int i = 0; i < 9; i++) {
-        vec3 texSample = texture(inputTex, ((uv + offsets[i] * amount * renderScale) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
+        vec3 texSample = nmTex(inputTex, ((uv + offsets[i] * amount * renderScale) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
         convX += texSample * sobel_x[i];
         convY += texSample * sobel_y[i];
     }

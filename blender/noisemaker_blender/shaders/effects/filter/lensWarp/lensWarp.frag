@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Lens Warp - Noise-driven radial lens distortion
  * Follows filter/warp pattern: Perlin noise displacement with singularity mask
@@ -93,19 +94,19 @@ void main() {
         vec4 col = vec4(0.0);
         
         vec2 sUV = ((uv + dx * -0.375 + dy * -0.125) * fullRes - tileOffset) / resolution;
-        col += texture(inputTex, clamp(sUV, 0.0, 1.0));
+        col += nmTex(inputTex, clamp(sUV, 0.0, 1.0));
         
         sUV = ((uv + dx *  0.125 + dy * -0.375) * fullRes - tileOffset) / resolution;
-        col += texture(inputTex, clamp(sUV, 0.0, 1.0));
+        col += nmTex(inputTex, clamp(sUV, 0.0, 1.0));
         
         sUV = ((uv + dx *  0.375 + dy *  0.125) * fullRes - tileOffset) / resolution;
-        col += texture(inputTex, clamp(sUV, 0.0, 1.0));
+        col += nmTex(inputTex, clamp(sUV, 0.0, 1.0));
         
         sUV = ((uv + dx * -0.125 + dy *  0.375) * fullRes - tileOffset) / resolution;
-        col += texture(inputTex, clamp(sUV, 0.0, 1.0));
+        col += nmTex(inputTex, clamp(sUV, 0.0, 1.0));
         
         fragColor = col * 0.25;
     } else {
-        fragColor = texture(inputTex, localUV);
+        fragColor = nmTex(inputTex, localUV);
     }
 }

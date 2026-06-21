@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Color lab shader.
  * Offers HSL, RGB, and curve adjustments in a single pass for rapid color grading.
@@ -227,7 +228,7 @@ void main() {
 
     float blendy = periodicFunction(time - offsets(uv));
 
-    color = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    color = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
 
     if (levels != 0.0) {
         color.rgb = posterize(color.rgb, levels);

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Navier-Stokes display pass.
  * Plain bilinear blit of the intermediate smoothed canvas into the output. The smoothing nm_kernel
@@ -30,7 +31,7 @@ void main() {
     float blend = clamp(inputIntensity, 0.0, 100.0) * 0.01;
     if (blend > 0.0) {
         vec2 inputUv = globalCoord / fullResolution;
-        vec3 inputColor = texture(inputTex, inputUv).rgb;
+        vec3 inputColor = nmTex(inputTex, inputUv).rgb;
         outCol = mix(outCol, inputColor, blend);
     }
 

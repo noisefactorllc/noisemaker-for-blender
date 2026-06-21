@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Texture effect: generate a height field from one of several texture modes,
 // derive shading from the gradient, then blend back into the source pixels.
 // Modes: 0=canvas, 1=crosshatch, 2=halftone, 3=paper, 4=stucco
@@ -178,7 +179,7 @@ float height_field(vec2 uv, vec2 base_freq, float motion) {
 }
 
 void main() {
-    vec4 base_color = texture(inputTex, v_texCoord);
+    vec4 base_color = nmTex(inputTex, v_texCoord);
     vec2 dims = vec2(textureSize(inputTex, 0));
     vec2 pixel_step = 1.0 / dims;
 

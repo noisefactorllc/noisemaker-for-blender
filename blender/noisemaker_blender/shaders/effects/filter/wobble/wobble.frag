@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Wobble effect - offsets the entire frame using noise-driven jitter
 
 in vec2 v_texCoord;
@@ -90,7 +91,7 @@ void main() {
     vec2 sampleCoord = v_texCoord + offset;
     sampleCoord = applyWrap(sampleCoord);
 
-    vec4 sampled = texture(inputTex, sampleCoord);
+    vec4 sampled = nmTex(inputTex, sampleCoord);
 
     fragColor = sampled;
 }

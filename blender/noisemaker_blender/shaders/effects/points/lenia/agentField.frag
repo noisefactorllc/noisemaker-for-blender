@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Agent update pass - samples pre-convolved U field
 // Much faster than O(n²) as field is already computed
 
@@ -44,16 +45,16 @@ void main() {
 
     // Sample U field at particle position
     vec2 uv = xyz.xy;
-    float U = texture(fieldTex, uv).r;
+    float U = nmTex(fieldTex, uv).r;
 
     // Compute gradient of U via finite differences
     // Use the field texture's actual size for correct texel stepping
     vec2 fieldSize = vec2(textureSize(fieldTex, 0));
     vec2 texelSize = 1.0 / fieldSize;
-    float Ux_plus = texture(fieldTex, fract(uv + vec2(texelSize.x, 0.0))).r;
-    float Ux_minus = texture(fieldTex, fract(uv - vec2(texelSize.x, 0.0))).r;
-    float Uy_plus = texture(fieldTex, fract(uv + vec2(0.0, texelSize.y))).r;
-    float Uy_minus = texture(fieldTex, fract(uv - vec2(0.0, texelSize.y))).r;
+    float Ux_plus = nmTex(fieldTex, fract(uv + vec2(texelSize.x, 0.0))).r;
+    float Ux_minus = nmTex(fieldTex, fract(uv - vec2(texelSize.x, 0.0))).r;
+    float Uy_plus = nmTex(fieldTex, fract(uv + vec2(0.0, texelSize.y))).r;
+    float Uy_minus = nmTex(fieldTex, fract(uv - vec2(0.0, texelSize.y))).r;
 
     vec2 gradU = vec2(
         (Ux_plus - Ux_minus) / (2.0 * texelSize.x),

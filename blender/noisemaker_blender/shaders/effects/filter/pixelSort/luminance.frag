@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // GPGPU Pass 1: Compute luminance for each pixel
 // Output: R = luminance, G = original x coordinate (normalized), B = 0, A = 1
 

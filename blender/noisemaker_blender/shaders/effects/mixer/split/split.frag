@@ -1,11 +1,12 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 #define PI 3.14159265359
 
 void main() {
     vec2 globalCoord = gl_FragCoord.xy + tileOffset;
     vec2 st = globalCoord / fullResolution;
 
-    vec4 colorA = texture(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
-    vec4 colorB = texture(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
+    vec4 colorA = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    vec4 colorB = nmTex(tex, gl_FragCoord.xy / vec2(textureSize(tex, 0)));
 
     vec2 fullRes = fullResolution.x > 0.0 ? fullResolution : resolution;
     float aspect = fullRes.x / fullRes.y;

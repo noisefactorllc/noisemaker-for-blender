@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Navier-Stokes advection pass (semi-Lagrangian).
  * Canonical bilinear backtrace nm_sample — fixed nm_kernel so each frame's advection doesn't compound

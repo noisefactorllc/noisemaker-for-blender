@@ -1,8 +1,9 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 void main() {
     vec2 uv = gl_FragCoord.xy / resolution;
     
-    vec4 inputColor = texture(inputTex, uv);
-    vec4 trailColor = texture(trailTex, uv);
+    vec4 inputColor = nmTex(inputTex, uv);
+    vec4 trailColor = nmTex(trailTex, uv);
     
     // Blend: trail over scaled input using alpha
     // inputIntensity 0 = trail only, 100 = trail over full input

@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Perspective tunnel effect
  * Based on Inigo Quilez's tunnel shader
@@ -69,13 +70,13 @@ void main() {
         vec2 dx = dFdx(tunnelCoords);
         vec2 dy = dFdy(tunnelCoords);
         color = vec4(0.0);
-        color += texture(inputTex, tunnelCoords + dx * -0.375 + dy * -0.125);
-        color += texture(inputTex, tunnelCoords + dx *  0.125 + dy * -0.375);
-        color += texture(inputTex, tunnelCoords + dx *  0.375 + dy *  0.125);
-        color += texture(inputTex, tunnelCoords + dx * -0.125 + dy *  0.375);
+        color += nmTex(inputTex, tunnelCoords + dx * -0.375 + dy * -0.125);
+        color += nmTex(inputTex, tunnelCoords + dx *  0.125 + dy * -0.375);
+        color += nmTex(inputTex, tunnelCoords + dx *  0.375 + dy *  0.125);
+        color += nmTex(inputTex, tunnelCoords + dx * -0.125 + dy *  0.375);
         color *= 0.25;
     } else {
-        color = texture(inputTex, tunnelCoords);
+        color = nmTex(inputTex, tunnelCoords);
     }
 
     // Center vignette: smooth falloff to hide moiré at vanishing point

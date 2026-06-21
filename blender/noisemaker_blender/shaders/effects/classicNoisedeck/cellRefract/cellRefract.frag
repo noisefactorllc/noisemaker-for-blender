@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * Cell refract shader.
  * Uses cell-noise distance fields to refract the input feed in a controllable manner.
@@ -73,7 +74,7 @@ vec3 convolve(vec2 localUV, float nm_kernel[9], bool divide) {
 
     for(int i = 0; i < 9; i++){
         //nm_sample a 3x3 grid of pixels
-        vec3 color = texture(inputTex, localUV + offset[i] * effectWidth).rgb;
+        vec3 color = nmTex(inputTex, localUV + offset[i] * effectWidth).rgb;
 
         // multiply the color by the nm_kernel value and add it to our conv total
         conv += color * nm_kernel[i];
@@ -400,14 +401,14 @@ vec3 posterize(vec3 color, float lev) {
 
 vec3 pixellate(vec2 localUV, float size) {
     if (size <= 1.0) {
-        return texture(inputTex, localUV).rgb;
+        return nmTex(inputTex, localUV).rgb;
     }
 
     vec2 texelSize = 1.0 / vec2(textureSize(inputTex, 0));
     float dx = size * texelSize.x;
     float dy = size * texelSize.y;
     vec2 coord = vec2(dx * floor(localUV.x / dx), dy * floor(localUV.y / dy));
-    return texture(inputTex, coord).rgb;
+    return nmTex(inputTex, coord).rgb;
 }
 
 void main() {
@@ -434,7 +435,7 @@ void main() {
 
     // Convert warped global UV to tile-local UV
     vec2 localUV = (st * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0));
-    color = texture(inputTex, localUV);
+    color = nmTex(inputTex, localUV);
 
 #if KERNEL != 0
     if (effectWidth != 0.0) {

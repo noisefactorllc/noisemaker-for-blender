@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 // Scanline glitch effect with two modes:
 // - scanlineError: simplex noise bands with horizontal displacement and additive white noise
 // - vhs: hash-based value noise with gradient-gated displacement and noise blending

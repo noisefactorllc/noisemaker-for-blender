@@ -1,3 +1,4 @@
+#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))), ivec2(0), textureSize((s),0)-ivec2(1)), 0))
 /*
  * GLSL 3D shapes shader.
  * Performs signed distance ray marching with configurable lighting to mirror the WGSL implementation.
@@ -483,9 +484,9 @@ void main() {
         vec3 localP = applyTransform(p, transformData);
         localP = localP * 0.5 + 0.5;
 
-        vec3 colorXY = texture(inputTex, localP.xy).rgb;
-        vec3 colorXZ = texture(inputTex, localP.xz).rgb;
-        vec3 colorYZ = texture(inputTex, localP.yz).rgb;
+        vec3 colorXY = nmTex(inputTex, localP.xy).rgb;
+        vec3 colorXZ = nmTex(inputTex, localP.xz).rgb;
+        vec3 colorYZ = nmTex(inputTex, localP.yz).rgb;
 
         normal = abs(normal);
         color.rgb = colorXY * normal.z + colorXZ * normal.y + colorYZ * normal.x;
