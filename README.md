@@ -35,6 +35,7 @@ and [`PORTING-GUIDE.md`](PORTING-GUIDE.md).
 | P3 executor: double-buffered surfaces, 3-tier ping-pong, iteration (`repeat`), `resolveDimension`, timed evolution (1800f @ 1/600) | ✅ |
 | **points/agents** (MRT + drawMode:points/billboards, additive ONE,ONE) | ✅ **byte-identical** (flow/flock/pointsRender/billboards, even @1800 timed) |
 | **3D perlin** (`#define DIMENSIONS 3`) | ✅ **byte-identical** |
+| **3D volume render** (precompute→raymarch: noise3d/fractal3d/cell3d/shape3d/flythrough3d × render3d/renderLit3d + renderCubemap3d/renderCubemapSurface) | ✅ **byte-exact / 1-ULP** vs reference goldens (was solid BLACK — fixed by the MRT slot-position output fallback: `out fragColor`@slot0 → graph key `color` was dropped, so the volume atlas was never written). 3D CA/RD render. flow3d (3D-agent flow) needs 3D-atlas particle deposit — feature gap, deferred |
 | **navierStokes** parity | ✅ **ssim 0.999** (smooth input @ speed 55 & 145 = the continuous-solver bar) |
 | breadth compile-fixes (palette struct-array, const-int→#define) | ✅ palette (was fail); classicNoisedeck PUSH_OVER_128 → UBO path staged |
 | **Integration target** (32 passes: perlin3d+agents+billboards+blur+navierStokes+palette/lighting+bloom/lens/vignette) | ✅ **renders end-to-end** (ssim 0.496; structure/colour match — chaotic-precision gap) |
