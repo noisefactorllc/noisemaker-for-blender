@@ -203,6 +203,113 @@ def remove_redundant_prototypes(src):
     return _PROTO_LINE.sub(repl, src)
 
 
+# Scalar reflect/refract. Metal's geometric library defines reflect/refract ONLY for float2/3/4
+# and half2/3/4 — there is NO scalar overload — so GLSL's legal `reflect(float, float)` is
+# "ambiguous" (a float promotes to any of the vector types). We inject scalar helpers and rewrite
+# ONLY the calls we can prove are scalar; vector calls keep the builtin (distortion/lighting and
+# shapeMixer's vec3 blend stay byte-identical). De-risked by spike_reflect.py (naming them
+# `reflect` HIDES the builtin and breaks the vector calls, so they must be nm_*-named + targeted).
+_VEC_TYPES = frozenset(("vec2", "vec3", "vec4", "ivec2", "ivec3", "ivec4",
+                        "uvec2", "uvec3", "uvec4", "bvec2", "bvec3", "bvec4"))
+_REFLECT_HELPERS = (
+    "\nfloat nm_reflect(float I, float N){ return I - 2.0 * (N * I) * N; }\n"
+    "float nm_refract(float I, float N, float eta){ float d = N * I;\n"
+    "  float k = 1.0 - eta * eta * (1.0 - d * d);\n"
+    "  if (k < 0.0) return 0.0;\n"
+    "  return eta * I - (eta * d + sqrt(k)) * N; }\n")
+
+
+def fix_scalar_reflect_refract(src):
+    """Rewrite scalar reflect/refract calls to injected nm_reflect/nm_refract (Metal has no scalar
+    overload). An arg is classified with SCOPE-LOCAL types (the same name is vec3 in one overload
+    and float in another, e.g. shapeMixer's two `blend`s), and a call is rewritten only when its
+    first arg is *provably* scalar — a known scalar var, a single-component swizzle, or a numeric
+    literal. Unknown/vector args keep the builtin, so working vector calls are never broken."""
+    if "reflect" not in src and "refract" not in src:
+        return src
+    toks = [m.group(0) for m in _TOKEN.finditer(src)]
+    n = len(toks)
+
+    def is_ws(t):
+        return t.startswith("//") or t.startswith("/*") or (t != "" and t.isspace())
+
+    def nxt(i):
+        j = i + 1
+        while j < n and is_ws(toks[j]):
+            j += 1
+        return j
+
+    scopes = [{}]        # stack of {name: is_vector}
+    pending = {}         # params declared in current () -> enter next {}
+    paren = 0
+    last_sig = None
+    member_next = False
+    changed = False
+
+    def lookup(name):
+        for s in reversed(scopes):
+            if name in s:
+                return s[name]
+        return None      # unknown
+
+    i = 0
+    while i < n:
+        t = toks[i]
+        if is_ws(t):
+            i += 1
+            continue
+        if t == "{":
+            scopes.append(dict(pending)); pending = {}; last_sig = "{"; member_next = False
+        elif t == "}":
+            if len(scopes) > 1:
+                scopes.pop()
+            last_sig = "}"; member_next = False
+        elif t == "(":
+            paren += 1; last_sig = "("; member_next = False
+        elif t == ")":
+            paren = max(0, paren - 1); last_sig = ")"; member_next = False
+        elif t == ";":
+            pending = {}; last_sig = ";"; member_next = False
+        elif t == ".":
+            last_sig = "."; member_next = True
+        elif t[:1].isalpha() or t[:1] == "_":
+            if member_next:
+                member_next = False; last_sig = t
+            elif last_sig in _TYPE_KW:                         # declaration: `TYPE t`
+                (pending if paren > 0 else scopes[-1])[t] = last_sig in _VEC_TYPES
+                last_sig = t
+            elif t in ("reflect", "refract") and nxt(i) < n and toks[nxt(i)] == "(":
+                k = nxt(nxt(i))                                # first significant arg token
+                a = toks[k] if k < n else ""
+                scalar = False
+                if a[:1].isdigit() or a[:1] == ".":            # numeric literal
+                    scalar = True
+                elif a in _VEC_TYPES:                          # vecN(...) constructor
+                    scalar = False
+                elif a[:1].isalpha() or a[:1] == "_":          # identifier
+                    m = nxt(k)
+                    if m < n and toks[m] == ".":               # member/swizzle access
+                        sw = toks[nxt(m)] if nxt(m) < n else ""
+                        scalar = not (len(sw) >= 2 and all(c in _SWIZZLE for c in sw))
+                    else:
+                        scalar = lookup(a) is False            # known scalar (not None/True)
+                if scalar:
+                    toks[i] = "nm_" + t; changed = True
+                last_sig = t
+            else:
+                last_sig = t
+            member_next = False
+        else:
+            last_sig = t; member_next = False
+        i += 1
+
+    if not changed:
+        return src
+    out = "".join(toks)
+    nl = out.find("\n")                                        # keep any leading directive first
+    return out[:nl + 1] + _REFLECT_HELPERS + out[nl + 1:] if nl >= 0 else _REFLECT_HELPERS + out
+
+
 def rename_cpp_alt_tokens(src):
     """Rename identifiers that are C++ alternative tokens (`or`/`and`/`xor`/...) to `nm_<name>`
     — they're keywords in Metal's C++ compiler. Tokenized so comments and member accesses are
