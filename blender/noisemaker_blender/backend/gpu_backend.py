@@ -315,12 +315,20 @@ class GpuBackend:
         size, so a small pooled texture (life's 8x8 forceMatrix) renders only its corner of a
         screen-sized shared slot — matching the reference's per-target viewport."""
         out_map = p.get("outputs", {})
+        out_vals = list(out_map.values())
         fout = sorted(desc.get("fragmentOut", []), key=lambda x: x[0])
         offs, prim = [], None
-        for _, _, fname in fout:
+        for idx, (_, _, fname) in enumerate(fout):
             tid = out_map.get(fname)
-            if tid is None and len(out_map) == 1:
-                tid = next(iter(out_map.values()))
+            if tid is None:                       # GLSL out name != graph output key
+                if len(out_map) == 1:
+                    tid = out_vals[0]
+                elif idx < len(out_vals):
+                    # MRT slot-position fallback: the descriptor's fragmentOut (sorted by slot) and
+                    # the graph's outputs are both in declaration/slot order, so the Nth out maps to
+                    # the Nth target. Fixes 3D render/precompute (`fragColor`@slot0 -> graph `color`),
+                    # whose color MRT target was otherwise dropped -> empty volume -> black.
+                    tid = out_vals[idx]
             if tid is not None:
                 offs.append(self._write(tid, graph))
                 if prim is None:
