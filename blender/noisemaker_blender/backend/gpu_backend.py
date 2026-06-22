@@ -127,26 +127,6 @@ class GpuBackend:
         for tid, spec in texspecs.items():
             self.tex_dims[tid] = (self.resolve_dim(spec.get("width", "screen"), uniforms),
                                   self.resolve_dim(spec.get("height", "screen"), uniforms))
-        # Pooled physical slots are sized to the MAX envelope over every aliased logical
-        # texture (and the most-demanding format). The reference allocator guarantees aliased
-        # lifetimes don't overlap, but the physical resource must fit the LARGEST member:
-        # life's 8x8 forceMatrix aliases screen-sized slots and must NOT shrink them to 8x8.
-        phys_env = {}  # phys -> [w, h, fmt_rank, fmt]
-        for tid, spec in texspecs.items():
-            if tid.startswith("global_"):
-                continue
-            phys = graph.phys(tid)
-            w, h = self.tex_dims[tid]
-            fmt = self._fmt(spec)
-            rank = _FMT_RANK.get(fmt, 2)
-            cur = phys_env.get(phys)
-            if cur is None:
-                phys_env[phys] = [w, h, rank, fmt]
-            else:
-                cur[0] = max(cur[0], w)
-                cur[1] = max(cur[1], h)
-                if rank > cur[2]:
-                    cur[2], cur[3] = rank, fmt
         for tid, spec in texspecs.items():
             if tid.startswith("global_"):
                 name = tid[len("global_"):]
@@ -154,9 +134,23 @@ class GpuBackend:
                     w, h = self.tex_dims[tid]
                     fmt = self._fmt(spec)
                     self.surfaces[name] = _Surface(self._new_off(w, h, fmt), self._new_off(w, h, fmt), fmt)
-        for phys, (w, h, _rank, fmt) in phys_env.items():
-            if phys not in self.pool:
-                self.pool[phys] = self._new_off(w, h, fmt)
+        # Each pooled texture gets a physical offscreen keyed by (phys, w, h, fmt). Textures that
+        # share a phys but differ in LOGICAL size get SEPARATE physical textures — the allocator
+        # guarantees same-phys lifetimes don't overlap, so this only costs memory. Sizing one slot
+        # to the MAX envelope over aliased textures (the old approach) makes textureSize() report
+        # the envelope, which silently corrupts any shader that derives atlas/UV coords from it:
+        # flow3d's 64x4096 volume aliased with a 256x256 screen buffer inflated to 256x4096, so the
+        # blend's `gl_FragCoord/textureSize` sampling stretched 4x in X and read unwritten columns
+        # (vertical bars through the volume). Same-(phys,size) textures still share (real pooling).
+        self.pool_key = {}
+        for tid, spec in texspecs.items():
+            if tid.startswith("global_"):
+                continue
+            w, h = self.tex_dims[tid]
+            key = (graph.phys(tid), w, h, self._fmt(spec))
+            self.pool_key[tid] = key
+            if key not in self.pool:
+                self.pool[key] = self._new_off(w, h, key[3])
 
     def frame_begin(self):
         for name, s in self.surfaces.items():
@@ -179,12 +173,12 @@ class GpuBackend:
     def _read(self, tid, graph):
         if tid.startswith("global_"):
             return self.frame_read[tid[len("global_"):]]
-        return self.pool[graph.phys(tid)]
+        return self.pool[self.pool_key[tid]]
 
     def _write(self, tid, graph):
         if tid.startswith("global_"):
             return self.frame_write[tid[len("global_"):]]
-        return self.pool[graph.phys(tid)]
+        return self.pool[self.pool_key[tid]]
 
     def swap_after_write(self, tid):
         if tid.startswith("global_"):
