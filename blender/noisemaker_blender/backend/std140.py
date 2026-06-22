@@ -127,6 +127,39 @@ def fix_mat2_vector_ctor(src):
         lambda m: "mat2(%s.x, %s.y,%s,%s)" % (m.group(1), m.group(1), m.group(2), m.group(3)), src)
 
 
+# GLSL struct constructors `Foo(a, b)` — Blender's MSL backend emits a C++ ctor call but never
+# generates the constructor ("no matching constructor for initialization of 'Foo'"). For each
+# `struct Foo { T a; U b; };` we inject a maker fn and rewrite the calls (e.g. newton's POIData).
+_STRUCT_DEF = __import__("re").compile(r"\bstruct\s+([A-Za-z_]\w*)\s*\{([^{}]*)\}\s*;")
+_STRUCT_FIELD = __import__("re").compile(r"\b([A-Za-z_]\w*)\s+([A-Za-z_]\w*)\s*;")
+
+
+def fix_struct_constructors(src):
+    """`Foo(a, b)` -> `nm_make_Foo(a, b)` with an injected `Foo nm_make_Foo(T a, U b){ Foo r;
+    r.a=a; r.b=b; return r; }` after each `struct Foo { T a; U b; };`. The `\\bFoo\\s*\\(` rewrite
+    hits only constructor calls — never the struct def, a `Foo var` decl, or a `Foo f(...)` return
+    type (no `(` directly after the name there), nor the maker (preceded by `nm_make_`)."""
+    structs = []
+    inserts = []
+    for m in _STRUCT_DEF.finditer(src):
+        name, body = m.group(1), m.group(2)
+        fields = _STRUCT_FIELD.findall(body)
+        if not fields:
+            continue
+        params = ", ".join("%s %s" % (t, n) for t, n in fields)
+        assigns = " ".join("r.%s=%s;" % (n, n) for _, n in fields)
+        inserts.append((m.end(), "\n%s nm_make_%s(%s){ %s r; %s return r; }"
+                        % (name, name, params, name, assigns)))
+        structs.append(name)
+    if not structs:
+        return src
+    for pos, maker in sorted(inserts, reverse=True):   # back-to-front keeps offsets valid
+        src = src[:pos] + maker + src[pos:]
+    for name in structs:
+        src = __import__("re").sub(r"\b%s\s*\(" % name, "nm_make_%s(" % name, src)
+    return src
+
+
 def rename_cpp_alt_tokens(src):
     """Rename identifiers that are C++ alternative tokens (`or`/`and`/`xor`/...) to `nm_<name>`
     — they're keywords in Metal's C++ compiler. Tokenized so comments and member accesses are

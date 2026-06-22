@@ -42,6 +42,7 @@ def _body(src, is_ubo, descriptor):
       - vecN==vecN(...) -> all(equal(...)) in bool contexts (compound case the transpiler misses);
       - for UBO effects, qualify bare uniform refs into the std140 block (scope-aware), last.
     See backend/std140.py + docs/BLENDER-PLATFORM-NOTES.md."""
+    src = std140.fix_struct_constructors(src)
     src = std140.rename_cpp_alt_tokens(src)
     src = std140.rename_shadow_builtins(src)
     src = std140.fix_vec_bool_compare(src)
