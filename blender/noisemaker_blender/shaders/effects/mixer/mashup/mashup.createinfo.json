@@ -11,6 +11,38 @@
     [
       "FLOAT",
       "smoothness"
+    ],
+    [
+      "INT",
+      "layer0_active"
+    ],
+    [
+      "INT",
+      "layer1_active"
+    ],
+    [
+      "INT",
+      "layer2_active"
+    ],
+    [
+      "INT",
+      "layer3_active"
+    ],
+    [
+      "INT",
+      "layer4_active"
+    ],
+    [
+      "INT",
+      "layer5_active"
+    ],
+    [
+      "INT",
+      "layer6_active"
+    ],
+    [
+      "INT",
+      "layer7_active"
     ]
   ],
   "samplers": [
@@ -68,7 +100,7 @@
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 16,
+  "std140Bytes": 48,
   "ubo": false,
   "notes": []
 }

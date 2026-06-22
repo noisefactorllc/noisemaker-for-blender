@@ -93,6 +93,15 @@ function fixVecBoolTernary (src) {
   return out
 }
 
+// The uniform/sampler lifters are line-anchored (^…;$ — one decl per line). The reference packs
+// some uniforms multiple-per-line (mashup's `uniform int layer0_active; uniform int layer1_active;
+// …`), which then match NEITHER the lift NOR the strip, so they survive into the body and break
+// Metal ("use of class template 'uniform' requires template arguments"). Put each `uniform …;` on
+// its own line first. Only fires on a `;` that is directly followed by another `uniform` token.
+function splitMultiUniformLines (src) {
+  return src.replace(/;[ \t]*(?=uniform\b)/g, ';\n')
+}
+
 function splitTopLevel (s) {
   const out = []; let depth = 0, cur = ''
   for (const ch of s) {
@@ -193,6 +202,7 @@ function transpile (src) {
   body = constIntToDefine(body)
   body = fixVecBoolTernary(body)
   body = flattenStructArrays(body)
+  body = splitMultiUniformLines(body)
 
   // flag uniform arrays (audio waveform/spectrum — out of scope) before generic uniform parse.
   const arrayRe = /^[ \t]*uniform[ \t]+\w+[ \t]+([A-Za-z_]\w*)[ \t]*\[/gm
@@ -277,7 +287,7 @@ function cleanAndRename (src) {
     }
     kept.push(lines[i])
   }
-  return fixVecBoolTernary(constIntToDefine(renameReserved(kept.join('\n'))))
+  return splitMultiUniformLines(fixVecBoolTernary(constIntToDefine(renameReserved(kept.join('\n')))))
 }
 
 // lift sampler + push-constant uniforms from a stage body, deduped across stages by name.

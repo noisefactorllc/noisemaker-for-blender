@@ -16,9 +16,6 @@
 
 // Control input: its luminance selects the band. Wire with `source: read(oN)`.
 
-uniform int layer0_active; uniform int layer1_active; uniform int layer2_active; uniform int layer3_active;
-uniform int layer4_active; uniform int layer5_active; uniform int layer6_active; uniform int layer7_active;
-
 // RGB -> luminosity (shared codebase weights).
 float getLuminosity(vec3 color) {
     return dot(color, vec3(0.299, 0.587, 0.114));
