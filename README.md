@@ -177,3 +177,9 @@ blender/
   noisemaker_blender/ the addon: backend/ runtime/ shaders/ effects/ compiler/ nodes/ ops/ props/ ui/
   harness/            spike_*.py (de-risk), compile_check.py, render_all.py, dump_atlas.py
 ```
+
+## License
+
+Released under the MIT License (see [LICENSE](LICENSE)). Use of the Noisemaker and Noise Factor names in derivative products is subject to the [Trademark Policy](TRADEMARK.md).
+
+Copyright © 2026 Noise Factor LLC
