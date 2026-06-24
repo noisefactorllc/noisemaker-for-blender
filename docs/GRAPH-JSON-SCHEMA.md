@@ -1,9 +1,10 @@
-# Render Graph JSON Schema (the C# ↔ exporter contract)
+# Render Graph JSON Schema (the producer ↔ runtime contract)
 
-This is the **normalized** graph format that both producers emit and the C# runtime
-consumes. It is the reference `compileGraph` output (`reference/03`, `reference/04`)
-with Maps serialized as objects and a few convenience fields added so the HLSL
-loader never has to re-derive them from program-id string encodings.
+This is the **normalized** graph format that producers emit and the Blender Python
+runtime consumes (`runtime/graph_loader.py` → `runtime/pipeline.py` →
+`backend/gpu_backend.py`). It is the reference `compileGraph` output (`reference/03`,
+`reference/04`) with Maps serialized as objects and a few convenience fields added so
+the backend never has to re-derive them from program-id string encodings.
 
 ```jsonc
 {
@@ -23,8 +24,9 @@ loader never has to re-derive them from program-id string encodings.
   },
 
   // programs: optional, raw reference program specs (glsl/wgsl/uniformLayout/defines).
-  // The HLSL loader does NOT need shader source from here — it resolves a Unity
-  // Shader by (namespace, func) and pass name. Kept for traceability / golden diff.
+  // The Blender backend does NOT need shader source from here — it resolves the
+  // transpiled .frag/.createinfo.json on disk by (namespace, func, progName). Kept
+  // for traceability / golden diff (uniformLayout IS used for remap's std140 block).
   "programs": { "node_0_noise": { "uniformLayout": { /*...*/ }, "defines": {} } }
 }
 ```
@@ -38,9 +40,9 @@ loader never has to re-derive them from program-id string encodings.
 
   // --- shader resolution (added convenience fields) ---
   "namespace": "synth",            // = pass.effectNamespace
-  "func": "noise",                 // = pass.effectFunc        -> Unity Shader "Noisemaker/synth/noise"
-  "progName": "noise",             // bare program basename     -> Unity pass name within that shader
-  "defines": { "NOISE_TYPE": 10, "LOOP_OFFSET": 300 },  // compile-time consts -> bound as int uniforms
+  "func": "noise",                 // = pass.effectFunc   -> shaders/effects/synth/noise/
+  "progName": "noise",             // bare program basename -> <progName>.frag + .createinfo.json
+  "defines": { "NOISE_TYPE": 10, "LOOP_OFFSET": 300 },  // compile-time consts -> prepended as #define lines
 
   // --- pass wiring (from reference Pass) ---
   "inputs":  { "inputTex": "node_0_outputTex" },   // samplerName -> texId | "none"
@@ -49,7 +51,7 @@ loader never has to re-derive them from program-id string encodings.
   "uniformSpecs": { "scaleX": { "min": 1, "max": 100 } },
 
   // --- optional execution modifiers ---
-  "drawMode": "points",            // scatter pass -> DrawProcedural(Points, count)
+  "drawMode": "points",            // scatter pass -> attribute-less gl_VertexID GPUBatch POINTS draw, additive ONE,ONE
   "count": 4096,                   // or
   "countUniform": "stateSize",     // dynamic count from a uniform (count = value*value for points)
   "drawBuffers": 2,                // MRT attachment count
@@ -82,21 +84,35 @@ Blit passes use `"passType":"blit"`, `"func":"blit"`, `inputs:{src:...}`,
 ## texId conventions
 
 - `global_<name>` — double-buffered global surface (`o0..o7`, `geo*`, `vol*`, dynamic).
-  Excluded from pooling/liveness. Maps to a `SurfaceManager` RT pair.
+  Excluded from pooling/liveness. Maps to a double-buffered `GPUOffScreen` pair (`_Surface` in
+  `GpuBackend`).
 - `phys_N` — a pooled physical slot (from the liveness allocator).
 - everything else — a virtual pooled texId mapped via `allocations` to a `phys_N`.
 
 ## Formats
 
-`rgba16f`/`rgba16float` → `RenderTextureFormat.ARGBHalf` (linear). `rgba32f` →
-`ARGBFloat`. `rgba8`/`rgba8unorm` → `ARGB32` (linear). **Never sRGB.** All RTs created
-with `RenderTextureReadWrite.Linear`.
+`rgba16f`/`rgba16float` → `GPUOffScreen(format='RGBA16F')` (the default). `rgba32f` →
+`'RGBA32F'` (agent position state). `rgba8`/`rgba8unorm` → `'RGBA8'`. **Never sRGB** — render
+targets are linear; shaders do any sRGB math themselves. Format ranking (`_FMT_RANK`) decides the
+pool slot's format when sizes match (`backend/gpu_backend.py` `_FORMAT`).
 
 ## Producers
 
 - **Golden:** `tools/export-graph.mjs` runs the unchanged reference `compileGraph`,
   then normalizes (Maps→objects, adds `passType/namespace/func/progName/defines`).
-- **Live:** the C# `Expander` emits this shape directly.
+- **Live:** the addon's Python compiler (`compiler/compile_graph`, expander in `compiler/`)
+  emits this shape directly, byte-identical to the golden (gated by `parity/compiler/check_graph.py`).
 
 Both must produce byte-identical normalized JSON for the same DSL (modulo `compiledAt`),
 which is the live-path parity test.
+
+## Blender consumer
+
+`runtime/graph_loader.py` wraps the JSON (`Graph`, with `phys`/`spec`/`output_tex_id` helpers) →
+`runtime/pipeline.py` `render()` runs the ordered passes (per-frame engine uniforms, repeat/skip,
+frame stepping) → `backend/gpu_backend.py` `GpuBackend` executes each pass on `GPUOffScreen`
+surfaces (push constants / samplers / MRT / points scatter / std140 UBO). The final
+`renderSurface` is read back and **baked into an `Image` datablock** by
+`ops/bake.py` (`NOISEMAKER_OT_bake`, bl_idname `noisemaker.bake`), which the stock compositor
+consumes via an Image node. A `CUSTOM` NodeTree (`nodes/tree.py`) + N-panels (`ui/panels.py`)
+drive it. End-to-end gated by `parity/integration.sh`.

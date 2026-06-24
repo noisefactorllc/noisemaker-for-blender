@@ -34,7 +34,8 @@ for reactionDiffusion / mnca) confirmed for the chaotic *agent flow*.
   *upstream* agent→nav field, not the colour/lighting stages.
 - **navierStokes in isolation is SSIM ≥ 0.999** (smooth static input, the target's exact params).
 - **The deposit / diffuse / blend / agent-spawn / single-pass paths are byte-identical** (incl. the
-  1M-agent point/billboard scatter at default stateSize).
+  point/billboard scatter at default stateSize — 256² ≈ 64K agents — and verified byte-identical
+  even at the ~1M-agent `x1024` stress size).
 - The divergent set is *exactly* the flow/agent→navierStokes programs (and lenia/mnca); nothing
   else.
 

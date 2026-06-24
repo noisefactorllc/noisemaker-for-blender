@@ -1,5 +1,12 @@
 # noisemaker-blender — Implementation Plan
 
+> **Historical (P0-era roadmap).** This is the original plan written at the first commit; it is
+> not maintained. **P0–P5 are complete and most of P6 shipped** — for current status see
+> [`README.md`](../README.md) (capability matrix) and [`ARCHITECTURE.md`](../ARCHITECTURE.md).
+> Some scripts/flags named below were planned but never built that way (e.g. there is no
+> `parity/run.sh`, `parity/sweep.sh`, `blender_manifest.toml`, or `--duration/--interval`); the
+> real harness is env-driven (`NM_FRAMES`/`NM_TIMESTEP`) — see README "Running the parity gates".
+
 A Blender port (Polymorphic DSL compiler, render-graph executor, effects collection) of
 `../noisemaker/shaders`, pixel-parity (relaxed Metal tolerance) to the reference WebGL2 engine.
 Primary analog: `noisemaker-td` (Python + node-based + GLSL + GUI harness). Reference named by
@@ -53,9 +60,10 @@ the real compositor. See `ARCHITECTURE.md`, `docs/BLENDER-PLATFORM-NOTES.md`, `P
   - `nodes/` `CUSTOM` NodeTree + hand-written evaluator (noisemaker graph as Blender nodes).
   - `blender_manifest.toml` Extension packaging (Blender 4.2+/5.x), `register()/unregister()`.
 
-- **P6 — Staged**
-  - In-Blender Python DSL compiler (graph-diff vs oracle), MRT, points/agents draw modes, 3D
-    volumes/raymarch, Linux headless CI path. Docs + examples + README + memory.
+- **P6 — mostly done**
+  - ✓ In-Blender Python DSL compiler (`compiler/`, byte-identical to the oracle), ✓ MRT,
+    ✓ points/agents draw modes, ✓ 3D volumes/raymarch, ✓ docs/examples/README.
+  - Open: a **Linux headless CI path** (no `.github/` yet) is the one genuinely-unstarted item.
 
 ## Harness specifics
 
@@ -67,7 +75,8 @@ the real compositor. See `ARCHITECTURE.md`, `docs/BLENDER-PLATFORM-NOTES.md`, `P
 
 ## Constraints
 
-- Local-only; **do not push** without instruction. Omit `Co-Authored-By` on commits.
+- Omit `Co-Authored-By` on commits. (The repo is now pushed to the private remote
+  `noisefactorllc/noisemaker-blender`.)
 - Additive: never modify `../noisemaker`. The port consumes it read-only.
 - Scope: `../noisemaker/shaders` + `../noisemaker/docs/shaders` ONLY — never the legacy Python/TF
   `noisemaker/` package.

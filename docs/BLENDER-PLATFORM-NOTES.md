@@ -103,10 +103,29 @@ backend rejects — surfaced once the cnd namespace started compiling:
   `all(equal(...))`/`any(notEqual(...))` is exactly equivalent.
 - **mat2(vec2, float, float)** — Metal has no mixed vec2+scalar mat2 ctor; `fix_mat2_vector_ctor`
   expands the leading vec2 to components (`mat2(z,-z.y,z.x)` → `mat2(z.x,z.y,-z.y,z.x)`, fractal).
+- **struct constructors** — Blender MSL emits a C++ ctor call for GLSL `Foo(a,b)` but never
+  generates it; `fix_struct_constructors` injects a `nm_make_Foo(...)` maker per `struct` and
+  rewrites the calls (newton, historicPalette).
+- **`const` array params** — Metal lowers a `vec3 pal[4]` param to a *mutable* `vec3*`, so a
+  `const` global array can't bind; `const_array_params` qualifies `in` array params `const` (dither
+  palettes; GLSL `in` arrays are read-only copies, so it's exact).
+- **redundant prototypes** — Blender wraps all functions in one MSL class, where a forward
+  prototype + later definition is "class member cannot be redeclared"; `remove_redundant_prototypes`
+  drops the prototype (dither).
+- **scalar reflect/refract** — Metal's geometric lib has only `float2/3/4`+`half2/3/4` (no scalar
+  overload), so GLSL `reflect(float,float)` is ambiguous; `fix_scalar_reflect_refract` injects
+  scalar `nm_reflect`/`nm_refract` (exact GLSL formulas) and rewrites *only* scope-locally-scalar
+  calls (shapeMixer's two `blend()` overloads share param names — vector calls keep the builtin).
+- **`v_texCoord` varying** — the reference full-screen VS supplies `v_texCoord`; the port's VS does
+  not, so `fixFragmentVarying` rewrites it to `gl_FragCoord.xy/vec2(textureSize(inputTex,0))`
+  (grime/spookyTicker/texture/wobble).
+- **multi-`uniform`-per-line** — the line-anchored uniform lifter missed `uniform int a; uniform
+  int b;`; `splitMultiUniformLines` puts each on its own line first (mashup's `layerN_active`).
 
-Result: classicNoisedeck 19/20 compile; cnd_noise/shapes/fractal/bitEffects/caustic/moodscape/
-noise3d byte-identical. Only `shapeMixer` remains (scalar `reflect`/`refract` is ambiguous on
-Metal's float/half overloads — and has no golden, so deferred rather than guess a substitution).
+Result: classicNoisedeck **20/20 compile**; cnd_noise/shapes/fractal/bitEffects/caustic/moodscape/
+noise3d byte-identical. `shapeMixer` is fixed via the injected scope-aware `nm_reflect`/`nm_refract`
+above (byte-exact vs reference golden, max-diff 0.000). Across the catalog only `scope`/`spectrum`
+(audio input, out of scope) do not compile → **255/257**.
 
 ## 6. Parity expectation
 
@@ -115,6 +134,14 @@ Metal but via different translators, so expect **±1–2/255** half-float diverg
 **relaxed-tolerance table** the Metal-backed godot/td ports already established
 (strict max-diff ≤ 1 where possible; relaxed ≤ 2–4 + SSIM ≥ 0.98 for discontinuity-heavy
 effects). Byte-tight parity is *not* expected and not required.
+
+**Exception — the chaos class.** Chaotic agent→navierStokes chains and continuous CAs
+(`flow:chaotic`, lenia, mnca, reactionDiffusion) are **SSIM-divergent by design** (full-chain
+~0.0–0.7; flow3d ≈ 0.44, the 32-pass integration target ≈ 0.50). The ~1-ULP transcendental
+difference between Blender's Metal codegen and the reference's ANGLE path is amplified by 100s–1000s
+of feedback iterations (butterfly effect) — a different-but-valid instance of the same chaos, **not
+a port bug**. Single-pass / 3D / agent-deposit paths stay byte-identical. These are graded for
+stability and character, not pixel parity. See [`CHAOS-GATE.md`](CHAOS-GATE.md).
 
 ## Sources (Blender 4.x/5.x docs; confirmed on 5.1.2)
 gpu / gpu.types / gpu.shader API; GPUShaderCreateInfo + create_from_info; GLSL cross-compilation
