@@ -336,7 +336,19 @@ class GpuBackend:
     @staticmethod
     def _blend_mode(p):
         b = p.get("blend")
-        return 'ADDITIVE_PREMULT' if (b and not isinstance(b, list)) else 'NONE'
+        if not b:
+            return 'NONE'
+        if isinstance(b, list):
+            # Per-pass array blend [src, dst]. Blender's gpu module exposes presets only, so we
+            # map the factor pairs the effects actually use to the matching preset:
+            #   ['ONE','ONE']                 -> ADDITIVE_PREMULT (additive deposit)
+            #   ['ONE','ONE_MINUS_SRC_ALPHA'] -> ALPHA_PREMULT    (premultiplied OVER)
+            # (pointsBillboardRender's deposit_alpha uses the latter.)
+            if b == ['ONE', 'ONE_MINUS_SRC_ALPHA']:
+                return 'ALPHA_PREMULT'
+            return 'ADDITIVE_PREMULT'
+        # blend: true -> additive ONE/ONE.
+        return 'ADDITIVE_PREMULT'
 
     def _render(self, compiled, merged, inputs, p, graph):
         shader, desc, rev = compiled
@@ -361,7 +373,7 @@ class GpuBackend:
         count = src_off.width * src_off.height * per_particle
         with target.bind():
             gpu.state.viewport_set(0, 0, w, h)
-            gpu.state.blend_set('ADDITIVE_PREMULT' if p.get("blend") else 'NONE')
+            gpu.state.blend_set(self._blend_mode(p))
             shader.bind()
             self._bind_inputs(shader, desc, rev, merged, inputs, graph)
             batch = GPUBatch(type='TRIS' if tris else 'POINTS', buf=self._points_vbuf(count))

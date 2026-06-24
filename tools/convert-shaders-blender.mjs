@@ -421,14 +421,13 @@ function transpileVertFrag (vertSrc, fragSrc) {
 
 // Per-program host adaptations for Blender-gpu-codegen quirks the generic transform can't catch.
 // Keyed "ns/name/program". Applied to the cleaned .frag after transpile(). Documented, narrow.
+//
+// (Previously held a render/pointsBillboardRender/blend clamp for the premultiplied-divide
+// singularity — the additive trail has HDR alpha (>1) -> (1-trail.a) hugely negative, and
+// Blender's MSL codegen amplifies float ULP near that singularity into +/-65504 explosions.
+// Reference commit a0d8ea14/77e45a5e now `clamp(...)`s that output natively, so the host override
+// is no longer needed; the generic transform carries the reference clamp through verbatim.)
 const PROGRAM_OVERRIDES = {
-  // Premultiplied-alpha composite divides by outAlpha, which approaches zero because the additive
-  // trail has HDR alpha (>1) -> (1-trail.a) hugely negative. Blender's MSL codegen amplifies
-  // float ULP near that singularity into +/-65504 explosions (the reference/ANGLE stays bounded,
-  // r,g in [0,1]); the result is mathematically in [0,1], so clamp recovers the intended value.
-  'render/pointsBillboardRender/blend': (frag) =>
-    frag.replace('fragColor = vec4(outRGB, outAlpha);',
-      'fragColor = clamp(vec4(outRGB, outAlpha), 0.0, 1.0); // host: clamp premultiplied-divide singularity'),
 }
 
 function* enumeratePrograms (filter) {

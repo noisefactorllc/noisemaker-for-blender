@@ -7,6 +7,10 @@
     [
       "FLOAT",
       "inputIntensity"
+    ],
+    [
+      "INT",
+      "blendMode"
     ]
   ],
   "samplers": [

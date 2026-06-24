@@ -197,6 +197,14 @@ function projectPass (pass) {
   if (pass.countUniform !== undefined) out.countUniform = pass.countUniform
   if (pass.repeat !== undefined) out.repeat = pass.repeat
   if (pass.blend !== undefined) out.blend = pass.blend
+  // Pass-gating conditions ({ runIf:[{uniform,equals}], skipIf:[...] }). The runtime pipeline
+  // (pipeline.should_skip) resolves these against the live uniform value to choose which of two
+  // same-program passes executes (e.g. pointsBillboardRender deposit vs deposit_alpha). Captured
+  // here from the effect def, but NOT baked into the expanded graph — the reference golden graph
+  // omits conditions, so the in-engine expander must not emit them or graph parity breaks. The
+  // pipeline reads them from this def via the registry at render time (matching the reference,
+  // whose Pipeline.shouldSkipPass reads conditions off the effect-def pass, not the graph).
+  if (pass.conditions !== undefined) out.conditions = pass.conditions
   if (pass.clear !== undefined) out.clear = pass.clear
   if (pass.type !== undefined) out.type = pass.type
   if (pass.entryPoint !== undefined) out.entryPoint = pass.entryPoint

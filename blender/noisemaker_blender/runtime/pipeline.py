@@ -5,6 +5,44 @@ skip conditions), ping-pong global outputs after each execution, persist state a
 end of frame. Supports multi-frame settle and sampling for stateful effects.
 """
 import math
+import re
+
+_PASS_INDEX_RE = re.compile(r"_pass_(\d+)$")
+
+
+def _pass_conditions(p):
+    """Resolve a pass's gating conditions ({runIf/skipIf}).
+
+    Conditions live on the EFFECT DEFINITION, not on the expanded/serialized graph
+    (the reference golden graph omits them, so baking them into the graph would break
+    graph parity). The reference Pipeline.shouldSkipPass likewise reads conditions off
+    the effect-def pass at render time. We mirror that: prefer an inline `conditions`
+    if a graph ever carries one, else map the built pass back to its effect-def pass
+    (effectKey + `node_*_pass_<i>` index) and read conditions from the registry.
+
+    Returns the conditions dict, or None.
+    """
+    inline = p.get("conditions")
+    if inline:
+        return inline
+    key = p.get("effectKey") or p.get("effectFunc")
+    if not key:
+        return None
+    m = _PASS_INDEX_RE.search(p.get("id") or "")
+    if not m:
+        return None
+    idx = int(m.group(1))
+    try:
+        from ..compiler import registry
+    except Exception:
+        return None
+    eff = registry.get_effect(key)
+    if not eff:
+        return None
+    passes = eff.get("passes") or []
+    if idx >= len(passes):
+        return None
+    return passes[idx].get("conditions")
 
 
 def default_engine(size, time, frame, delta_time=0.0):
@@ -33,7 +71,7 @@ def collect_default_uniforms(graph):
 def should_skip(p, lookup):
     if p.get("skip") or p.get("_skip"):
         return True
-    conds = p.get("conditions")
+    conds = _pass_conditions(p)
     if not conds:
         return False
     for c in conds.get("skipIf", []):
