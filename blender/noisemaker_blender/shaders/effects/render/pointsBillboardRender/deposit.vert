@@ -3,9 +3,14 @@
 
 // 3D viewport uniforms
 
-// Deterministic noise function for per-particle variation
+uint hash_uint(uint s) {
+    uint state = s * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
 float hash(float n) {
-    return fract(sin(n + seed) * 43758.5453123);
+    return float(hash_uint(floatBitsToUint(n + seed))) / 4294967295.0;
 }
 
 void main() {
