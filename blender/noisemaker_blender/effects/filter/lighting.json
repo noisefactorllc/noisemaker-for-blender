@@ -92,6 +92,10 @@
       "uniform": "aberration",
       "min": 0,
       "max": 100
+    },
+    "heightMap": {
+      "type": "surface",
+      "default": "inputTex"
     }
   },
   "passes": [
@@ -99,7 +103,8 @@
       "name": "render",
       "program": "lighting",
       "inputs": {
-        "inputTex": "inputTex"
+        "inputTex": "inputTex",
+        "heightMap": "heightMap"
       },
       "outputs": {
         "fragColor": "outputTex"

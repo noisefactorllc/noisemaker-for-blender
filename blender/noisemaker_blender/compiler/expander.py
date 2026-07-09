@@ -59,8 +59,17 @@ _UNDEFINED = object()
 
 
 # Surface-arg "kinds" that name a texture rather than carry a scalar value. Used
-# in two places to decide whether an arg is a texture binding vs a uniform.
-_SURFACE_ARG_KINDS = ("temp", "output", "source", "feedback", "xyz", "vel", "rgba")
+# in three places to decide whether an arg is a texture binding vs a uniform.
+# 'pipeline' is the validator's default-value fallback for a surface global
+# whose default (e.g. "inputTex") isn't itself a resolvable surface reference
+# (see filter/lighting's heightMap) -- it must be skipped here too, or its
+# {"kind":"pipeline",...} dict leaks into pass_obj["uniforms"] as a bogus value.
+_TEXTURE_ARG_KINDS = ("temp", "output", "source", "feedback", "vol", "geo", "xyz", "vel", "rgba", "pipeline")
+
+
+def _is_texture_arg(arg):
+    """Port of ``isTextureArg``."""
+    return arg is not None and isinstance(arg, dict) and arg.get("kind") in _TEXTURE_ARG_KINDS
 
 
 def _truthy(value):
@@ -538,8 +547,7 @@ def expand(compilation_result, options=None):
             # FIRST PASS: surface args -> colorModeControlledUniforms
             if isinstance(step_args, dict):
                 for arg_name, arg in step_args.items():
-                    is_object_arg = _is_object_arg(arg)
-                    if is_object_arg and isinstance(arg, dict) and arg.get("kind") in _SURFACE_ARG_KINDS:
+                    if _is_texture_arg(arg):
                         global_def = effect_globals.get(arg_name) if effect_globals else None
                         if global_def and global_def.get("colorModeUniform"):
                             is_none = arg.get("name") == "none"
@@ -550,7 +558,7 @@ def expand(compilation_result, options=None):
             if isinstance(step_args, dict):
                 for arg_name, arg in step_args.items():
                     is_object_arg = _is_object_arg(arg)
-                    if is_object_arg and isinstance(arg, dict) and arg.get("kind") in _SURFACE_ARG_KINDS:
+                    if _is_texture_arg(arg):
                         continue
 
                     uniform_name = arg_name
@@ -636,7 +644,7 @@ def expand(compilation_result, options=None):
                 if isinstance(step_args, dict):
                     for arg_name, arg in step_args.items():
                         is_object_arg = _is_object_arg(arg)
-                        if is_object_arg and isinstance(arg, dict) and arg.get("kind") in _SURFACE_ARG_KINDS:
+                        if _is_texture_arg(arg):
                             continue
 
                         uniform_name = arg_name
@@ -745,6 +753,8 @@ def expand(compilation_result, options=None):
                                 continue
                             if isinstance(arg, dict) and arg.get("kind") == "temp":
                                 pass_obj["inputs"][uniform_name] = texture_map.get("node_%s_out" % arg.get("index"))
+                            elif isinstance(arg, dict) and arg.get("kind") == "pipeline" and arg.get("name") in ("inputTex", "inputColor"):
+                                pass_obj["inputs"][uniform_name] = current_input or arg.get("name")
                             elif isinstance(arg, dict) and arg.get("kind") in ("output", "source", "vol", "geo", "xyz", "vel", "rgba"):
                                 pass_obj["inputs"][uniform_name] = "none" if arg.get("name") == "none" else "global_%s" % arg.get("name")
                             elif isinstance(arg, str):

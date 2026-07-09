@@ -10,6 +10,12 @@ float getLuminosity(vec3 color) {
     return dot(color, vec3(0.299, 0.587, 0.114));
 }
 
+float getHeight(vec2 uv) {
+    vec2 mapSize = vec2(textureSize(heightMap, 0));
+    vec2 localUV = (uv * fullResolution - tileOffset) / mapSize;
+    return getLuminosity(nmTex(heightMap, localUV).rgb);
+}
+
 // Calculate surface normal from height map using Sobel convolution
 vec3 calculateNormal(vec2 uv, vec2 texelSize) {
     // Apply smoothing to texel size for smoother normals
@@ -42,8 +48,7 @@ vec3 calculateNormal(vec2 uv, vec2 texelSize) {
     float dy = 0.0;
     
     for (int i = 0; i < 9; i++) {
-        vec3 texSample = nmTex(inputTex, ((uv + offsets[i]) * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
-        float height = getLuminosity(texSample);
+        float height = getHeight(uv + offsets[i]);
         dx += height * sobel_x[i];
         dy += height * sobel_y[i];
     }
