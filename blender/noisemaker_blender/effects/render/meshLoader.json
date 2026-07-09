@@ -5,8 +5,7 @@
   "tags": [
     "mesh",
     "geometry",
-    "3D",
-    "OBJ"
+    "3d"
   ],
   "paramAliases": {},
   "defaultProgram": "search render\n\nmeshLoader()\n.meshRender()\n.write(o0)",
