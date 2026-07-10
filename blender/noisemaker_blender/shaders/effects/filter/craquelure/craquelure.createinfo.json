@@ -2,6 +2,10 @@
   "pushConstants": [
     [
       "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
       "tileOffset"
     ],
     [
@@ -10,43 +14,19 @@
     ],
     [
       "FLOAT",
-      "scale"
+      "spacing"
     ],
     [
       "FLOAT",
-      "seed"
+      "depth"
+    ],
+    [
+      "FLOAT",
+      "brightness"
     ],
     [
       "INT",
-      "mode"
-    ],
-    [
-      "FLOAT",
-      "edgeStrength"
-    ],
-    [
-      "VEC3",
-      "edgeColor"
-    ],
-    [
-      "FLOAT",
-      "speed"
-    ],
-    [
-      "FLOAT",
-      "time"
-    ],
-    [
-      "FLOAT",
-      "alpha"
-    ],
-    [
-      "FLOAT",
-      "borderWidth"
-    ],
-    [
-      "FLOAT",
-      "lightIntensity"
+      "seed"
     ]
   ],
   "samplers": [
@@ -64,7 +44,7 @@
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 64,
+  "std140Bytes": 48,
   "ubo": false,
   "notes": []
 }

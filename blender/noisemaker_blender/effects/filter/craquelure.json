@@ -1,0 +1,54 @@
+{
+  "name": "Craquelure",
+  "namespace": "filter",
+  "func": "craquelure",
+  "tags": [
+    "noise",
+    "edges"
+  ],
+  "paramAliases": {},
+  "globals": {
+    "spacing": {
+      "type": "float",
+      "default": 40,
+      "uniform": "spacing",
+      "min": 5,
+      "max": 100
+    },
+    "depth": {
+      "type": "float",
+      "default": 50,
+      "uniform": "depth",
+      "min": 0,
+      "max": 100
+    },
+    "brightness": {
+      "type": "float",
+      "default": 50,
+      "uniform": "brightness",
+      "min": 0,
+      "max": 100
+    },
+    "seed": {
+      "type": "int",
+      "default": 1,
+      "uniform": "seed",
+      "min": 1,
+      "max": 100
+    }
+  },
+  "passes": [
+    {
+      "name": "render",
+      "program": "craquelure",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {}
+    }
+  ],
+  "textures": {}
+}

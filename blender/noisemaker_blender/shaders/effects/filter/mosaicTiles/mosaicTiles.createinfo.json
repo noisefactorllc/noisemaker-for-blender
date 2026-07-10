@@ -2,6 +2,10 @@
   "pushConstants": [
     [
       "VEC2",
+      "resolution"
+    ],
+    [
+      "VEC2",
       "tileOffset"
     ],
     [
@@ -9,44 +13,36 @@
       "fullResolution"
     ],
     [
-      "FLOAT",
-      "scale"
-    ],
-    [
-      "FLOAT",
-      "seed"
-    ],
-    [
       "INT",
       "mode"
     ],
     [
       "FLOAT",
-      "edgeStrength"
+      "tileSize"
+    ],
+    [
+      "FLOAT",
+      "groutWidth"
+    ],
+    [
+      "FLOAT",
+      "relief"
+    ],
+    [
+      "FLOAT",
+      "maxOffset"
+    ],
+    [
+      "INT",
+      "gapFill"
     ],
     [
       "VEC3",
-      "edgeColor"
+      "backgroundColor"
     ],
     [
-      "FLOAT",
-      "speed"
-    ],
-    [
-      "FLOAT",
-      "time"
-    ],
-    [
-      "FLOAT",
-      "alpha"
-    ],
-    [
-      "FLOAT",
-      "borderWidth"
-    ],
-    [
-      "FLOAT",
-      "lightIntensity"
+      "INT",
+      "seed"
     ]
   ],
   "samplers": [
