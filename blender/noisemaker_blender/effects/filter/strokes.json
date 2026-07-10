@@ -1,0 +1,90 @@
+{
+  "name": "Strokes",
+  "namespace": "filter",
+  "func": "strokes",
+  "tags": [
+    "blur",
+    "edges"
+  ],
+  "paramAliases": {},
+  "globals": {
+    "mode": {
+      "type": "int",
+      "default": 0,
+      "define": "MODE",
+      "choices": {
+        "angled": 0,
+        "sprayed": 1,
+        "dark": 2,
+        "sumiE": 3,
+        "smudge": 4
+      }
+    },
+    "length": {
+      "type": "float",
+      "default": 40,
+      "uniform": "strokeLength",
+      "min": 0,
+      "max": 100
+    },
+    "balance": {
+      "type": "float",
+      "default": 50,
+      "uniform": "balance",
+      "min": 0,
+      "max": 100
+    },
+    "intensity": {
+      "type": "float",
+      "default": 50,
+      "uniform": "intensity",
+      "min": 0,
+      "max": 100
+    },
+    "sharpness": {
+      "type": "float",
+      "default": 30,
+      "uniform": "sharpness",
+      "min": 0,
+      "max": 100
+    }
+  },
+  "passes": [
+    {
+      "name": "smear",
+      "program": "stkSmear",
+      "inputs": {
+        "inputTex": "inputTex"
+      },
+      "outputs": {
+        "fragColor": "_stkTmp"
+      },
+      "uniforms": {
+        "strokeLength": "strokeLength",
+        "balance": "balance",
+        "intensity": "intensity"
+      }
+    },
+    {
+      "name": "post",
+      "program": "stkPost",
+      "inputs": {
+        "inputTex": "inputTex",
+        "smearTex": "_stkTmp"
+      },
+      "outputs": {
+        "fragColor": "outputTex"
+      },
+      "uniforms": {
+        "sharpness": "sharpness"
+      }
+    }
+  ],
+  "textures": {
+    "_stkTmp": {
+      "width": "input",
+      "height": "input",
+      "format": "rgba8unorm"
+    }
+  }
+}
