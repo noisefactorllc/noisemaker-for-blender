@@ -110,7 +110,7 @@ evolved or animated result.
 ## What works today
 
 - The **2D single-pass catalog plus agent-deposit** is **pixel-identical to the web reference**
-  (byte-exact / ±1); chaotic continuous sims are chaos-gated (below). In all, **205 effect
+  (byte-exact / ±1); chaotic continuous sims are chaos-gated (below). In all, **210 effect
   definitions** span 8 namespaces (including the 3D `synth3d` / `filter3d`).
 - **Particle/agent sims, fluid (navier–stokes), and the 3D volume renderer** all render and match the
   reference.

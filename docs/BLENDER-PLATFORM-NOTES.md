@@ -125,7 +125,7 @@ backend rejects — surfaced once the cnd namespace started compiling:
 Result: classicNoisedeck **20/20 compile**; cnd_noise/shapes/fractal/bitEffects/caustic/moodscape/
 noise3d byte-identical. `shapeMixer` is fixed via the injected scope-aware `nm_reflect`/`nm_refract`
 above (byte-exact vs reference golden, max-diff 0.000). Across the catalog only `scope`/`spectrum`
-(audio input, out of scope) do not compile → **297/299**.
+(audio input, out of scope) do not compile → **303/305**.
 
 ## 6. Parity expectation
 

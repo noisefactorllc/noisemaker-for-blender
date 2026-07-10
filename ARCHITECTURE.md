@@ -94,7 +94,7 @@ Metal-backed godot/td precedent. Byte-tight parity is not expected.
 ## Status
 
 The port is end-to-end and self-contained (Blender 5.1 / Py 3.13 / Metal): whole catalog
-transpiled (299/299), **297/299 compile** on Metal (only `scope`/`spectrum` = audio, out of
+transpiled (305/305), **303/305 compile** on Metal (only `scope`/`spectrum` = audio, out of
 scope); the in-Blender DSL compiler is **byte-identical** to the reference
 (`parity/compiler/check_graph.py`); the P5 integration surface is built and **gated byte-exact**
 (`parity/integration.sh`); single-pass / agents / 3D-volume / navierStokes are byte-exact or
