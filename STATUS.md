@@ -1,16 +1,21 @@
 # noisemaker-blender — status & parity
 
 *Verified on Apple Silicon / Metal. The sources of truth are `parity/integration.sh`,
-`parity/compare.py`, and `parity/compiler/check_*.py`. Synced against reference (noisemaker)
-commit **36e7f3f5** ("Add Photoshop filter parity implementation plan").*
+`parity/compare.py`, and `parity/compiler/check_*.py`. Crystallized against reference (noisemaker)
+content **pinned at commit 75507112** ("Add CPU Composer link to index footer"). Upstream's
+artistic-filter batch lives in a single commit that is rebased/amended in place (unstable SHA), so
+this round re-verified by diffing tree CONTENT against a pinned snapshot of that commit, not by
+commit-range history — the prior sync SHAs (a27bf823/b7c1bc36/36e7f3f5) are off the mainline.*
 
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 
 ## Coverage
 
-**210 effect definitions** across 8 namespaces. **303 / 305 shader programs compile on Metal** — the
-whole catalog except the two audio synths `scope` / `spectrum` (audio input is out of scope).
+**210 effect definitions** across 8 namespaces. **301 / 303 shader programs compile on Metal** — the
+whole catalog except the two audio synths `scope` / `spectrum` (audio input is out of scope). (Was
+303/305 at the last sync point: `filter/median` collapsed from a 3-pass seed/pass/final pipeline to
+a single exact-quickselect pass upstream, net -2 programs.)
 
 | Namespace | Definitions | State |
 |---|---|---|
@@ -23,11 +28,29 @@ whole catalog except the two audio synths `scope` / `spectrum` (audio input is o
 
 ## Parity
 
-- **Shader compile (Metal):** 303 / 305 programs (`scope` / `spectrum` excluded — audio input).
+- **Shader compile (Metal):** 301 / 303 programs (`scope` / `spectrum` excluded — audio input).
 - **In-Blender DSL→graph compiler:** byte-identical to the reference across all gates
   (lex / parse / compile / expand / graph); the full 19-program blaster corpus compiles to
   byte-identical graphs. The addon needs **no external engine** to author or compile.
-- **2D effects (single-pass + stateful) and agent deposit:** whole catalog **byte-identical / ±1**.
+- **2D effects (single-pass + stateful) and agent deposit:** whole catalog **byte-identical / ±1**,
+  except the discontinuity-heavy subset of the artistic-filter batch noted below.
+- **Artistic-filter batch re-verification (this crystallization round):** all 37 reference dirs that
+  changed upstream (33 with real GLSL/definition content drift + 4 confirmed N/A — see below) were
+  re-ported from the pinned snapshot and graded per (effect, mode) against 97 freshly-minted goldens
+  (33 defaults + 64 non-default modes, mirroring `test_artistic_effect_release.mjs`'s own
+  enumeration): **85 PASS, 12 NEAR, 0 FAIL.** Every NEAR is mechanism-traced to a source-verified
+  discontinuity in the reused-verbatim GLSL (a hard `step()`, an `fwidth()`-derived AA width, a
+  `pow()` specular term, an oscillating multi-cycle `sin()` tone curve, or an argmin/argmax discrete
+  sector pick) landing on opposite sides of a ~1-ULP Blender-MSL-vs-reference-ANGLE transcendental
+  difference at a sparse set of pixels — never a solid-region mismatch, always SSIM ≥ 0.994. This is
+  the same ~1-ULP-transcendental class the Metal-vs-ANGLE tolerance note above already covers, just
+  with the mechanism now pinned per effect: `chrome` (sine tone curve), `relief` notePaper/plaster
+  (`step()` paper threshold), `oilPaint` dryBrush (Kuwahara-sector argmin near-tie), `plasticWrap`
+  (specular `pow()`), `stamp` (`fwidth()` ink-edge AA). Two of the 33 (`filter/dither`'s new block-local Floyd–Steinberg
+  diffusion, `filter/median`'s new exact-quickselect) newly exercised transpiler/runtime gaps —
+  `dither`'s `const int FS_ERR_W = A+B+C+D;` array-size expression and `median`'s
+  `packHalf2x16`/`unpackHalf2x16` calls — both fixed this round (see `tools/convert-shaders-
+  blender.mjs`'s `constIntToDefine` and `backend/std140.py`'s `inject_pack_half2x16`).
 - **Stateful sims (navierStokes + continuous: reactionDiffusion, lenia, mnca):** pixel-parity in the
   smooth/stable regime, SSIM ≈ 0.999; chaotic regimes are chaos-gated (below).
 - **3D volume render + cubemaps** (synth3d × render3d / renderLit3d / cubemap): **byte-exact / 1-ULP**.

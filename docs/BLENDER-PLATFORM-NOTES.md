@@ -121,11 +121,27 @@ backend rejects — surfaced once the cnd namespace started compiling:
   (grime/spookyTicker/texture/wobble).
 - **multi-`uniform`-per-line** — the line-anchored uniform lifter missed `uniform int a; uniform
   int b;`; `splitMultiUniformLines` puts each on its own line first (mashup's `layerN_active`).
+- **`const int` array-size EXPRESSIONS** (transpile-time, `convert-shaders-blender.mjs`'s
+  `constIntToDefine`, not a `shader_build.py` runtime fixup like the rest of this list) — Blender's
+  GLSL→MSL codegen rejects ANY top-level `const int` as an array size (non-static data member),
+  literal or not; the transpiler already promoted the bare-literal case (`const int X = 4;` →
+  `#define X 4`) to committed `.frag` source, but missed an arithmetic-expression RHS until the
+  artistic-batch crystallization surfaced `filter/dither`'s `const int FS_ERR_W = FS_BLOCK +
+  FS_APRON_MAX + FS_RPAD + 1;` (sizes its Floyd–Steinberg error-row array). Now promotes both
+  shapes, parenthesizing the expansion for precedence. Catalog-wide grep confirms dither is (still)
+  the only file this class of decl appears in.
+- **`packHalf2x16`/`unpackHalf2x16`** — Blender's GLSL→MSL codegen has no builtin under either name
+  ("undeclared identifier") — unlike scalar reflect/refract there's no Metal-side *ambiguity* to
+  dodge, just an absent one, so `inject_pack_half2x16` prepends real polyfill functions under the
+  exact reference names (no call-site rewriting needed), built on `floatBitsToUint`/
+  `uintBitsToFloat` + `uint` bitwise ops already proven elsewhere in the catalog. Surfaced by
+  `filter/median`'s new exact-quickselect packed-record sort key.
 
 Result: classicNoisedeck **20/20 compile**; cnd_noise/shapes/fractal/bitEffects/caustic/moodscape/
 noise3d byte-identical. `shapeMixer` is fixed via the injected scope-aware `nm_reflect`/`nm_refract`
 above (byte-exact vs reference golden, max-diff 0.000). Across the catalog only `scope`/`spectrum`
-(audio input, out of scope) do not compile → **303/305**.
+(audio input, out of scope) do not compile → **301/303** (303 total programs as of the artistic-batch
+crystallization: `filter/median` went from 3 programs to 1, net -2 vs the prior 305).
 
 ## 6. Parity expectation
 
@@ -134,6 +150,19 @@ Metal but via different translators, so expect **±1–2/255** half-float diverg
 **relaxed-tolerance table** the Metal-backed godot/td ports already established
 (strict max-diff ≤ 1 where possible; relaxed ≤ 2–4 + SSIM ≥ 0.98 for discontinuity-heavy
 effects). Byte-tight parity is *not* expected and not required.
+
+**Sub-case — sparse single-pixel discontinuity flips can exceed the ≤2–4 band on `max-abs-diff`
+alone while staying well inside tolerance structurally.** A handful of the artistic-filter batch
+(non-chaotic, single/few-pass, no feedback) put a hard `step()`, an `fwidth()`-derived antialiasing
+width, a high-exponent `pow()` specular term, a multi-cycle `sin()` tone curve, or an argmin/argmax
+discrete pick directly in the per-pixel path. None of those are byte-stable across two different
+GLSL→Metal translators at the ~1-ULP level, so at a SPARSE, contour-tracing set of pixels (never a
+solid region) the two backends land on opposite sides of the discontinuity and that pixel jumps to
+the far side of the value range — `max-abs-diff` can read >100 on one pixel even though SSIM stays
+≥0.994 and every neighboring pixel matches tightly. This is graded **NEAR**, not FAIL (SSIM is the
+gate that matters here), and is not fixable without deviating from the reused-verbatim reference
+GLSL. Per-effect mechanism list and the (effect, mode) ledger from the artistic-batch
+crystallization: see STATUS.md's Parity section.
 
 **Exception — the chaos class.** Chaotic agent→navierStokes chains and continuous CAs
 (`flow:chaotic`, lenia, mnca, reactionDiffusion) are **SSIM-divergent by design** (full-chain

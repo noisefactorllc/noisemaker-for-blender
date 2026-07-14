@@ -94,10 +94,16 @@ Metal-backed godot/td precedent. Byte-tight parity is not expected.
 ## Status
 
 The port is end-to-end and self-contained (Blender 5.1 / Py 3.13 / Metal): whole catalog
-transpiled (305/305), **303/305 compile** on Metal (only `scope`/`spectrum` = audio, out of
-scope); the in-Blender DSL compiler is **byte-identical** to the reference
+transpiled (303/303), **301/303 compile** on Metal (only `scope`/`spectrum` = audio, out of
+scope; program total dropped from 305 when upstream's `filter/median` collapsed 3 passes into 1);
+the in-Blender DSL compiler is **byte-identical** to the reference
 (`parity/compiler/check_graph.py`); the P5 integration surface is built and **gated byte-exact**
 (`parity/integration.sh`); single-pass / agents / 3D-volume / navierStokes are byte-exact or
-1-ULP; chaotic iteration is chaos-gated (`docs/CHAOS-GATE.md`). Pushed to the private remote
-`noisefactorllc/noisemaker-blender`. See [`README.md`](README.md) for the capability matrix; the
-genuinely-open item is a Linux headless-CI path. Commits omit the `Co-Authored-By` trailer.
+1-ULP; chaotic iteration is chaos-gated (`docs/CHAOS-GATE.md`). A crystallization pass re-verified
+the 33-effect artistic-filter batch content-pinned against reference commit 75507112 (that commit
+is rebased/amended upstream, so treat the SHA as unstable): 97 (effect, mode) goldens minted fresh,
+85 PASS / 12 NEAR / 0 FAIL, every NEAR mechanism-traced to a ~1-ULP transcendental difference
+crossing a hard threshold/specular/argmin discontinuity in the reused-verbatim GLSL — see
+STATUS.md. Pushed to the private remote `noisefactorllc/noisemaker-blender`. See
+[`README.md`](README.md) for the capability matrix; the genuinely-open item is a Linux headless-CI
+path. Commits omit the `Co-Authored-By` trailer.
