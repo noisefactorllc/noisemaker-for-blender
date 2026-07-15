@@ -1,4 +1,4 @@
-# noisemaker-blender — Implementation Plan
+# Noisemaker for Blender — Implementation Plan
 
 > **Historical (P0-era roadmap).** This is the original plan written at the first commit; it is
 > not maintained. **P0–P5 are complete and most of P6 shipped** — for current status see
@@ -10,7 +10,7 @@
 A Blender port (Polymorphic DSL compiler, render-graph executor, effects collection) of
 `../noisemaker/shaders`, pixel-parity (relaxed Metal tolerance) to the reference WebGL2 engine.
 Primary analog: `noisemaker-td` (Python + node-based + GLSL + GUI harness). Reference named by
-user: `noisemaker-hlsl`.
+user: `noisemaker-unity`.
 
 ## Architecture in one line
 

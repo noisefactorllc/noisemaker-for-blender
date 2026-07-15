@@ -1,4 +1,4 @@
-# noisemaker-blender — status & parity
+# Noisemaker for Blender — status & parity
 
 *Verified on Apple Silicon / Metal. The sources of truth are `parity/integration.sh`,
 `parity/compare.py`, and `parity/compiler/check_*.py`. Crystallized against reference (noisemaker)

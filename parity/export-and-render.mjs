@@ -37,7 +37,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 // Reference (golden) engine lives in the sibling `noisemaker` repo. Override
 // with NM_REFERENCE_ROOT if it's elsewhere. (This repo was split out of
-// noisemaker/noisemaker-hlsl/, where the default was just `../..`.)
+// noisemaker/noisemaker-unity/, where the default was just `../..`.)
 if (!process.env.NM_REFERENCE_ROOT) {
   console.error('NM_REFERENCE_ROOT must point at the Noisemaker reference engine source root')
   process.exit(1)

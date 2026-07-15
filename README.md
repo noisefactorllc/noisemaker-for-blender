@@ -1,4 +1,4 @@
-# noisemaker-blender
+# Noisemaker for Blender
 
 > Run **Noisemaker**'s procedural visuals inside **Blender**.
 
@@ -16,7 +16,7 @@ render(o0)
 That little language is Noisemaker's **DSL** (a domain-specific language for visuals). The original
 engine runs in the browser at [noisedeck.app](https://noisedeck.app).
 
-**noisemaker-blender** runs that same engine *inside Blender* — the same programs and the same ~200
+**Noisemaker for Blender** runs that same engine *inside Blender* — the same programs and the same ~200
 effects, rendered on Blender's GPU. Use it to make textures, materials, and animated backgrounds
 from code, with no image files.
 
@@ -55,7 +55,7 @@ cd blender && zip -r noisemaker_blender.zip noisemaker_blender
 ```
 
 Then in Blender: **Edit ▸ Preferences ▸ Add-ons ▸ Install from Disk**, pick
-`noisemaker_blender.zip`, and enable **"Noisemaker"**.
+`noisemaker_blender.zip`, and enable **"Noisemaker for Blender"**.
 
 (Prefer a live checkout? Symlink `blender/noisemaker_blender` into your Blender `scripts/addons/`
 instead.)
@@ -128,7 +128,7 @@ Coverage table, parity numbers, and the full "chaos" explanation: **[STATUS.md](
 ## How it works
 
 Noisemaker turns a DSL program into a **render graph** — a normalized list of GPU passes. That graph
-is the shared seam every Noisemaker port targets. noisemaker-blender ports the whole compiler to
+is the shared seam every Noisemaker port targets. Noisemaker for Blender ports the whole compiler to
 Python (so it runs in-engine) and executes the graph on Blender's `gpu` module. Effect shaders are
 translated mechanically from the reference GLSL into the form Blender's Metal backend requires, and
 the final image is written to an Image datablock — which is what lets the stock compositor and

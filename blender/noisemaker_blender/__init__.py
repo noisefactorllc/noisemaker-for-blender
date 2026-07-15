@@ -1,4 +1,4 @@
-"""noisemaker-blender addon package.
+"""Noisemaker for Blender add-on package.
 
 This package has two faces:
 
@@ -18,12 +18,12 @@ module, bake into an Image datablock, and let the stock compositor Image node co
 """
 
 bl_info = {
-    "name": "Noisemaker",
+    "name": "Noisemaker for Blender",
     "author": "Noise Factory LLC",
     "version": (0, 1, 0),
     "blender": (5, 1, 0),
     "location": "Compositor / Image Editor > Sidebar > Noisemaker; Noisemaker node editor",
-    "description": "Polymorphic-DSL procedural texture engine; bakes to an Image the compositor can use",
+    "description": "Noisemaker for Blender: Polymorphic-DSL procedural texture engine that bakes to an Image",
     "category": "Compositing",
 }
 

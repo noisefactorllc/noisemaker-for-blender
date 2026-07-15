@@ -1,4 +1,4 @@
-# noisemaker-blender — Porting Guide (shader translation)
+# Noisemaker for Blender — Porting Guide (shader translation)
 
 How a reference GLSL effect program (`noisemaker/shaders/effects/<ns>/<name>/glsl/<prog>.glsl`)
 becomes a Blender `gpu`-module shader. The translation is **mechanical** (a transpiler,

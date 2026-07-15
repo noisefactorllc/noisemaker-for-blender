@@ -13,7 +13,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFont
 
 dsl_path, canvas_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
-title = sys.argv[4] if len(sys.argv) > 4 else "noisemaker-blender"
+title = sys.argv[4] if len(sys.argv) > 4 else "Noisemaker for Blender"
 caption = sys.argv[5] if len(sys.argv) > 5 else ""
 
 # Catppuccin-ish dark theme.

@@ -1,8 +1,8 @@
-# noisemaker-blender — Architecture
+# Noisemaker for Blender — Architecture
 
 A Blender port of the Noisemaker procedural shader engine (`../noisemaker/shaders`): Polymorphic
-DSL compiler, render-graph executor, and effects collection. Sibling to `noisemaker-hlsl` (Unity),
-`noisemaker-godot`, `noisemaker-td` (TouchDesigner), `noisemaker-three`, `noisemaker-babylon`.
+DSL compiler, render-graph executor, and effects collection. Sibling to `noisemaker-unity` (Unity),
+`noisemaker-godot`, `noisemaker-td` (TouchDesigner), `noisemaker-threejs`, `noisemaker-babylonjs`.
 
 Blender's host language is **Python**, and the GPU surface is the **`gpu` module** (GLSL→Metal).
 The closest analog is **`noisemaker-td`**: Python host, node-based, OpenGL-family GLSL, and a

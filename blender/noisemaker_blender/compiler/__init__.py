@@ -1,4 +1,4 @@
-"""noisemaker-blender DSL compiler package (lexer/parser/validator/graph port).
+"""Noisemaker for Blender DSL compiler package (lexer/parser/validator/graph port).
 
 Stage-1 (``compile``) mirrors the reference ``shaders/src/lang/index.js``:
 ``compile(source)`` == lex -> parse -> validate, returning the validated program
