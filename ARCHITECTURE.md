@@ -1,11 +1,11 @@
 # Noisemaker for Blender — Architecture
 
 A Blender port of the Noisemaker procedural shader engine (`../noisemaker/shaders`): Polymorphic
-DSL compiler, render-graph executor, and effects collection. Sibling to `noisemaker-unity` (Unity),
-`noisemaker-godot`, `noisemaker-td` (TouchDesigner), `noisemaker-threejs`, `noisemaker-babylonjs`.
+DSL compiler, render-graph executor, and effects collection. Sibling to `noisemaker-for-unity` (Unity),
+`noisemaker-for-godot`, `noisemaker-for-touchdesigner` (TouchDesigner), `noisemaker-for-threejs`, `noisemaker-for-babylonjs`.
 
 Blender's host language is **Python**, and the GPU surface is the **`gpu` module** (GLSL→Metal).
-The closest analog is **`noisemaker-td`**: Python host, node-based, OpenGL-family GLSL, and a
+The closest analog is **`noisemaker-for-touchdesigner`**: Python host, node-based, OpenGL-family GLSL, and a
 GUI-launched parity harness (Blender, like TouchDesigner, cannot render GPU headless on macOS).
 
 ## The seam
@@ -104,6 +104,6 @@ the 33-effect artistic-filter batch content-pinned against reference commit 7550
 is rebased/amended upstream, so treat the SHA as unstable): 97 (effect, mode) goldens minted fresh,
 85 PASS / 12 NEAR / 0 FAIL, every NEAR mechanism-traced to a ~1-ULP transcendental difference
 crossing a hard threshold/specular/argmin discontinuity in the reused-verbatim GLSL — see
-STATUS.md. Pushed to the private remote `noisefactorllc/noisemaker-blender`. See
+STATUS.md. Pushed to the private remote `noisefactorllc/noisemaker-for-blender`. See
 [`README.md`](README.md) for the capability matrix; the genuinely-open item is a Linux headless-CI
 path. Commits omit the `Co-Authored-By` trailer.

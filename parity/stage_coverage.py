@@ -2,7 +2,7 @@
 """stage_coverage.py — stage parity DSL+golden pairs from a sibling Noisemaker port and
 classify each by whether this TD port can render it yet.
 
-A sibling port (default ../noisemaker-godot) renders its goldens from the SAME reference
+A sibling port (default ../noisemaker-for-godot) renders its goldens from the SAME reference
 WebGL2 engine off the SAME Polymorphic DSL, so every `<name>.dsl` / `<name>.golden.png`
 pair is reusable verbatim — exactly how the 8 Tier-1 goldens were seeded. For each pair:
 
@@ -15,7 +15,7 @@ A program whose graph references a missing or MRT `.frag` is DEFERred — never 
 skipped (the parity contract: log everything we can't yet cover, with a reason).
 
 Env:
-  NM_SIBLING_PORT   sibling port to reuse from   (default ../noisemaker-godot)
+  NM_SIBLING_PORT   sibling port to reuse from   (default ../noisemaker-for-godot)
   NM_REFERENCE_ROOT reference engine root        (default ../noisemaker)
 
 Usage:

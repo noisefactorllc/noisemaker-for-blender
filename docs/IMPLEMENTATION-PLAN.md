@@ -9,8 +9,8 @@
 
 A Blender port (Polymorphic DSL compiler, render-graph executor, effects collection) of
 `../noisemaker/shaders`, pixel-parity (relaxed Metal tolerance) to the reference WebGL2 engine.
-Primary analog: `noisemaker-td` (Python + node-based + GLSL + GUI harness). Reference named by
-user: `noisemaker-unity`.
+Primary analog: `noisemaker-for-touchdesigner` (Python + node-based + GLSL + GUI harness). Reference named by
+user: `noisemaker-for-unity`.
 
 ## Architecture in one line
 
@@ -76,7 +76,7 @@ the real compositor. See `ARCHITECTURE.md`, `docs/BLENDER-PLATFORM-NOTES.md`, `P
 ## Constraints
 
 - Omit `Co-Authored-By` on commits. (The repo is now pushed to the private remote
-  `noisefactorllc/noisemaker-blender`.)
+  `noisefactorllc/noisemaker-for-blender`.)
 - Additive: never modify `../noisemaker`. The port consumes it read-only.
 - Scope: `../noisemaker/shaders` + `../noisemaker/docs/shaders` ONLY — never the legacy Python/TF
   `noisemaker/` package.

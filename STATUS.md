@@ -102,7 +102,7 @@ once): `/Applications/Blender.app/Contents/Resources/5.1/python/bin/python3.13`.
 ```sh
 # 1. graph + golden (goldens are byte-identical across ports; reuse a sibling's or mint one)
 NM_REFERENCE_ROOT=../noisemaker node tools/export-graph.mjs --file parity/programs/noise.dsl parity/out/noise.graph.json
-cp ../noisemaker-godot/parity/out/noise.golden.png parity/out/   # or: parity/export-and-render.mjs
+cp ../noisemaker-for-godot/parity/out/noise.golden.png parity/out/   # or: parity/export-and-render.mjs
 
 # 2. render candidate (GUI mode — macOS GPU needs a context; self-quits)
 NM_JOBS='[{"graph":"parity/out/noise.graph.json","out":"parity/out/noise.candidate.png"}]' \

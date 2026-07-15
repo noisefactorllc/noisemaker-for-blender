@@ -19,7 +19,7 @@ import sys
 #     insert its PARENT so `import noisemaker_blender...` resolves). -------------------------
 HERE = os.path.dirname(os.path.abspath(__file__))            # parity/compiler
 PARITY = os.path.dirname(HERE)                               # parity
-ROOT = os.path.dirname(PARITY)                               # repo root (noisemaker-blender)
+ROOT = os.path.dirname(PARITY)                               # repo root (noisemaker-for-blender)
 ADDON = os.path.join(ROOT, "blender", "noisemaker_blender")  # addon package dir
 sys.path.insert(0, os.path.dirname(ADDON))                   # .../blender (parent of package)
 

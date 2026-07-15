@@ -28,7 +28,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 // Reference engine lives in the sibling `noisemaker` repo (this repo was split
-// out of noisemaker/noisemaker-unity/). Override with NM_REFERENCE_ROOT.
+// out of noisemaker/noisemaker-for-unity/). Override with NM_REFERENCE_ROOT.
 if (!process.env.NM_REFERENCE_ROOT) {
   console.error('NM_REFERENCE_ROOT must point at the Noisemaker reference engine source root')
   process.exit(1)
