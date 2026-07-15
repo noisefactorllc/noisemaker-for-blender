@@ -1,3 +1,3 @@
 search synth, filter
-noise(seed: 1, scaleX: 50, scaleY: 50).pondRipples(style: 1).write(o0)
+noise(seed: 1, scaleX: 50, scaleY: 50).pondRipples(style: 1, amount: 70).write(o0)
 render(o0)

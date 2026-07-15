@@ -1,3 +1,3 @@
 search synth, filter
-noise(seed: 1, scaleX: 50, scaleY: 50).hatch(mode: 2).write(o0)
+noise(seed: 1, scaleX: 50, scaleY: 50).hatch(mode: 2, direction: 0).write(o0)
 render(o0)

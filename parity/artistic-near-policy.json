@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "cases": {
+    "chrome": {
+      "max_abs_diff": 200,
+      "mean_abs_diff": 2.5,
+      "ssim_min": 0.994,
+      "mechanism": "multi-cycle sin tone curve plus pow(v, 8) rim highlight amplifies translator-level rounding"
+    },
+    "craquelure": {
+      "max_abs_diff": 4,
+      "mean_abs_diff": 0.03,
+      "ssim_min": 0.9999,
+      "mechanism": "Voronoi F1/F2 nearest-rank tie feeds the smoothstep crack ridge"
+    },
+    "oilPaint_dryBrush": {
+      "max_abs_diff": 45,
+      "mean_abs_diff": 0.35,
+      "ssim_min": 0.998,
+      "mechanism": "eight-sector Kuwahara lowest-variance selection is discontinuous at sector ties"
+    },
+    "photocopy": {
+      "max_abs_diff": 12,
+      "mean_abs_diff": 0.65,
+      "ssim_min": 0.999,
+      "mechanism": "Gaussian-derived luminance crosses the narrow smoothstep tonal-ink threshold"
+    },
+    "plasticWrap": {
+      "max_abs_diff": 40,
+      "mean_abs_diff": 2.0,
+      "ssim_min": 0.996,
+      "mechanism": "high-exponent Blinn specular pow amplifies height-gradient rounding"
+    },
+    "plasticWrap_directed": {
+      "max_abs_diff": 50,
+      "mean_abs_diff": 2.1,
+      "ssim_min": 0.995,
+      "mechanism": "high-exponent Blinn specular pow amplifies height-gradient rounding with a non-axis-aligned light vector"
+    },
+    "pondRipples_aroundCenter": {
+      "max_abs_diff": 6,
+      "mean_abs_diff": 0.001,
+      "ssim_min": 0.9999,
+      "mechanism": "sin-based radial displacement lands on a texture-coordinate boundary"
+    },
+    "relief": {
+      "max_abs_diff": 5,
+      "mean_abs_diff": 0.75,
+      "ssim_min": 0.999,
+      "mechanism": "Gaussian height gradient followed by squared glossy shading amplifies rounding"
+    },
+    "relief_basRelief": {
+      "max_abs_diff": 10,
+      "mean_abs_diff": 1.2,
+      "ssim_min": 0.997,
+      "mechanism": "Gaussian height gradient followed by squared glossy shading amplifies rounding at the explicit light angle"
+    },
+    "relief_notePaper": {
+      "max_abs_diff": 210,
+      "mean_abs_diff": 0.25,
+      "ssim_min": 0.997,
+      "mechanism": "binary step at the note-paper height threshold flips sparse contour pixels"
+    },
+    "relief_plaster": {
+      "max_abs_diff": 36,
+      "mean_abs_diff": 1.05,
+      "ssim_min": 0.997,
+      "mechanism": "smoothed height gradient followed by pow(shade, 2) amplifies rounding"
+    },
+    "stamp": {
+      "max_abs_diff": 42,
+      "mean_abs_diff": 0.3,
+      "ssim_min": 0.999,
+      "mechanism": "fwidth-derived antialias width shifts the smoothstep ink contour"
+    },
+    "unsharpMask": {
+      "max_abs_diff": 4,
+      "mean_abs_diff": 0.45,
+      "ssim_min": 0.999,
+      "mechanism": "separable Gaussian residual is amplified by subtract-and-rescale sharpening"
+    }
+  }
+}
