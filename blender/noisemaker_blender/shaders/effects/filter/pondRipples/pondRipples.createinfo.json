@@ -21,6 +21,14 @@
       "ridges"
     ],
     [
+      "INT",
+      "speed"
+    ],
+    [
+      "FLOAT",
+      "time"
+    ],
+    [
       "BOOL",
       "antialias"
     ]

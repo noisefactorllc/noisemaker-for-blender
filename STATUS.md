@@ -7,6 +7,12 @@ artistic-filter batch lives in a single commit that is rebased/amended in place 
 this round re-verified by diffing tree CONTENT against a pinned snapshot of that commit, not by
 commit-range history — the prior sync SHAs (a27bf823/b7c1bc36/36e7f3f5) are off the mainline.*
 
+*Incrementally synced 2026-07-23 to reference `349e9909` — `filter/pondRipples` gained a `speed`
+control, the only port-affecting change in that range. pondRipples re-graded 7 PASS / 1 NEAR
+(`pondRipples_aroundCenter`, pre-existing: its candidate is byte-identical before and after this
+change), plus two new animated fixtures. The catalogue-wide numbers below are still the `75507112`
+figures; only pondRipples was re-rendered.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 
