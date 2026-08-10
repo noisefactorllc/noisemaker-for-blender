@@ -34,6 +34,9 @@ def global_ssim(a, b):
 
 def main():
     default_policy = Path(__file__).with_name("artistic-near-policy.json")
+    policy_was_explicit = any(
+        arg == "--policy" or arg.startswith("--policy=") for arg in sys.argv[1:]
+    )
     ap = argparse.ArgumentParser()
     ap.add_argument("goldDir", type=Path)
     ap.add_argument("candDir", type=Path)
@@ -67,14 +70,37 @@ def main():
     expected_names = None
     if args.expected:
         try:
-            expected_names = {
+            expected_list = [
                 line.strip() for line in args.expected.read_text().splitlines()
                 if line.strip() and not line.lstrip().startswith("#")
-            }
+            ]
         except OSError as exc:
             ap.error(f"invalid expected-name manifest {args.expected}: {exc}")
+        duplicates = sorted({name for name in expected_list if expected_list.count(name) > 1})
+        if duplicates:
+            ap.error(f"duplicate expected fixture: {duplicates[0]}")
+        expected_names = set(expected_list)
+        unexpected_policies = sorted(set(policies) - expected_names)
+        if policy_was_explicit and unexpected_policies:
+            ap.error(
+                "policy fixture not present in expected manifest: "
+                f"{unexpected_policies[0]}"
+            )
 
     goldens = sorted(args.goldDir.glob("*.golden.png"))
+    cand_names = {p.name[:-4] for p in args.candDir.glob("*.png")}
+    gold_names = {g.name[:-len(".golden.png")] for g in goldens}
+    if expected_names is not None:
+        unexpected_goldens = sorted(gold_names - expected_names)
+        unexpected_candidates = sorted(cand_names - expected_names)
+        problems = []
+        if unexpected_goldens:
+            problems.append(f"unexpected golden fixture: {unexpected_goldens[0]}")
+        if unexpected_candidates:
+            problems.append(f"unexpected candidate fixture: {unexpected_candidates[0]}")
+        if problems:
+            ap.error("; ".join(problems))
+
     results = []
     for g in goldens:
         name = g.name[:-len(".golden.png")]
@@ -115,8 +141,6 @@ def main():
         results.append(rec)
 
     # candidates without goldens
-    cand_names = {p.name[:-4] for p in args.candDir.glob("*.png")}
-    gold_names = {g.name[:-len(".golden.png")] for g in goldens}
     for cn in sorted(cand_names - gold_names):
         results.append({"name": cn, "cls": "MISSING_GOLD", "max_abs_diff": None, "ssim": None})
     if expected_names is not None:
@@ -124,9 +148,10 @@ def main():
             results.append({"name": name, "cls": "MISSING_GOLD", "max_abs_diff": None, "ssim": None})
 
     used_policies = {r["name"] for r in results if r["cls"] == "NEAR"}
-    unused_policies = sorted(
-        (expected_names or set()) & set(policies) - used_policies
-    )
+    if policy_was_explicit:
+        unused_policies = sorted(set(policies) - used_policies)
+    else:
+        unused_policies = sorted((expected_names or set()) & set(policies) - used_policies)
 
     order = {"FAIL": 0, "SIZE_MISMATCH": 1, "MISSING_CAND": 2, "MISSING_GOLD": 3, "NEAR": 4, "PASS": 5}
     results.sort(key=lambda r: (order.get(r["cls"], 9), r["name"]))

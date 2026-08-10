@@ -190,8 +190,19 @@ async function main () {
         throw new Error('DSL compile failed: ' + document.getElementById('status')?.textContent)
       }
       const p = window.__noisemakerRenderingPipeline
-      return !!(p && p.graph && p.graph.id !== base)
-    }, { timeout: STATUS_TIMEOUT }, baselineId)
+      if (!(p && p.graph && p.graph.id !== base && p.isCompiling === false)) return false
+      if (!s.includes('compiled')) return false
+      // The demo's DSL swap is two-phase. Require the graph id to remain stable
+      // across two polls so the reset below targets the new graph's surfaces,
+      // not a transient graph while compilation is still settling.
+      if (window.__nmStableId === p.graph.id) {
+        window.__nmStableCount = (window.__nmStableCount || 0) + 1
+      } else {
+        window.__nmStableId = p.graph.id
+        window.__nmStableCount = 0
+      }
+      return window.__nmStableCount >= 1
+    }, baselineId, { timeout: STATUS_TIMEOUT })
 
     // PAUSE FIRST so the demo's requestAnimationFrame loop stops re-syncing the
     // canvas to its (small, letterboxed) layout size — that auto-resize is what
@@ -200,22 +211,106 @@ async function main () {
       if (window.__noisemakerSetPaused) window.__noisemakerSetPaused(true)
     })
     // Resize the render surface to the requested square (canvas backing + CSS + the
-    // pipeline's own surfaces) so the readback is deterministic and matches Unity.
+    // pipeline's own surfaces) so the readback is deterministic and matches Blender.
+    // page.setViewportSize() dispatches a resize event asynchronously; the demo's
+    // layout handler can otherwise land after this block and revert the backing
+    // store to its ~90px letterboxed size. Set the real backing size through the
+    // prototype setters, then pin the instance properties so late layout writes
+    // cannot change the discrete-protocol dimensions.
     await page.evaluate((size) => {
       const r = window.__noisemakerCanvasRenderer
       const p = window.__noisemakerRenderingPipeline
-      if (r && r.canvas) {
-        r.canvas.width = size; r.canvas.height = size
-        if (r.canvas.style) { r.canvas.style.width = size + 'px'; r.canvas.style.height = size + 'px' }
+      const canvas = r && r.canvas
+      if (canvas) {
+        const widthDescriptor = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'width')
+        const heightDescriptor = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'height')
+        if (widthDescriptor?.set) widthDescriptor.set.call(canvas, size)
+        if (heightDescriptor?.set) heightDescriptor.set.call(canvas, size)
+        const pin = (property) => {
+          Object.defineProperty(canvas, property, {
+            configurable: true,
+            enumerable: true,
+            get () { return size },
+            set () { /* locked to size for deterministic capture */ }
+          })
+        }
+        pin('width')
+        pin('height')
+        if (canvas.style) { canvas.style.width = size + 'px'; canvas.style.height = size + 'px' }
       }
       if (p && typeof p.resize === 'function') p.resize(size, size)
     }, opts.size)
 
-    // Pin the normalized frame time, then render deterministic frames by driving the
+    // Drain any pending layout resize and require the presented surface itself
+    // to reach the requested dimensions before state reset and rendering.
+    await page.waitForFunction((size) => {
+      const p = window.__noisemakerRenderingPipeline
+      if (!p || typeof p.resize !== 'function') return false
+      const surf = p.surfaces?.get(p.graph?.renderSurface || 'o0')
+      const info = surf && p.backend?.textures?.get(surf.read)
+      if (!info) return false
+      if (info.width !== size || info.height !== size) {
+        p.resize(size, size)
+        return false
+      }
+      return true
+    }, opts.size, { timeout: STATUS_TIMEOUT })
+
+    // ROOT-CAUSE FIX: the demo's CanvasRenderer runs an always-on
+    // requestAnimationFrame loop (shaders/src/renderer/canvas.js
+    // _renderLoop/start()/stop()). The loop keeps firing through a DSL swap:
+    // pipeline.render() no-ops while isCompiling is true, but resumes real
+    // renders as soon as compilation completes. It then free-runs until this
+    // harness's asynchronous __noisemakerSetPaused(true) call lands in the
+    // page, leaving a load-dependent window of uncounted renders before the
+    // official 8-frame protocol below. Stateful and feedback-through-display
+    // graphs bake those uncounted frames into the golden. The reference's own
+    // deterministic tests avoid the race by directly driving render() without
+    // ever starting the RAF loop. resize() is not a reset: createSurfaces()
+    // short-circuits when the dimensions already match.
+    //
+    // Re-establish the same state as a freshly initialized pipeline after
+    // pausing and resizing, regardless of how many RAF renders landed first.
+    // Clear EVERY backend texture, including iterative graph textures such as
+    // global_rd_state that are not registered as pipeline surfaces. Then restore
+    // canonical read/write orientation and reset the frame clock; zeroing only
+    // selected surfaces leaves those three sources of hidden history intact.
+    await page.evaluate((time) => {
+      if (window.__noisemakerSetPausedTime) window.__noisemakerSetPausedTime(time)
+    }, opts.time)
+
+    const reset = await page.evaluate(() => {
+      const p = window.__noisemakerRenderingPipeline
+      const backend = p?.backend
+      if (!p) return { error: 'no pipeline' }
+      if (!backend?.textures || typeof backend.clearTexture !== 'function') {
+        return { error: 'backend cannot clear textures' }
+      }
+      const textureIds = [...backend.textures.keys()]
+      for (const texId of backend.textures.keys()) backend.clearTexture(texId)
+      const normalizedSurfaces = []
+      if (p.surfaces) {
+        for (const [name, surface] of p.surfaces.entries()) {
+          const readId = `global_${name}_read`
+          const writeId = `global_${name}_write`
+          if (backend.textures.get(readId) && backend.textures.get(writeId)) {
+            surface.read = readId
+            surface.write = writeId
+            normalizedSurfaces.push(name)
+          }
+        }
+      }
+      p.frameIndex = 0
+      p.lastTime = 0
+      return { textureCount: textureIds.length, normalizedSurfaces }
+    })
+    if (reset.error) throw new Error(`state reset failed: ${reset.error}`)
+    process.stderr.write(`[parity] reset ${reset.textureCount} textures and ${reset.normalizedSurfaces.length} ping-pong surfaces before the 8-frame protocol\n`)
+
+    // Render deterministic frames at the pinned time by driving the
     // PIPELINE directly (the CanvasRenderer re-syncs canvas size per frame and can
     // revert the resize; pipeline.render does the GPU work the readback reads).
     await page.evaluate(({ time, frames, size }) => {
-      if (window.__noisemakerSetPausedTime) window.__noisemakerSetPausedTime(time)
       const p = window.__noisemakerRenderingPipeline
       const r = window.__noisemakerCanvasRenderer
       for (let i = 0; i < frames; i++) {

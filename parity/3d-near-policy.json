@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "cases": {
+    "flythrough3d": {
+      "max_abs_diff": 87.001,
+      "mean_abs_diff": 0.0103,
+      "ssim_min": 0.999,
+      "mechanism": "sub-ULP cross-GPU divergence flips a discrete fractal raymarch surface-boundary hit or miss"
+    }
+  }
+}

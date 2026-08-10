@@ -123,17 +123,20 @@ def _merge_choice_tree(target: dict, source: dict) -> None:
     """Port of enums.deepMerge for the choice-tree shape we register.
 
     The reference ``mergeIntoEnums`` deep-merges nested plain objects but assigns
-    (does not recurse into) any object carrying a ``type`` key (an enum entry).
+    (does not recurse into) an enum-entry leaf carrying both ``type`` and ``value``.
     Our source tree is ``{ns: {func: {key: {choiceName: {type:'Number', value}}}}}``
     so the namespace/func/key levels are merged and the leaf enum entries are
-    assigned -- which is exactly what deepMerge does.
+    assigned -- which is exactly what deepMerge does. Checking only for a
+    ``type`` key is insufficient because an effect may itself have a choice
+    parameter named ``type``; that container must still merge with sibling
+    parameter trees such as ``volumeSize``.
     """
     for key, source_val in source.items():
         target_val = target.get(key)
         if (
             isinstance(source_val, dict)
             and isinstance(target_val, dict)
-            and "type" not in source_val
+            and not ("type" in source_val and "value" in source_val)
         ):
             _merge_choice_tree(target_val, source_val)
         else:
