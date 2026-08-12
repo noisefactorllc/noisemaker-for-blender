@@ -1,0 +1,38 @@
+{
+  "configVersion": 1,
+  "id": "blender",
+  "series": "0.1",
+  "shaderSource": "kit",
+  "engineSource": "kit",
+  "pageTemplate": false,
+  "subtrees": [
+    {
+      "from": "blender/noisemaker_blender",
+      "to": "engine/noisemaker_blender.zip",
+      "mode": "zip"
+    }
+  ],
+  "licenses": [
+    { "from": "LICENSE", "to": "LICENSES/noisemaker-for-blender-LICENSE.txt" }
+  ],
+  "shaderCorpus": {
+    "effectsDir": "blender/noisemaker_blender/shaders/effects",
+    "includeDir": "blender/noisemaker_blender/shaders/include"
+  },
+  "shaderLayout": {
+    "root": "shaders",
+    "effectsPrefix": "",
+    "includeDir": null
+  },
+  "inject": {
+    "type": "dsl-file",
+    "target": "program.dsl"
+  },
+  "compat": {
+    "mode": "list",
+    "fromDefs": "blender/noisemaker_blender/effects",
+    "excludeNames": ["scope", "spectrum"],
+    "excludeIds": []
+  },
+  "engineBytesFrom": ["engine/"]
+}
