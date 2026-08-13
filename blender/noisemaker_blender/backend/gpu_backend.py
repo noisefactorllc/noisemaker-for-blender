@@ -77,6 +77,15 @@ class GpuBackend:
         self._fb_cache = {}       # tuple(id(off)..) -> GPUFrameBuffer (MRT)
         self._vbuf_cache = {}     # count -> GPUVertBuf (attribute-less points draw)
 
+    def create_frame_export_queue(self, **_options):
+        """Return no queue until Blender exposes non-blocking GPU readback primitives.
+
+        Blender 5.1's public ``gpu.types`` provides synchronous ``read_color``/``GPUTexture.read``
+        but no fence, pixel-buffer, or mapped-buffer API. Wrapping those reads in the generic queue
+        would block during ``enqueue`` and violate the upstream asynchronous export contract.
+        """
+        return None
+
     # ---- dimension resolution (reference/04 §resolveDimension) -------------
     def resolve_dim(self, spec, uniforms):
         s = self.size

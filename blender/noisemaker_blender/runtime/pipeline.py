@@ -5,6 +5,7 @@ skip conditions), ping-pong global outputs after each execution, persist state a
 end of frame. Supports multi-frame settle and sampling for stateful effects.
 """
 import math
+import time as clock
 
 
 def default_engine(size, time, frame, delta_time=0.0):
@@ -70,7 +71,8 @@ def resolve_repeat_count(p, lookup):
     return 1
 
 
-def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None):
+def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None,
+           sink_manager=None):
     """Run `frames` frames, matching the reference golden harness stepping EXACTLY
     (parity/batch-golden.mjs): per frame `tt = (time + i*timestep) % 1`, and engine
     deltaTime = 0 on frame 0 else (tt - tt_prev) — the `lastTime>0` guard, raw diff
@@ -82,10 +84,21 @@ def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None):
       points sims): the babylon `_EVO` recipe is frames=1800, timestep=0.0016667 (30s @ 1/600).
 
     If `samples` (set of frame indices) given, return {frame: array}; else the final
-    render-surface array."""
+    render-surface array. An optional externally owned `sink_manager` receives the configured
+    output descriptor and each completed render-surface binding with a monotonic timestamp in ms.
+    """
     defaults = collect_default_uniforms(graph)
     backend.setup(graph, defaults)
     out_name = graph.render_surface  # surface name, e.g. "o1"
+    if sink_manager is not None:
+        sink_manager.configure({
+            "width": backend.size,
+            "height": backend.size,
+            "format": "rgba8unorm",
+            "colorSpace": "srgb",
+            "alphaMode": "premultiplied",
+            "fps": 60,
+        })
     sampled = {}
     prev_tt = None
     for f in range(frames):
@@ -104,6 +117,9 @@ def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None):
                 backend.execute(p, graph, engine)
                 for tid in p.get("outputs", {}).values():
                     backend.swap_after_write(tid)
+        if sink_manager is not None:
+            timestamp = clock.perf_counter() * 1000.0
+            sink_manager.submit(backend.frame_read[out_name], timestamp)
         backend.frame_persist()
         # Force GPU submission periodically so long unsynced loops don't overflow Blender's
         # batched command stream (-> NaN / saturation). Read back the RENDER SURFACE (not an
