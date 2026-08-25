@@ -39,7 +39,7 @@ class _IdentityMap(MutableMapping):
 
 
 def _normalize_descriptor(descriptor):
-    return _EMPTY_DESCRIPTOR if descriptor is None else descriptor
+    return _EMPTY_DESCRIPTOR if descriptor is None else MappingProxyType(dict(descriptor))
 
 
 def _validate_sink(sink):

@@ -132,6 +132,41 @@ class SinkManagerTests(unittest.TestCase):
         self.assertEqual(first_manager.stats[mutating]["failed"], 1)
         self.assertNotIn("leaked", observer.events[0][1])
 
+    def test_custom_descriptor_is_immutable_between_sinks(self):
+        class MutatingSink(RecordingSink):
+            def configure(self, descriptor):
+                descriptor["width"] = 999
+
+        manager = SinkManager()
+        mutating = MutatingSink()
+        observer = RecordingSink()
+        manager.add(mutating)
+        manager.add(observer)
+
+        manager.configure({"width": 3, "height": 2, "format": "rgba8unorm"})
+
+        self.assertEqual(manager.stats[mutating]["failed"], 1)
+        self.assertEqual(dict(observer.events[0][1]), {
+            "width": 3,
+            "height": 2,
+            "format": "rgba8unorm",
+        })
+
+    def test_later_sink_uses_snapshot_when_caller_mutates_descriptor(self):
+        manager = SinkManager()
+        descriptor = {"width": 3, "height": 2, "format": "rgba8unorm"}
+        manager.configure(descriptor)
+
+        descriptor["width"] = 999
+        late = RecordingSink()
+        manager.add(late)
+
+        self.assertEqual(dict(late.events[0][1]), {
+            "width": 3,
+            "height": 2,
+            "format": "rgba8unorm",
+        })
+
     def test_isolates_failures_and_counts_submit_outcomes(self):
         reported = []
         manager = SinkManager(on_error=lambda error, sink: reported.append((str(error), sink)))
