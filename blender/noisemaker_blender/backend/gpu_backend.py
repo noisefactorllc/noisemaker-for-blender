@@ -86,6 +86,10 @@ class GpuBackend:
         """
         return None
 
+    def max_texture_size(self):
+        """Return Blender's active GPU texture-dimension limit."""
+        return gpu.capabilities.max_texture_size_get()
+
     # ---- dimension resolution (reference/04 §resolveDimension) -------------
     def resolve_dim(self, spec, uniforms):
         s = self.size

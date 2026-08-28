@@ -31,6 +31,33 @@ def collect_default_uniforms(graph):
     return out
 
 
+def _is_volume_size_uniform(name):
+    return (name == "volumeSize" or
+            name.startswith("volumeSize_chain_") or
+            name.startswith("volumeSize_node_"))
+
+
+def _clamp_volume_size(value, max_texture_size):
+    """Clamp a volume atlas edge power-of-two-down to the device texture limit."""
+    if (not isinstance(value, (int, float)) or isinstance(value, bool) or
+            not max_texture_size or value * value <= max_texture_size):
+        return value
+    clamped = 16
+    while (clamped * 2) ** 2 <= max_texture_size and clamped * 2 < value:
+        clamped *= 2
+    return clamped
+
+
+def _clamp_graph_volume_sizes(graph, max_texture_size):
+    for render_pass in graph.passes:
+        uniforms = render_pass.get("uniforms")
+        if not uniforms:
+            continue
+        for name, value in uniforms.items():
+            if _is_volume_size_uniform(name):
+                uniforms[name] = _clamp_volume_size(value, max_texture_size)
+
+
 def should_skip(p, lookup):
     """Mirror reference Pipeline.shouldSkipPass — conditions are read ONLY off the pass
     object. The reference expander builds each graph pass from an explicit field list that
@@ -87,6 +114,9 @@ def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None,
     render-surface array. An optional externally owned `sink_manager` receives the configured
     output descriptor and each completed render-surface binding with a monotonic timestamp in ms.
     """
+    max_texture_size = getattr(backend, "max_texture_size", None)
+    if callable(max_texture_size):
+        _clamp_graph_volume_sizes(graph, max_texture_size())
     defaults = collect_default_uniforms(graph)
     backend.setup(graph, defaults)
     out_name = graph.render_surface  # surface name, e.g. "o1"
