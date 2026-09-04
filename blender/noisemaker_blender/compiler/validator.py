@@ -1255,6 +1255,8 @@ def _osc_resolve_param(param, resolve_enum):
 
 
 def _clamp01(v):
+    if isinstance(v, float) and math.isnan(v):
+        return v
     return max(0, min(1, v))
 
 

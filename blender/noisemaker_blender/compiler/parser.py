@@ -77,9 +77,15 @@ def _make_number(value):
 
     JS has a single Number type; ``JSON.stringify`` of an integral float (e.g. ``30.0``)
     emits ``30``. We mirror that by storing integral values as Python ``int`` so the
-    serialized/structural form matches the golden, and non-integral values as ``float``.
+    serialized/structural form matches the golden, while retaining negative zero and
+    non-integral values as ``float`` for subsequent arithmetic.
     """
-    if isinstance(value, float) and value.is_integer() and not math.isinf(value):
+    if (
+        isinstance(value, float)
+        and value.is_integer()
+        and math.isfinite(value)
+        and not (value == 0 and math.copysign(1, value) < 0)
+    ):
         return int(value)
     return value
 
@@ -1000,7 +1006,10 @@ def parse(tokens):
         if peek()["type"] == "MINUS":
             advance()
             val = parse_unary()
-            return {"type": "Number", "value": _make_number(-to_number(val))}
+            return {
+                "type": "Number",
+                "value": _make_number(-_to_js_number(to_number(val))),
+            }
         return parse_primary()
 
     def parse_primary():
