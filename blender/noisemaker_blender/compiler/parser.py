@@ -324,39 +324,92 @@ def parse(tokens):
     def transform_audio_invocation(call, name_token):
         """Transform an audio() call into an Audio AST node.
 
-        audio(band, min?, max?) — band required.
+        audio(band, min?, max?, channel:?, name:?, id:?) — band required.
         """
         args = call["args"] if isinstance(call.get("args"), list) else []
         kwargs = call.get("kwargs") or {}
 
         param_order = ["band", "min", "max"]
+        keyword_only_params = ["channel", "name", "id"]
+        valid_params = param_order + keyword_only_params
+        if len(args) > len(param_order):
+            raise SyntaxError_(
+                "audio() channel, name and id are keyword-only at line %d col %d"
+                % (name_token["line"], name_token["col"])
+            )
+        for key in kwargs.keys():
+            if key not in valid_params:
+                raise SyntaxError_(
+                    "audio() unknown parameter '%s' at line %d col %d. Valid: %s"
+                    % (
+                        key,
+                        name_token["line"],
+                        name_token["col"],
+                        ", ".join(valid_params),
+                    )
+                )
         defaults = {
             "min": {"type": "Number", "value": 0},
             "max": {"type": "Number", "value": 1},
         }
 
         resolved = {}
-        for i, param_name in enumerate(param_order):
+        pos_cursor = 0
+        for param_name in param_order:
             if kwargs.get(param_name) is not None:
                 resolved[param_name] = kwargs[param_name]
-            elif i < len(args):
-                resolved[param_name] = args[i]
+            elif pos_cursor < len(args):
+                resolved[param_name] = args[pos_cursor]
+                pos_cursor += 1
             elif defaults.get(param_name) is not None:
                 resolved[param_name] = defaults[param_name]
 
+        if pos_cursor < len(args):
+            raise SyntaxError_(
+                "audio() has an excess positional argument at line %d col %d"
+                % (name_token["line"], name_token["col"])
+            )
         if not resolved.get("band"):
             raise SyntaxError_(
                 "audio() requires 'band' argument at line %d col %d"
                 % (name_token["line"], name_token["col"])
             )
+        if kwargs.get("id") is not None and kwargs.get("name") is None:
+            raise SyntaxError_(
+                "audio() 'id' requires readable 'name' at line %d col %d"
+                % (name_token["line"], name_token["col"])
+            )
+        if (kwargs.get("channel") is None) != (kwargs.get("name") is None):
+            raise SyntaxError_(
+                "audio() selected device requires both 'name' and 'channel' at line %d col %d"
+                % (name_token["line"], name_token["col"])
+            )
+        for param_name in ("name", "id"):
+            value = kwargs.get(param_name)
+            if value is None:
+                continue
+            if value.get("type") != "String":
+                raise SyntaxError_(
+                    "audio() '%s' requires a quoted string at line %d col %d"
+                    % (param_name, name_token["line"], name_token["col"])
+                )
+            if len(value.get("value", "")) == 0:
+                raise SyntaxError_(
+                    "audio() '%s' must not be empty at line %d col %d"
+                    % (param_name, name_token["line"], name_token["col"])
+                )
 
-        return {
+        node = {
             "type": "Audio",
             "band": resolved.get("band"),
             "min": resolved.get("min"),
             "max": resolved.get("max"),
             "loc": {"line": name_token["line"], "col": name_token["col"]},
         }
+        for param_name in keyword_only_params:
+            if kwargs.get(param_name) is not None:
+                node[param_name] = kwargs[param_name]
+        return node
 
     def transform_from_invocation(call, name_token):
         def fail(message):
@@ -878,7 +931,7 @@ def parse(tokens):
         kwargs = {}
         keyword = False
         positional = False
-        allow_mixed = name_token["lexeme"] == "midi"
+        allow_mixed = name_token["lexeme"] in ("midi", "audio")
         if peek()["type"] != "RPAREN":
             while True:
                 nxt = tok_at(state["current"] + 1)

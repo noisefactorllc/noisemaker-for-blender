@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Compiler parity for device-qualified MIDI automation descriptors."""
 
-import math
 import sys
 import unittest
 from pathlib import Path
@@ -71,12 +70,12 @@ class MidiDeviceSelectionTests(unittest.TestCase):
                 )
                 self.assertEqual(4, descriptor["mode"])
 
-    def test_numeric_ranges_preserve_javascript_signed_zero_and_nan(self):
+    def test_numeric_ranges_preserve_signed_zero_and_reject_nan(self):
         negative_zero = compile_scale_x("midi(channel: 1, min: 1 / -0)")
         not_a_number = compile_scale_x("midi(channel: 1, min: 0 / 0)")
 
         self.assertEqual(0, negative_zero["min"])
-        self.assertTrue(math.isnan(not_a_number["min"]))
+        self.assertEqual(0, not_a_number["min"])
 
     def test_invalid_identity_forms_are_rejected(self):
         cases = {

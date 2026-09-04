@@ -114,6 +114,7 @@ _AUDIO_BAND_ENUM = {
     "mid": _num(1),
     "high": _num(2),
     "vol": _num(3),
+    "raw": _num(4),
 }
 
 STD_ENUMS = {
