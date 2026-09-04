@@ -39,15 +39,42 @@ class MidiDeviceSelectionTests(unittest.TestCase):
         self.assertEqual('Launch "Control"', descriptor["name"])
         self.assertEqual(r"port\2", descriptor["id"])
 
+    def test_single_quoted_identity_uses_legacy_escape_fallback(self):
+        descriptor = compile_scale_x(
+            r'''midi(channel: 1, name: 'Launch "Control"\'s \\ A', id: 'port\\2')'''
+        )
+
+        self.assertEqual('Launch "Control"\'s \\ A', descriptor["name"])
+        self.assertEqual(r"port\2", descriptor["id"])
+
     def test_integral_decimal_mode_is_preserved(self):
         descriptor = compile_scale_x("midi(channel: 1, mode: 2.0)")
 
         self.assertEqual(2, descriptor["mode"])
 
+    def test_numeric_mode_uses_javascript_binary64_arithmetic(self):
+        descriptor = compile_scale_x(
+            "midi(channel: 1, mode: 9007199254740992 + 1 - 9007199254740992)"
+        )
+
+        self.assertEqual(0, descriptor["mode"])
+
+    def test_non_finite_numeric_mode_defaults_without_crashing(self):
+        huge = "9" * 200
+        expressions = ["%s * %s" % (huge, huge), "1 / 0", "0 / 0"]
+
+        for expression in expressions:
+            with self.subTest(expression=expression):
+                descriptor = compile_scale_x(
+                    "midi(channel: 1, mode: %s)" % expression
+                )
+                self.assertEqual(4, descriptor["mode"])
+
     def test_invalid_identity_forms_are_rejected(self):
         cases = {
             'midi(channel: 1, id: "port-2")': "requires readable 'name'",
             'midi(channel: 1, name: "")': "must not be empty",
+            'midi(channel: 1, name: "Controller", id: "")': "must not be empty",
             "midi(channel: 1, name: portName)": "requires a quoted string",
             'midi(1, 0, 0, 1, 1, "Controller")': "keyword-only",
             'midi(channel: 1, vendor: "Noise Factor")': "unknown parameter 'vendor'",

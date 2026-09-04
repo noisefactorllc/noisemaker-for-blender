@@ -89,6 +89,34 @@ def _parse_js_number(lexeme):
     return _make_number(float(lexeme))
 
 
+def _to_js_number(value):
+    """Coerce a Python numeric value back to JavaScript's binary64 Number domain."""
+    try:
+        return float(value)
+    except OverflowError:
+        return -math.inf if value < 0 else math.inf
+
+
+def _js_binary_number(left, right, operator):
+    """Evaluate parser arithmetic with JavaScript Number semantics."""
+    left = _to_js_number(left)
+    right = _to_js_number(right)
+    if operator == "PLUS":
+        result = left + right
+    elif operator == "MINUS":
+        result = left - right
+    elif operator == "STAR":
+        result = left * right
+    elif right != 0:
+        result = left / right
+    elif left == 0 or math.isnan(left):
+        result = math.nan
+    else:
+        negative = math.copysign(1, left) != math.copysign(1, right)
+        result = -math.inf if negative else math.inf
+    return _make_number(result)
+
+
 def parse(tokens):
     """Parse a token stream into an AST.
 
@@ -946,8 +974,10 @@ def parse(tokens):
             right = parse_multiplicative()
             left_val = to_number(node)
             right_val = to_number(right)
-            result = left_val + right_val if op == "PLUS" else left_val - right_val
-            node = {"type": "Number", "value": _make_number(result)}
+            node = {
+                "type": "Number",
+                "value": _js_binary_number(left_val, right_val, op),
+            }
         return node
 
     def parse_multiplicative():
@@ -957,8 +987,10 @@ def parse(tokens):
             right = parse_unary()
             left_val = to_number(node)
             right_val = to_number(right)
-            result = left_val * right_val if op == "STAR" else left_val / right_val
-            node = {"type": "Number", "value": _make_number(result)}
+            node = {
+                "type": "Number",
+                "value": _js_binary_number(left_val, right_val, op),
+            }
         return node
 
     def parse_unary():

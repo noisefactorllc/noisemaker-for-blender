@@ -26,6 +26,7 @@ stdlib-only and self-contained: imports only sibling compiler modules + stdlib.
 from __future__ import annotations
 
 import copy
+import math
 import re
 
 from . import ops as _ops_mod
@@ -1311,7 +1312,13 @@ def _resolve_midi(node, resolve_enum):
         mode_node
         and mode_node.get("type") == "Number"
         and _is_number(mode_node.get("value"))
-        and float(mode_node["value"]).is_integer()
+        and (
+            isinstance(mode_node["value"], int)
+            or (
+                math.isfinite(mode_node["value"])
+                and mode_node["value"].is_integer()
+            )
+        )
         and 0 <= mode_node["value"] <= 4
     ):
         mode_value = mode_node["value"]
