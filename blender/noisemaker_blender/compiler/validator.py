@@ -36,6 +36,7 @@ from .lang_data import (
     normalize_member_path,
     path_starts_with,
 )
+from .string_literals import decode_json_string_literal_content
 
 # A sentinel distinguishing "argument absent" (JS ``undefined``) from an explicit
 # ``None`` value. Mirrors JS where ``call.args[i]`` past the end is ``undefined``.
@@ -51,7 +52,14 @@ _STATE_VALUES = frozenset(
 _SURFACE_PASSTHROUGH_CALLS = frozenset(["read"])
 
 _ALLOWED_STRING_PARAMS = frozenset(
-    ["text.text", "text.font", "text.justify"]
+    [
+        "text.text",
+        "text.font",
+        "text.justify",
+        "text.style",
+        "midi.name",
+        "midi.id",
+    ]
 )
 
 _VOL_RE = re.compile(r"^vol[0-7]$")
@@ -1299,6 +1307,14 @@ def _resolve_midi(node, resolve_enum):
             mode_value = resolved
         elif isinstance(resolved, dict) and resolved.get("type") == "Number":
             mode_value = resolved["value"]
+    elif (
+        mode_node
+        and mode_node.get("type") == "Number"
+        and _is_number(mode_node.get("value"))
+        and float(mode_node["value"]).is_integer()
+        and 0 <= mode_node["value"] <= 4
+    ):
+        mode_value = mode_node["value"]
     value = {
         "type": "Midi",
         "channel": _qq(_osc_resolve_param(node.get("channel"), resolve_enum), 1),
@@ -1308,6 +1324,15 @@ def _resolve_midi(node, resolve_enum):
         "sensitivity": _qq(_osc_resolve_param(node.get("sensitivity"), resolve_enum), 1),
         "_ast": node,
     }
+    for param_name in ("name", "id"):
+        param = node.get(param_name)
+        if param is None:
+            continue
+        allowlist_key = "midi.%s" % param_name
+        if allowlist_key not in _ALLOWED_STRING_PARAMS:
+            continue
+        if param.get("type") == "String" and len(param.get("value", "")) > 0:
+            value[param_name] = decode_json_string_literal_content(param["value"])
     if node.get("_varRef"):
         value["_varRef"] = node["_varRef"]
     return value

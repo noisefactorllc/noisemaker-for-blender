@@ -201,12 +201,30 @@ def parse(tokens):
     def transform_midi_invocation(call, name_token):
         """Transform a midi() call into a Midi AST node.
 
-        midi(channel, mode?, min?, max?, sensitivity?) — channel required.
+        midi(channel, mode?, min?, max?, sensitivity?, name:?, id:?) — channel required.
         """
         args = call["args"] if isinstance(call.get("args"), list) else []
         kwargs = call.get("kwargs") or {}
 
         param_order = ["channel", "mode", "min", "max", "sensitivity"]
+        keyword_only_params = ["name", "id"]
+        valid_params = param_order + keyword_only_params
+        if len(args) > len(param_order):
+            raise SyntaxError_(
+                "midi() name and id are keyword-only at line %d col %d"
+                % (name_token["line"], name_token["col"])
+            )
+        for key in kwargs.keys():
+            if key not in valid_params:
+                raise SyntaxError_(
+                    "midi() unknown parameter '%s' at line %d col %d. Valid: %s"
+                    % (
+                        key,
+                        name_token["line"],
+                        name_token["col"],
+                        ", ".join(valid_params),
+                    )
+                )
         defaults = {
             "mode": {"type": "Member", "path": ["midiMode", "velocity"]},
             "min": {"type": "Number", "value": 0},
@@ -215,21 +233,47 @@ def parse(tokens):
         }
 
         resolved = {}
-        for i, param_name in enumerate(param_order):
+        pos_cursor = 0
+        for param_name in param_order:
             if kwargs.get(param_name) is not None:
                 resolved[param_name] = kwargs[param_name]
-            elif i < len(args):
-                resolved[param_name] = args[i]
+            elif pos_cursor < len(args):
+                resolved[param_name] = args[pos_cursor]
+                pos_cursor += 1
             elif defaults.get(param_name) is not None:
                 resolved[param_name] = defaults[param_name]
 
+        if pos_cursor < len(args):
+            raise SyntaxError_(
+                "midi() has an excess positional argument at line %d col %d"
+                % (name_token["line"], name_token["col"])
+            )
         if not resolved.get("channel"):
             raise SyntaxError_(
                 "midi() requires 'channel' argument at line %d col %d"
                 % (name_token["line"], name_token["col"])
             )
+        if kwargs.get("id") is not None and kwargs.get("name") is None:
+            raise SyntaxError_(
+                "midi() 'id' requires readable 'name' at line %d col %d"
+                % (name_token["line"], name_token["col"])
+            )
+        for param_name in keyword_only_params:
+            value = kwargs.get(param_name)
+            if value is None:
+                continue
+            if value.get("type") != "String":
+                raise SyntaxError_(
+                    "midi() '%s' requires a quoted string at line %d col %d"
+                    % (param_name, name_token["line"], name_token["col"])
+                )
+            if len(value.get("value", "")) == 0:
+                raise SyntaxError_(
+                    "midi() '%s' must not be empty at line %d col %d"
+                    % (param_name, name_token["line"], name_token["col"])
+                )
 
-        return {
+        node = {
             "type": "Midi",
             "channel": resolved.get("channel"),
             "mode": resolved.get("mode"),
@@ -238,6 +282,10 @@ def parse(tokens):
             "sensitivity": resolved.get("sensitivity"),
             "loc": {"line": name_token["line"], "col": name_token["col"]},
         }
+        for param_name in keyword_only_params:
+            if kwargs.get(param_name) is not None:
+                node[param_name] = kwargs[param_name]
+        return node
 
     def transform_audio_invocation(call, name_token):
         """Transform an audio() call into an Audio AST node.
@@ -795,43 +843,34 @@ def parse(tokens):
         args = []
         kwargs = {}
         keyword = False
+        positional = False
+        allow_mixed = name_token["lexeme"] == "midi"
         if peek()["type"] != "RPAREN":
-            nxt = tok_at(state["current"] + 1)
-            if peek()["type"] == "IDENT" and nxt is not None and nxt.get("type") == "COLON":
-                keyword = True
-                parse_kwarg(kwargs)
-                while peek()["type"] == "COMMA":
-                    advance()
-                    if peek()["type"] == "RPAREN":
-                        break
-                    nxt = tok_at(state["current"] + 1)
-                    if not (
-                        peek()["type"] == "IDENT"
-                        and nxt is not None and nxt.get("type") == "COLON"
-                    ):
+            while True:
+                nxt = tok_at(state["current"] + 1)
+                if peek()["type"] == "IDENT" and nxt is not None and nxt.get("type") == "COLON":
+                    if positional and not allow_mixed:
                         t = peek()
                         raise SyntaxError_(
                             "Cannot mix positional and keyword arguments "
                             "at line %d col %d" % (t["line"], t["col"])
                         )
+                    keyword = True
                     parse_kwarg(kwargs)
-            else:
-                args.append(parse_arg())
-                while peek()["type"] == "COMMA":
-                    advance()
-                    if peek()["type"] == "RPAREN":
-                        break
-                    nxt = tok_at(state["current"] + 1)
-                    if (
-                        peek()["type"] == "IDENT"
-                        and nxt is not None and nxt.get("type") == "COLON"
-                    ):
+                else:
+                    if keyword and not allow_mixed:
                         t = peek()
                         raise SyntaxError_(
                             "Cannot mix positional and keyword arguments "
                             "at line %d col %d" % (t["line"], t["col"])
                         )
+                    positional = True
                     args.append(parse_arg())
+                if peek()["type"] != "COMMA":
+                    break
+                advance()
+                if peek()["type"] == "RPAREN":
+                    break
         expect("RPAREN", "Expect ')'")
         call = {"type": "Call", "name": name_token["lexeme"], "args": args}
         if keyword:
