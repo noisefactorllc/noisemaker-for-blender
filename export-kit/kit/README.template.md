@@ -9,24 +9,24 @@ like a picture. It fetches nothing at runtime.
 
 1. Unzip this folder anywhere. Leave `engine/noisemaker_blender.zip` zipped: Blender wants the
    archive, not its contents.
-2. In Blender, open **Edit > Preferences > Add-ons**, use **Install from Disk**, and pick
-   `engine/noisemaker_blender.zip`.
+2. In Blender, open **Edit > Preferences > Add-ons**. Select **Install from Disk**.
+   Select `engine/noisemaker_blender.zip`.
 3. Tick **Noisemaker for Blender** in the add-on list to enable it.
 
 You need Blender 5.1 or newer and a working GPU: the add-on renders through Blender's `gpu` module.
 
 ## Bake your program
 
-1. Open the **Compositor** or the **Image Editor** and press **N** to show the sidebar, then pick
-   the **Noisemaker** tab.
-2. Set **Source** to **File** and point **DSL File** at the `program.dsl` in this folder.
+1. Open the **Compositor** or the **Image Editor**. Press **N** to show the sidebar.
+   Select the **Noisemaker** tab.
+2. Set **Source** to **File**. Point **DSL File** at the `program.dsl` in this folder.
 3. Press **Bake**.
 
-The result lands in an Image datablock (named `Noisemaker` unless you change **Image**). Add a stock
+The result appears in an Image datablock (named `Noisemaker` unless you change **Image**). Add a stock
 **Image** node in the compositor pointing at it, or drop it into any material.
 
-`bake.py` does the same thing from a script if you would rather not click: open it in Blender's Text
-Editor and press **Run Script**. It reads the `program.dsl` sitting beside it and writes to an Image
+`bake.py` performs the same bake from a script. Open it in Blender's Text Editor. Press **Run Script**.
+It reads the `program.dsl` sitting beside it and writes to an Image
 called `NoisedeckExport`, with the resolution, frame count and timestep as constants at the top.
 
 ### Simulations need time to evolve
@@ -76,15 +76,17 @@ right. They are still in the supported set because the rest of the program is un
 
 ## The engine
 
-Left **include engine code** checked? The add-on is here, at `engine/noisemaker_blender.zip`.
-Install it and bake offline.
+If you kept **include engine code** checked, the add-on is at `engine/noisemaker_blender.zip`.
+Install it. Bake offline.
 
-Already have the add-on installed? Then you only need `program.dsl`, plus `shaders/` if you kept
-**include shader code** checked. Point **DSL File** at it and press **Bake**.
+If the add-on is already installed, you only need `program.dsl`, plus `shaders/` if you kept
+**include shader code** checked. Point **DSL File** at the program. Press **Bake**.
 
-Do not have it at all? Get the port from
-<https://github.com/noisefactorllc/noisemaker-for-blender>, build the archive with
-`cd blender && zip -r noisemaker_blender.zip noisemaker_blender`, and install that the same way.
+If you do not have the add-on:
+
+1. Get the port from <https://github.com/noisefactorllc/noisemaker-for-blender>.
+2. Build the archive with `cd blender && zip -r noisemaker_blender.zip noisemaker_blender`.
+3. Install the archive as described above.
 
 Noisedeck exported this program against Noisemaker `{{NM_ENGINE_VERSION}}`. The Blender port is a
 second implementation of that engine rather than the same code, so expect small differences from
@@ -92,5 +94,5 @@ what the app showed you, on top of the two effects named above.
 
 ## License
 
-The Noisemaker engine and the Blender port are MIT licensed; see `LICENSES/`. Your program and the
+The Noisemaker engine and the Blender port are MIT licensed. See `LICENSES/`. Your program and the
 imagery it renders are yours.

@@ -25,10 +25,9 @@ engine runs in the browser at [noisedeck.app](https://noisedeck.app).
 effects, rendered on Blender's GPU. Use it to make textures, materials, and animated backgrounds
 from code, with no image files.
 
-One thing worth knowing up front: Blender's compositor can't run custom shader code. So instead of
-adding new effect nodes, this addon **bakes** a Noisemaker program into a regular Blender **Image**
-(an Image datablock) — which the compositor, any material, or any texture slot can then use like any
-other picture.
+Blender's compositor cannot run custom shader code. Instead of adding new effect nodes, this addon
+**bakes** a Noisemaker program into a regular Blender **Image** (an Image datablock).
+The compositor, any material, or any texture slot can use the datablock like any other picture.
 
 It is **self-contained**: the addon compiles the DSL and renders it entirely in Blender — no
 internet, no Node.js, no separate engine to install.
@@ -59,8 +58,11 @@ The addon is a classic single-folder addon, so install it as a zip:
 cd blender && zip -r noisemaker_blender.zip noisemaker_blender
 ```
 
-Then in Blender: **Edit ▸ Preferences ▸ Add-ons ▸ Install from Disk**, pick
-`noisemaker_blender.zip`, and enable **"Noisemaker for Blender"**.
+Then in Blender:
+
+1. Open **Edit ▸ Preferences ▸ Add-ons ▸ Install from Disk**.
+2. Select `noisemaker_blender.zip`.
+3. Enable **"Noisemaker for Blender"**.
 
 (Prefer a live checkout? Symlink `blender/noisemaker_blender` into your Blender `scripts/addons/`
 instead.)
@@ -73,16 +75,19 @@ instead.)
    noise(seed: 1, scaleX: 50, scaleY: 50).adjust().write(o0)
    render(o0)
    ```
-2. **Open the Noisemaker panel** — press `N` in the **Compositor** or **Image Editor** and open the
-   **Noisemaker** tab, then point it at your text block. (Or add a *Program* node in the
-   **Noisemaker** node editor with Shift+A and set its DSL there.)
-3. **Click Bake.** The result lands in an Image datablock named `Noisemaker`.
+2. **Open the Noisemaker panel.** Press `N` in the **Compositor** or **Image Editor**.
+   Open the **Noisemaker** tab. Select your text block.
+   Alternatively, add a *Program* node in the **Noisemaker** node editor with Shift+A. Set its DSL there.
+3. **Click Bake.** The result appears in an Image datablock named `Noisemaker`.
 4. **Use it** — add an **Image node** in the compositor pointing at that datablock, or drop the Image
    into any material or texture.
 
-**Every DSL program** has the same shape: name the namespaces it uses (`search synth, filter`),
-chain effects, write the result to an output surface (`.write(o0)`), then pick one to show
-(`render(o0)`).
+**Every DSL program** has the same shape:
+
+- Name the namespaces it uses (`search synth, filter`).
+- Chain the effects.
+- Write the result to an output surface (`.write(o0)`).
+- Select a surface to show (`render(o0)`).
 
 Ready-to-bake examples live in [`parity/programs/`](parity/programs). The flagship is
 [`parity/programs/north_star.dsl`](parity/programs/north_star.dsl) — a 33-pass program (3D noise →
@@ -109,13 +114,13 @@ A bake produces an ordinary Blender **Image** datablock, so it works anywhere a 
 - any panel that takes an image.
 
 It's stored as **Non-Color** data (raw linear values), so it matches the original engine's output
-and isn't double-corrected by color management. Re-bake to refresh it; raise **Frames** to capture an
+and isn't double-corrected by color management. Re-bake to refresh it. Raise **Frames** to capture an
 evolved or animated result.
 
 ## What works today
 
 - The **2D single-pass catalog plus agent-deposit** is **pixel-identical to the web reference**
-  (byte-exact / ±1); chaotic continuous sims are chaos-gated (below). In all, **210 effect
+  (byte-exact / ±1). Chaotic continuous sims are chaos-gated (below). In all, **210 effect
   definitions** span 8 namespaces (including the 3D `synth3d` / `filter3d`).
 - **Particle/agent sims, fluid (navier–stokes), and the 3D volume renderer** all render and match the
   reference.
