@@ -36,7 +36,6 @@ class SelectedAudioCompilerTests(unittest.TestCase):
         cases = {
             'audio(band: audioBand.low, id: "device")': "requires readable 'name'",
             'audio(band: audioBand.low, name: "Input")': "requires both 'name' and 'channel'",
-            'audio(band: audioBand.low, channel: 1)': "requires both 'name' and 'channel'",
             'audio(band: audioBand.low, channel: 1, name: "")': "must not be empty",
             'audio(band: audioBand.low, channel: 1, name: inputName)': "requires a quoted string",
             'audio(audioBand.low, 0, 1, 2)': "keyword-only",

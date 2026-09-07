@@ -235,17 +235,18 @@ def parse(tokens):
     def transform_midi_invocation(call, name_token):
         """Transform a midi() call into a Midi AST node.
 
-        midi(channel, mode?, min?, max?, sensitivity?, name:?, id:?) — channel required.
+        midi(channel?, mode?, min?, max?, sensitivity?, name:?, id:?, cc:?,
+             nrpn:?, zone:?, members:?) — exactly one of channel or zone.
         """
         args = call["args"] if isinstance(call.get("args"), list) else []
         kwargs = call.get("kwargs") or {}
 
         param_order = ["channel", "mode", "min", "max", "sensitivity"]
-        keyword_only_params = ["name", "id"]
+        keyword_only_params = ["name", "id", "cc", "nrpn", "zone", "members"]
         valid_params = param_order + keyword_only_params
         if len(args) > len(param_order):
             raise SyntaxError_(
-                "midi() name and id are keyword-only at line %d col %d"
+                "midi() name, id, cc, nrpn, zone and members are keyword-only at line %d col %d"
                 % (name_token["line"], name_token["col"])
             )
         for key in kwargs.keys():
@@ -282,9 +283,19 @@ def parse(tokens):
                 "midi() has an excess positional argument at line %d col %d"
                 % (name_token["line"], name_token["col"])
             )
-        if not resolved.get("channel"):
+        if not resolved.get("channel") and kwargs.get("zone") is None:
             raise SyntaxError_(
-                "midi() requires 'channel' argument at line %d col %d"
+                "midi() requires 'channel' or 'zone' argument at line %d col %d"
+                % (name_token["line"], name_token["col"])
+            )
+        if resolved.get("channel") and kwargs.get("zone") is not None:
+            raise SyntaxError_(
+                "midi() 'channel' and 'zone' are mutually exclusive at line %d col %d"
+                % (name_token["line"], name_token["col"])
+            )
+        if kwargs.get("members") is not None and kwargs.get("zone") is None:
+            raise SyntaxError_(
+                "midi() 'members' requires 'zone' at line %d col %d"
                 % (name_token["line"], name_token["col"])
             )
         if kwargs.get("id") is not None and kwargs.get("name") is None:
@@ -292,7 +303,7 @@ def parse(tokens):
                 "midi() 'id' requires readable 'name' at line %d col %d"
                 % (name_token["line"], name_token["col"])
             )
-        for param_name in keyword_only_params:
+        for param_name in ("name", "id"):
             value = kwargs.get(param_name)
             if value is None:
                 continue
@@ -309,13 +320,14 @@ def parse(tokens):
 
         node = {
             "type": "Midi",
-            "channel": resolved.get("channel"),
             "mode": resolved.get("mode"),
             "min": resolved.get("min"),
             "max": resolved.get("max"),
             "sensitivity": resolved.get("sensitivity"),
             "loc": {"line": name_token["line"], "col": name_token["col"]},
         }
+        if resolved.get("channel") is not None:
+            node["channel"] = resolved["channel"]
         for param_name in keyword_only_params:
             if kwargs.get(param_name) is not None:
                 node[param_name] = kwargs[param_name]
@@ -379,7 +391,7 @@ def parse(tokens):
                 "audio() 'id' requires readable 'name' at line %d col %d"
                 % (name_token["line"], name_token["col"])
             )
-        if (kwargs.get("channel") is None) != (kwargs.get("name") is None):
+        if kwargs.get("name") is not None and kwargs.get("channel") is None:
             raise SyntaxError_(
                 "audio() selected device requires both 'name' and 'channel' at line %d col %d"
                 % (name_token["line"], name_token["col"])

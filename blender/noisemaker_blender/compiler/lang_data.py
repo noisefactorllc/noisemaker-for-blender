@@ -107,6 +107,12 @@ _MIDI_MODE_ENUM = {
     "gateVelocity": _num(2),
     "triggerNote": _num(3),
     "velocity": _num(4),
+    "cc": _num(5),
+    "cc14": _num(6),
+    "nrpn": _num(7),
+    "pitchBend": _num(8),
+    "pressure": _num(9),
+    "polyPressure": _num(10),
 }
 
 _AUDIO_BAND_ENUM = {
@@ -140,6 +146,7 @@ STD_ENUMS = {
     },
     "oscKind": _OSC_KIND_ENUM,
     "midiMode": _MIDI_MODE_ENUM,
+    "midiZone": {"lower": _num(0), "upper": _num(1)},
     "audioBand": _AUDIO_BAND_ENUM,
     "palette": _PALETTE_ENUM,
 }

@@ -54,7 +54,7 @@ _SURFACE_PASSTHROUGH_CALLS = frozenset(["read"])
 
 _AUTOMATION_FIELDS = {
     "Oscillator": ("oscType", "min", "max", "speed", "offset", "seed"),
-    "Midi": ("channel", "mode", "min", "max", "sensitivity", "name", "id"),
+    "Midi": ("channel", "mode", "min", "max", "sensitivity", "name", "id", "cc", "nrpn", "zone", "members"),
     "Audio": ("band", "min", "max", "channel", "name", "id"),
 }
 _MAX_AUTOMATION_DEPTH = 8
@@ -160,7 +160,7 @@ def validate(ast):
             return "{%s%s}" % (src[:30], "..." if len(src) > 30 else "")
         if node.get("name"):
             return node.get("name")
-        if node.get("value") is not None:
+        if _js_truthy(node.get("value")):
             return _js_string(node.get("value"))
         return "[%s]" % (node.get("type") or "unknown")
 
@@ -1446,16 +1446,55 @@ def _compile_automation_descriptor(node, resolve_enum, push_diag, depth=0):
             "_ast": node,
         }
     elif node_type == "Midi":
+        mode = _resolve_automation_enum(
+            node.get("mode"), "midiMode", 4, set(range(11)), "midi", "mode",
+            resolve_enum, push_diag,
+        )
+        has_zone = node.get("zone") is not None
+        zone = _resolve_automation_enum(
+            node.get("zone"), "midiZone", _UNDEF, {0, 1}, "midi", "zone",
+            resolve_enum, push_diag,
+        ) if has_zone else _UNDEF
+        selection_invalid = [has_zone and zone is _UNDEF]
+        members = _UNDEF
+        if node.get("members") is not None:
+            members = _resolve_automation_number(
+                node["members"], "midi", "members", _UNDEF, resolve_enum, push_diag,
+                integer=True, minimum=1, maximum=15, allow_member=False,
+                invalid_flag=selection_invalid, depth=depth,
+            )
+            if not has_zone:
+                selection_invalid[0] = True
+        if has_zone and node.get("channel") is not None:
+            selection_invalid[0] = True
+        channel_invalid = [False]
+        channel = _UNDEF if has_zone else _resolve_automation_number(
+            node.get("channel"), "midi", "channel", 1, resolve_enum, push_diag,
+            **({"integer": True, "minimum": 1, "maximum": 16,
+                "allow_member": False, "invalid_flag": channel_invalid}
+               if mode >= 5 else {"allow_boolean": True}), depth=depth,
+        )
+        cc_invalid = [False]
+        cc = _UNDEF
+        if node.get("cc") is not None or mode in (5, 6):
+            cc = _resolve_automation_number(
+                node.get("cc"), "midi", "cc", 1, resolve_enum, push_diag,
+                integer=True, minimum=0, maximum=31 if mode == 6 else 127,
+                allow_member=False, invalid_flag=cc_invalid, depth=depth,
+            )
+        nrpn = _UNDEF
+        if node.get("nrpn") is not None or mode == 7:
+            if node.get("nrpn") is None:
+                push_diag("S002", node, "midi() nrpn mode requires a parameter number")
+                selection_invalid[0] = True
+            nrpn = _resolve_automation_number(
+                node.get("nrpn"), "midi", "nrpn", _UNDEF, resolve_enum, push_diag,
+                integer=True, minimum=0, maximum=16382, allow_member=False,
+                invalid_flag=selection_invalid, depth=depth,
+            )
         value = {
             "type": "Midi",
-            "channel": _resolve_automation_number(
-                node.get("channel"), "midi", "channel", 1, resolve_enum, push_diag,
-                allow_boolean=True, depth=depth,
-            ),
-            "mode": _resolve_automation_enum(
-                node.get("mode"), "midiMode", 4, set(range(5)), "midi", "mode",
-                resolve_enum, push_diag,
-            ),
+            "mode": mode,
             "min": _resolve_automation_number(
                 node.get("min"), "midi", "min", 0, resolve_enum, push_diag,
                 allow_boolean=True, allow_automation=True, clamp01=True, depth=depth,
@@ -1471,6 +1510,13 @@ def _compile_automation_descriptor(node, resolve_enum, push_diag, depth=0):
             ),
             "_ast": node,
         }
+        for field_name, field_value in (("channel", channel), ("cc", cc),
+                                        ("nrpn", nrpn), ("zone", zone),
+                                        ("members", members)):
+            if field_value is not _UNDEF:
+                value[field_name] = field_value
+        if selection_invalid[0] or channel_invalid[0] or cc_invalid[0]:
+            value["_invalid"] = True
         for field_name in ("name", "id"):
             string_value = _resolve_automation_string(
                 node.get(field_name), "midi", field_name, push_diag
@@ -1505,6 +1551,7 @@ def _compile_automation_descriptor(node, resolve_enum, push_diag, depth=0):
                 and math.isfinite(channel_value)
                 and float(channel_value).is_integer()
                 and channel_value >= 1
+                and channel_value <= 32
             ):
                 channel = channel_value
             else:
@@ -1520,7 +1567,7 @@ def _compile_automation_descriptor(node, resolve_enum, push_diag, depth=0):
                     )
                     push_diag(
                         "S002", channel_node,
-                        "audio() channel must be a positive integer (got %s)" % got,
+                        "audio() channel must be a positive integer from 1 to 32 (got %s)" % _js_string(got),
                     )
         name = _resolve_automation_string(node.get("name"), "audio", "name", push_diag)
         identity = _resolve_automation_string(node.get("id"), "audio", "id", push_diag)

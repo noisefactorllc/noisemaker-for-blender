@@ -297,18 +297,61 @@ def _evaluate_oscillator(
 
 
 def _evaluate_midi(config, midi_state, wall_time_ms, minimum, maximum, sensitivity):
-    if midi_state is None:
+    if config.get("_invalid") or midi_state is None:
         return minimum
-    get_channel = _method(midi_state, "get_channel", "getChannel")
-    if get_channel is None:
+
+    def integer_in(value, low, high):
+        return _finite_number(value) and float(value).is_integer() and low <= value <= high
+
+    def indexed(values, key, default=0):
+        if isinstance(values, dict):
+            return values.get(key, default)
+        if isinstance(values, (list, tuple)) and integer_in(key, 0, len(values) - 1):
+            return values[int(key)]
+        return default
+
+    mode = config.get("mode", 4)
+    has_zone = "zone" in config
+    if has_zone and ("channel" in config or not integer_in(config["zone"], 0, 1)):
         return minimum
-    channel = get_channel(config.get("channel"))
+    if "members" in config and (not has_zone or not integer_in(config["members"], 1, 15)):
+        return minimum
+    if not has_zone and mode >= 5 and not integer_in(config.get("channel"), 1, 16):
+        return minimum
+    voice = None
+    if has_zone:
+        get_voice = _method(midi_state, "get_zone_voice", "getZoneVoice")
+        voice = get_voice(config) if get_voice else None
+        if voice is None:
+            return minimum
+        channel = _member(voice, "channel")
+    else:
+        get_channel = _method(midi_state, "get_channel", "getChannel")
+        channel = get_channel(config.get("channel")) if get_channel else None
     if channel is None:
         return minimum
-    gate = _member(channel, "gate", 0)
-    key = _member(channel, "key", 0)
-    velocity = _member(channel, "velocity", 0)
-    mode = config.get("mode")
+    note = voice if voice is not None else channel
+    gate = 1 if voice is not None else _member(note, "gate", 0)
+    key = _member(note, "key", 0)
+    velocity = _member(note, "velocity", 0)
+    if mode in (5, 6):
+        cc = config.get("cc", 1)
+        if not integer_in(cc, 0, 31 if mode == 6 else 127):
+            return minimum
+        raw = indexed(_member(channel, "cc14" if mode == 6 else "cc"), cc)
+        return minimum + raw / (16383 if mode == 6 else 127) * (maximum - minimum)
+    if mode == 7:
+        parameter = config.get("nrpn")
+        if not integer_in(parameter, 0, 16382):
+            return minimum
+        raw = indexed(_member(channel, "nrpn"), parameter)
+        return minimum + raw / 16383 * (maximum - minimum)
+    if mode == 8:
+        return minimum + _member(channel, "pitchBend", 8192) / 16383 * (maximum - minimum)
+    if mode == 9:
+        return minimum + _member(channel, "pressure", 0) / 127 * (maximum - minimum)
+    if mode == 10:
+        return minimum + indexed(_member(channel, "polyPressure"), key) / 127 * (maximum - minimum)
     raw = 0
     if mode == 0:
         raw = key
@@ -318,7 +361,7 @@ def _evaluate_midi(config, midi_state, wall_time_ms, minimum, maximum, sensitivi
         raw = velocity
     elif mode in (3, 4) and gate == 1:
         raw = key if mode == 3 else velocity
-        elapsed = wall_time_ms - _member(channel, "time", wall_time_ms)
+        elapsed = wall_time_ms - _member(note, "time", wall_time_ms)
         decay = min(1, elapsed * sensitivity * 0.001)
         raw *= 1 - decay
     return minimum + (raw / 127) * (maximum - minimum)
@@ -327,11 +370,21 @@ def _evaluate_midi(config, midi_state, wall_time_ms, minimum, maximum, sensitivi
 def _evaluate_audio(config, audio_state, minimum, maximum):
     if config.get("_invalid") or audio_state is None:
         return minimum
-    has_selector = bool(
-        config.get("name") or config.get("id") or "channel" in config
-    )
+    source = config.get("_ast")
+    if not isinstance(source, dict) or source.get("type") != "Audio":
+        source = config
+    has_selector = any(field in config or field in source for field in ("name", "id", "channel"))
     selected_state = audio_state
     if has_selector:
+        if any(field in source and field not in config for field in ("name", "id", "channel")):
+            return minimum
+        if "name" in config and (not isinstance(config["name"], str) or not config["name"]):
+            return minimum
+        if "id" in config and (not isinstance(config["id"], str) or not config["id"] or not config.get("name")):
+            return minimum
+        channel = config.get("channel")
+        if not _finite_number(channel) or not float(channel).is_integer() or not 1 <= channel <= 32:
+            return minimum
         get_selected = _method(
             audio_state, "get_device_channel_state", "getDeviceChannelState"
         )
