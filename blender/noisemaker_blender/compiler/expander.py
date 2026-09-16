@@ -368,6 +368,17 @@ def expand(compilation_result, options=None):
             effect_globals = effect_def.get("globals")
             effect_passes = effect_def.get("passes") or []
 
+            # Uniforms any pass's conditions.runIf/skipIf test (pointsRender/
+            # pointsBillboardRender's viewMode/blendMode view-mode selectors,
+            # reference 0ed489ec): these need an int-typed uniformSpecs entry
+            # below even though they carry `choices` (see the loop past the
+            # regular float/int-without-choices case).
+            conditional_uniforms = set()
+            for pass_def_scan in effect_passes:
+                conds_scan = pass_def_scan.get("conditions") or {}
+                for condition in list(conds_scan.get("runIf") or []) + list(conds_scan.get("skipIf") or []):
+                    conditional_uniforms.add(condition.get("uniform"))
+
             # Helper to scope particle textures to current pipeline.
             def scope_particle_tex(tex_name):
                 if not current_particle_pipeline_id:
@@ -485,7 +496,20 @@ def expand(compilation_result, options=None):
                         def scope_dim_spec(dim_spec):
                             if isinstance(dim_spec, dict) and "param" in dim_spec:
                                 original_param = dim_spec["param"]
-                                scoped_param = "%s_%s" % (original_param, scope_suffix)
+                                # A per-effect-local texture's own `stateSize` (pointsBillboardRender's
+                                # depthOrderA/B, spriteMean(Tiles), defocus, reference 0ed489ec) scopes
+                                # to the PARTICLE PIPELINE id, not the chain id `scope_suffix` would
+                                # otherwise give it (this branch is only reached for a non-`global_`
+                                # texture already, per `should_scope_params` above, so plain particle
+                                # surfaces stay on their existing `should_scope_as_particle` scoping) --
+                                # matching `pointsEmit`'s own `stateSize_<pipelineId>` uniform so both
+                                # sides read the same agent-count texture size.
+                                dimension_scope = (
+                                    current_particle_pipeline_id
+                                    if original_param == "stateSize" and current_particle_pipeline_id
+                                    else scope_suffix
+                                )
+                                scoped_param = "%s_%s" % (original_param, dimension_scope)
                                 scoped_param_map[original_param] = scoped_param
                                 new_dim = dict(dim_spec)
                                 new_dim["param"] = scoped_param
@@ -584,9 +608,26 @@ def expand(compilation_result, options=None):
                 pass_id = "%s_pass_%d" % (node_id, i)
                 program_name = "%s_%s%s" % (node_id, pass_def.get("program"), program_define_suffix)
 
+                # Pass-level defines (e.g. pointsRender/pointsBillboardRender's per-viewMode
+                # deposit variants, reference 0ed489ec) get their own `__KEY_value` run appended
+                # to the program name, mirroring expander.js's `programName += passDefineSuffix`.
+                # We do NOT also set an explicit `pass.defines` field: the reference doesn't
+                # either (only `programs[programName].defines` would carry it, a registration
+                # that's dead in this port -- see the module docstring -- so the suffix on
+                # `pass.program` is the only place the value survives; compiler.py's
+                # `_defines_from_program_name` recovers it from there for the actual GPU compile).
+                pass_def_defines = pass_def.get("defines")
+                if _truthy(pass_def_defines):
+                    pass_define_suffix = "".join(
+                        "__%s_%s" % (k, _js_value_str(pass_def_defines[k]))
+                        for k in sorted(pass_def_defines.keys())
+                    )
+                    program_name += pass_define_suffix
+
                 pass_obj = {
                     "id": pass_id,
                     "program": program_name,
+                    "conditions": pass_def.get("conditions", _UNDEFINED),
                     "entryPoint": pass_def.get("entryPoint", _UNDEFINED),
                     "drawMode": pass_def.get("drawMode", _UNDEFINED),
                     "drawBuffers": pass_def.get("drawBuffers", _UNDEFINED),
@@ -639,6 +680,17 @@ def expand(compilation_result, options=None):
                                 "min": d["min"] if d.get("min") is not None else 0,
                                 "max": d["max"] if d.get("max") is not None else 100,
                             }
+                        elif (d.get("type") == "int" and d.get("choices") and
+                                uniform_name in conditional_uniforms):
+                            # A conditional selector must use the same integer in every
+                            # shader pass and in CPU-side pass selection.
+                            spec = {"type": "int"}
+                            dmin, dmax = d.get("min"), d.get("max")
+                            if isinstance(dmin, (int, float)) and not isinstance(dmin, bool) and \
+                                    isinstance(dmax, (int, float)) and not isinstance(dmax, bool):
+                                spec["min"] = dmin
+                                spec["max"] = dmax
+                            pass_obj["uniformSpecs"][uniform_name] = spec
 
                 # Map Uniforms from step.args.
                 if isinstance(step_args, dict):
@@ -675,6 +727,12 @@ def expand(compilation_result, options=None):
                 pass_def_uniforms = pass_def.get("uniforms")
                 if _truthy(pass_def_uniforms):
                     for uniform_name, global_ref in pass_def_uniforms.items():
+                        # A literal constant (pointsBillboardRender's `blurLayer: 1`) specializes
+                        # a draw that shares a program with others, without exposing internal pass
+                        # selection as a DSL arg. Checked first, same as expander.js.
+                        if isinstance(global_ref, (int, float)) and not isinstance(global_ref, bool):
+                            pass_obj["uniforms"][uniform_name] = global_ref
+                            continue
                         if pipeline_uniforms.get(uniform_name, _UNDEFINED) is not _UNDEFINED:
                             pass_obj["uniforms"][uniform_name] = pipeline_uniforms[uniform_name]
                         elif pipeline_uniforms.get(global_ref, _UNDEFINED) is not _UNDEFINED:

@@ -1,0 +1,61 @@
+{
+  "pushConstants": [
+    [
+      "FLOAT",
+      "gridScale"
+    ],
+    [
+      "FLOAT",
+      "heightScale"
+    ],
+    [
+      "FLOAT",
+      "heightOffset"
+    ]
+  ],
+  "samplers": [
+    [
+      0,
+      "FLOAT_2D",
+      "xyzTex"
+    ],
+    [
+      1,
+      "FLOAT_2D",
+      "velTex"
+    ],
+    [
+      2,
+      "FLOAT_2D",
+      "heightTex"
+    ],
+    [
+      3,
+      "FLOAT_2D",
+      "diffuseTex"
+    ]
+  ],
+  "fragmentOut": [
+    [
+      0,
+      "VEC4",
+      "outXYZ"
+    ],
+    [
+      1,
+      "VEC4",
+      "outVel"
+    ],
+    [
+      2,
+      "VEC4",
+      "outRGBA"
+    ]
+  ],
+  "uniformAliases": {},
+  "std140Bytes": 16,
+  "ubo": false,
+  "notes": [
+    "MRT (3) — staged"
+  ]
+}

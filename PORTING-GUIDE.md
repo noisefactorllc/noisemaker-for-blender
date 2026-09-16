@@ -103,6 +103,63 @@ interpolated UV is needed.
   (`--tolerance 2`, `--ssim-min 0.98`); per-program overrides live at the call sites
   (`parity/integration.sh`, `parity/scorecard.py`).
 
+## This round's compiler fixes (2026-09-15, reference 0ed489ec)
+
+Upstream's `render/pointsRender` and `render/pointsBillboardRender` gained a `perspective` view mode
+by exploding their `deposit` pass into per-`viewMode` clones via `.flatMap()` on the effect
+definition — each clone carries its own `defines: {VIEW_MODE: n, ...}` and `conditions: {runIf: [...],
+skipIf: [...]}` so only the one matching the live `viewMode` uniform actually draws.
+`pointsBillboardRender` additionally gained a depth-sorted alpha-blend path (`depthKeys` +
+22-stage `depthMerge`, split the same way) and aperture defocus (`spriteMeanTiles`/`spriteMean`/
+`clearDefocus`/`depositDefocus`). This is the **first** upstream pattern combining per-pass defines
+with per-pass conditions, and three places in this port had never needed to carry either field
+through to the graph:
+
+1. **`tools/convert-defs-blender.mjs`'s `projectPass()`** didn't capture `pass.defines` at all (only
+   `conditions`, itself unused until now — see #3). Fixed: pass both through into the def JSON.
+2. **`compiler/expander.py`** never read a pass def's `defines`/`conditions`. Fixed:
+   - `defines` gets appended to the program name as a sorted `__KEY_val` run, mirroring reference
+     `expand()`'s `programName += passDefineSuffix` — **not** registered into `programs[name]`
+     (that registration is dead in this port either way, see the module docstring: no effect JSON
+     carries a `shaders` key). `pass.defines` itself is never set — the reference doesn't set it
+     either; only the program name carries it.
+   - `conditions` is copied onto the pass verbatim (mirrors reference `expand()`, which now does the
+     same — `conditions: passDef.conditions`).
+   - A new `conditionalUniforms` set (every uniform any pass's `runIf`/`skipIf` names) makes such a
+     uniform get an int-typed `uniformSpecs` entry even though it has `choices` (normally excluded) —
+     "a conditional selector must use the same integer in every shader pass and in CPU-side pass
+     selection," matching reference `expand()`'s new branch.
+   - A texture's own `stateSize` dimension (pointsBillboardRender's `depthOrderA`/`depthOrderB`/
+     `spriteMean(Tiles)`/`defocus`) now scopes to the particle-pipeline id instead of the chain id,
+     matching the reference's `dimensionScope` split (so it lands on the same `stateSize_<pipelineId>`
+     uniform key `pointsEmit` already produces, instead of a stray unmatched `stateSize_chain_N`).
+3. **`compiler/compiler.py`** gained `_defines_from_program_name()`, parsing the `__KEY_val` suffix
+   back into a dict for the actual GPU compile (`gpu_backend.py`'s `compile()` needs a real defines
+   dict — the reference gets this from `programs[pass.program].defines`, populated from each effect's
+   *inline* shader source, which this port's effect JSONs never carry) — and `_normalize_pass()` now
+   passes `conditions` through into the final graph (previously dropped even at the graph-normalize
+   stage; `runtime/pipeline.py`'s `should_skip()` was already able to consume it once present — its
+   own comment had documented this exact gap as an accepted limitation before this fix).
+4. **`tools/export-graph.mjs`** (this port's own golden-generation tool, shared shape with
+   `compiler.py`'s `_normalize_pass`) needed the identical `conditions` passthrough and
+   suffix-based defines recovery so the parity goldens reflect the same thing Python now produces.
+
+Not ported this round: the reference's `write3d`/`read3d` volume-atlas size *propagation* across
+global `vol0`-`vol7` handoffs (`expand()`'s new `writtenVolumes`/`readVolumes`/`resolveVolume`). None
+of the three new effects or the 20-program corpus exercise `write3d`/`read3d`, so this wasn't needed
+to reach 19/19 (20/20 minus the one intentional `B5oBsA` exclusion) on `parity/compiler/check_graph.py`
+— flagging it here as a known gap for whoever next touches a program using those verbs.
+
+Verified this round: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` (stdlib `python3`,
+no Blender) and every non-GUI `parity/test_*.py`. **Not verified: Metal shader compilation or
+image-level render parity** — both need a live Blender GPU context (`blender --python ...`), which
+this porting session could not launch (operator policy: no unattended GUI-app launches). The
+transpiler itself needed no changes — its existing `const int X = MACRO;` → `#define X (MACRO)`
+rule (`constIntToDefine`, built for an earlier `dither`/`median` array-size fix) already handles the
+new `const int viewMode = VIEW_MODE;`-style declarations in `deposit.vert`/`.frag` correctly; spot-check
+by hand of the transpiled `.createinfo.json`/`.frag`/`.vert` output for all 7 touched effects turned up
+nothing else needing a fix.
+
 ## Adding / regenerating an effect
 
 ```sh

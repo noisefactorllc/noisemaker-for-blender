@@ -1,36 +1,28 @@
 {
   "pushConstants": [
     [
-      "VEC2",
-      "resolution"
+      "INT",
+      "volumeSize"
     ],
     [
       "FLOAT",
-      "intensity"
+      "heightScale"
     ],
     [
       "FLOAT",
-      "aperture"
-    ],
-    [
-      "INT",
-      "viewMode"
-    ],
-    [
-      "INT",
-      "blendMode"
+      "baseHeight"
     ]
   ],
   "samplers": [
     [
       0,
       "FLOAT_2D",
-      "trailTex"
+      "heightTex"
     ],
     [
       1,
       "FLOAT_2D",
-      "defocusTex"
+      "tex"
     ]
   ],
   "fragmentOut": [
@@ -38,10 +30,17 @@
       0,
       "VEC4",
       "fragColor"
+    ],
+    [
+      1,
+      "VEC4",
+      "geoOut"
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 32,
+  "std140Bytes": 16,
   "ubo": false,
-  "notes": []
+  "notes": [
+    "MRT (2) — staged"
+  ]
 }

@@ -26,7 +26,7 @@
     ],
     [
       "INT",
-      "viewMode"
+      "shapeMode"
     ],
     [
       "FLOAT",
@@ -53,8 +53,28 @@
       "posY"
     ],
     [
-      "INT",
-      "shapeMode"
+      "FLOAT",
+      "posZ"
+    ],
+    [
+      "FLOAT",
+      "fieldOfView"
+    ],
+    [
+      "FLOAT",
+      "sizeDistance"
+    ],
+    [
+      "FLOAT",
+      "brightnessDistance"
+    ],
+    [
+      "FLOAT",
+      "aperture"
+    ],
+    [
+      "FLOAT",
+      "focalDistance"
     ],
     [
       "FLOAT",
@@ -75,7 +95,17 @@
     [
       2,
       "FLOAT_2D",
+      "orderTex"
+    ],
+    [
+      3,
+      "FLOAT_2D",
       "spriteTex"
+    ],
+    [
+      4,
+      "FLOAT_2D",
+      "spriteMeanTex"
     ]
   ],
   "fragmentOut": [
@@ -102,11 +132,16 @@
       "smooth",
       "VEC2",
       "vSpriteUV"
+    ],
+    [
+      "smooth",
+      "FLOAT",
+      "vBlurRadius"
     ]
   ],
   "vertex": true,
   "uniformAliases": {},
-  "std140Bytes": 64,
+  "std140Bytes": 96,
   "ubo": false,
   "notes": []
 }

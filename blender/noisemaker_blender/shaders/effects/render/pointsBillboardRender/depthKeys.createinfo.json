@@ -1,36 +1,23 @@
 {
   "pushConstants": [
     [
-      "VEC2",
-      "resolution"
+      "FLOAT",
+      "rotateX"
     ],
     [
       "FLOAT",
-      "intensity"
+      "rotateY"
     ],
     [
       "FLOAT",
-      "aperture"
-    ],
-    [
-      "INT",
-      "viewMode"
-    ],
-    [
-      "INT",
-      "blendMode"
+      "posZ"
     ]
   ],
   "samplers": [
     [
       0,
       "FLOAT_2D",
-      "trailTex"
-    ],
-    [
-      1,
-      "FLOAT_2D",
-      "defocusTex"
+      "xyzTex"
     ]
   ],
   "fragmentOut": [
@@ -41,7 +28,7 @@
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 32,
+  "std140Bytes": 16,
   "ubo": false,
   "notes": []
 }

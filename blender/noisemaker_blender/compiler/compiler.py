@@ -300,13 +300,49 @@ def _defines_for_pass(pass_, programs):
     The resolved program (``programs[pass.program]``) carries ``defines``
     (NOISE_TYPE, LOOP_OFFSET, ...). For this addon's effect definitions (no
     shader source -> only ``blit`` is in ``programs``) this is normally ``{}``
-    and the defines arrive via the define_map promotion below.
+    and the defines arrive via the define_map promotion below, or (for
+    pointsRender/pointsBillboardRender's per-viewMode deposit variants,
+    reference 0ed489ec) via ``_defines_from_program_name`` below.
     """
     program = programs.get(pass_.get("program")) if pass_.get("program") is not None else None
     d = program.get("defines") if isinstance(program, dict) else None
     if not d:
         return {}
     return dict(d)
+
+
+def _defines_from_program_name(pass_):
+    """Recover pass-level defines from the ``__KEY_val`` run ``_derive_prog_name``
+    strips off ``pass.program`` (expander.py appends one per ``passDef.defines``
+    entry, mirroring reference ``expand()``'s ``programName += passDefineSuffix``).
+
+    The reference itself never sets an explicit ``pass.defines`` field -- in the
+    real engine the value lives in ``programs[pass.program].defines``, populated
+    from each effect's inline shader source, a ``shaders`` key this port's effect
+    JSONs never carry (see expander.py's module docstring) -- so this suffix is
+    the only place left to recover it for the actual GPU compile.
+    """
+    raw = pass_.get("program") or ""
+    s = raw
+    node_id = pass_.get("nodeId")
+    node_prefix = ("%s_" % node_id) if node_id else None
+    if node_prefix and s.startswith(node_prefix):
+        s = s[len(node_prefix):]
+    suffix_idx = s.find("__")
+    if suffix_idx < 0:
+        return {}
+    out = {}
+    for seg in s[suffix_idx:].split("__"):
+        if not seg:
+            continue
+        key, sep, val = seg.rpartition("_")
+        if not sep:
+            continue
+        try:
+            out[key] = int(val)
+        except ValueError:
+            out[key] = val
+    return out
 
 
 def _normalize_pass(pass_, programs, define_map):
@@ -324,7 +360,11 @@ def _normalize_pass(pass_, programs, define_map):
         "func": "blit" if is_blit else _coalesce(pass_.get("effectFunc")),
         "progName": "blit" if is_blit else _derive_prog_name(pass_),
         "program": _coalesce(pass_.get("program")),
-        "defines": {} if is_blit else _defines_for_pass(pass_, programs),
+        # Program-registry defines (normally {}, see _defines_for_pass) merged over any
+        # pass-level defines the expander attached directly (pointsRender/pointsBillboardRender's
+        # per-viewMode variants, reference 0ed489ec) — the latter is this port's live path since
+        # the former stays inert (no `shaders` key on the effect JSONs).
+        "defines": {} if is_blit else {**_defines_for_pass(pass_, programs), **_defines_from_program_name(pass_)},
         "inputs": pass_.get("inputs") or {},
         "outputs": pass_.get("outputs") or {},
         "uniforms": dict(pass_.get("uniforms") or {}),
@@ -361,6 +401,8 @@ def _normalize_pass(pass_, programs, define_map):
         out["repeat"] = pass_["repeat"]
     if "clear" in pass_:
         out["clear"] = pass_["clear"]
+    if "conditions" in pass_:
+        out["conditions"] = pass_["conditions"]
 
     # Metadata.
     out["effectKey"] = _coalesce(pass_.get("effectKey"))

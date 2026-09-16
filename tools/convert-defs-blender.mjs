@@ -197,14 +197,18 @@ function projectPass (pass) {
   if (pass.countUniform !== undefined) out.countUniform = pass.countUniform
   if (pass.repeat !== undefined) out.repeat = pass.repeat
   if (pass.blend !== undefined) out.blend = pass.blend
-  // Pass-gating conditions ({ runIf:[{uniform,equals}], skipIf:[...] }). The runtime pipeline
-  // (pipeline.should_skip) resolves these against the live uniform value to choose which of two
-  // same-program passes executes (e.g. pointsBillboardRender deposit vs deposit_alpha). Captured
-  // here from the effect def, but NOT baked into the expanded graph — the reference golden graph
-  // omits conditions, so the in-engine expander must not emit them or graph parity breaks. The
-  // pipeline reads them from this def via the registry at render time (matching the reference,
-  // whose Pipeline.shouldSkipPass reads conditions off the effect-def pass, not the graph).
+  // Pass-gating conditions ({ runIf:[{uniform,equals}], skipIf:[...] }). Captured here from the
+  // effect def AND baked into the expanded/final graph by the in-engine expander (matching
+  // reference 0ed489ec's expander.js, which now sets `conditions: passDef.conditions` on the
+  // graph pass too) — pipeline.should_skip reads `pass.conditions` straight off the graph pass
+  // it's executing.
   if (pass.conditions !== undefined) out.conditions = pass.conditions
+  // Pass-level compile-time defines (pointsRender/pointsBillboardRender's per-viewMode deposit
+  // variants, reference 0ed489ec: `defines: {VIEW_MODE: viewMode, ...}` from the definition's own
+  // `.flatMap()`). The reference expander never puts these on the GRAPH pass either (only on the
+  // program-name suffix — see expander.js's `programName += passDefineSuffix`), so this is read
+  // by the in-engine expander to build that same suffix, not forwarded to the graph verbatim.
+  if (pass.defines !== undefined) out.defines = pass.defines
   if (pass.clear !== undefined) out.clear = pass.clear
   if (pass.type !== undefined) out.type = pass.type
   if (pass.entryPoint !== undefined) out.entryPoint = pass.entryPoint

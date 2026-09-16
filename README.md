@@ -25,7 +25,7 @@ render(o0)
 That little language is Noisemaker's **DSL** (a domain-specific language for visuals). The original
 engine runs in the browser at [noisedeck.app](https://noisedeck.app).
 
-**Noisemaker for Blender** runs that same engine *inside Blender* — the same programs and the same ~200
+**Noisemaker for Blender** runs that same engine *inside Blender* — the same programs and the same ~213
 effects, rendered on Blender's GPU. Use it to make textures, materials, and animated backgrounds
 from code, with no image files.
 
@@ -124,8 +124,9 @@ evolved or animated result.
 ## What works today
 
 - The **2D single-pass catalog plus agent-deposit** is **pixel-identical to the web reference**
-  (byte-exact / ±1). Chaotic continuous sims are chaos-gated (below). In all, **210 effect
-  definitions** span 8 namespaces (including the 3D `synth3d` / `filter3d`).
+  (byte-exact / ±1). Chaotic continuous sims are chaos-gated (below). In all, **213 effect
+  definitions** span 8 namespaces (including the 3D `synth3d` / `filter3d`) — see STATUS.md for
+  the 2026-09-15 landscape-effects sync and its verification status.
 - **Particle/agent sims, fluid (navier–stokes), and the 3D volume renderer** all render and match the
   reference.
 - **Chaotic** programs (chaotic agent flows feeding fluid, continuous cellular automata) render

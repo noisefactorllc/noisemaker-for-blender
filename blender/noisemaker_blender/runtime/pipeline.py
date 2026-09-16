@@ -548,13 +548,13 @@ def _clamp_graph_volume_sizes(graph, max_texture_size):
 
 def should_skip(p, lookup):
     """Mirror reference Pipeline.shouldSkipPass — conditions are read ONLY off the pass
-    object. The reference expander builds each graph pass from an explicit field list that
-    OMITS `conditions` (shaders/src/runtime/expander.js), so `pass.conditions` is never set
-    at runtime and skipping never fires from a definition's runIf/skipIf. In particular
-    pointsBillboardRender's `deposit` (additive) and `deposit_alpha` (premult-over) carry
-    their runIf only on the effect DEF, never on the graph pass, so BOTH always run every
-    frame regardless of blendMode. We do NOT resolve conditions from the registry/def; we
-    only honor an inline `conditions` if a pass dict ever literally carries one."""
+    object. As of reference 0ed489ec, expander.js sets `conditions: passDef.conditions` on
+    each graph pass it builds (pointsRender/pointsBillboardRender's per-viewMode deposit
+    variants, and pointsBillboardRender's `deposit` (additive) vs `deposit_alpha`
+    (premult-over) blendMode split, are what actually exercises this) — expander.py mirrors
+    that, so `pass.conditions` IS set at runtime for any effect whose definition carries one.
+    We do NOT resolve conditions from the registry/def; we only honor an inline `conditions`
+    a pass dict literally carries, matching the reference exactly."""
     if p.get("skip") or p.get("_skip"):
         return True
     conds = p.get("conditions")

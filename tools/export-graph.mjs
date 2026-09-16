@@ -207,9 +207,28 @@ function deriveProgName (pass) {
 function definesForPass (pass, programs) {
   const prog = programs && programs[pass.program]
   const d = prog && prog.defines
-  if (!d) return {}
   const out = {}
-  for (const [k, v] of Object.entries(d)) out[k] = v
+  if (d) for (const [k, v] of Object.entries(d)) out[k] = v
+  // Recover pass-level defines (pointsRender/pointsBillboardRender's per-viewMode
+  // deposit variants, reference 0ed489ec) from the `__KEY_val` run deriveProgName()
+  // strips off pass.program: this port's effect JSONs carry no shader source, so
+  // `programs[pass.program].defines` (above) never carries them — the suffix
+  // string is the only place the value survives.
+  const raw = pass.program || ''
+  let s = raw
+  const nodePrefix = pass.nodeId ? `${pass.nodeId}_` : null
+  if (nodePrefix && s.startsWith(nodePrefix)) s = s.slice(nodePrefix.length)
+  const suffixIdx = s.indexOf('__')
+  if (suffixIdx >= 0) {
+    for (const seg of s.slice(suffixIdx).split('__')) {
+      if (!seg) continue
+      const idx = seg.lastIndexOf('_')
+      if (idx < 0) continue
+      const key = seg.slice(0, idx)
+      const val = seg.slice(idx + 1)
+      out[key] = /^-?\d+$/.test(val) ? Number(val) : val
+    }
+  }
   return out
 }
 
@@ -253,6 +272,7 @@ function normalizePass (pass, programs, defineMap) {
   if (pass.blend !== undefined) out.blend = pass.blend
   if (pass.repeat !== undefined) out.repeat = pass.repeat
   if (pass.clear !== undefined) out.clear = pass.clear
+  if (pass.conditions !== undefined) out.conditions = pass.conditions
 
   // Metadata.
   out.effectKey = pass.effectKey ?? null

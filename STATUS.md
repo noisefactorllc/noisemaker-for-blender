@@ -13,15 +13,35 @@ control, the only port-affecting change in that range. pondRipples re-graded 7 P
 change), plus two new animated fixtures. The catalogue-wide numbers below are still the `75507112`
 figures; only pondRipples was re-rendered.*
 
+*Incrementally synced 2026-09-15 to reference `0ed489ec4684` (`246ff57f43cc..0ed489ec4684`) — 3 new
+effects (`synth3d/heightmap3d`, `render/renderLandscape3d`, `points/heightGrid`) and content changes
+to `render/pointsRender` + `render/pointsBillboardRender` (new `perspective` view mode; billboard
+render additionally gained depth-sorted alpha blending and aperture defocus), `synth/remap` (267 →
+275 UBO slots), and `synth/media` (alpha-sampling fix). Defs + shaders regenerated via
+`convert-defs-blender.mjs` / `convert-shaders-blender.mjs`; the DSL compiler (`compiler/expander.py`,
+`compiler/compiler.py`) needed 3 real fixes to reach this round's new per-pass-defines/conditions
+pattern (pointsRender/pointsBillboardRender's viewMode-split deposit draws) — see PORTING-GUIDE.md's
+"This round's compiler fixes". **Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py`
+all pass (19-20/20; `B5oBsA` is an intentional compile-error exclusion), plus every non-Blender-GUI
+`parity/test_*.py`.** These do not need Blender. **NOT verified this round:** Metal shader compilation
+(`blender/harness/compile_check.py`) and image-level render parity (`parity/integration.sh`,
+`parity/compare.py`) — both require launching the Blender GUI app to get a real GPU context (see
+"Good to know" in the README), which this porting session could not do. The catalogue-wide parity
+numbers below predate this sync; only the DSL-compiler-stage gates above are current for the new/
+changed effects until someone runs the Blender-GUI gates locally.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 
 ## Coverage
 
-**210 effect definitions** across 8 namespaces. **301 / 303 shader programs compile on Metal** — the
-whole catalog except the two audio synths `scope` / `spectrum` (audio input is out of scope). (Was
-303/305 at the last sync point: `filter/median` collapsed from a 3-pass seed/pass/final pipeline to
-a single exact-quickselect pass upstream, net -2 programs.)
+**213 effect definitions** across 8 namespaces (was 210 — see the 2026-09-15 sync note above for
+the +3 new effects and the def/shader regeneration). **301 / 303 shader programs compile on Metal**
+— the whole catalog except the two audio synths `scope` / `spectrum` (audio input is out of scope)
+— **as of the 75507112 crystallization; the 2026-09-15 sync's def/shader changes are not yet
+Metal-compile-verified** (would need `blender/harness/compile_check.py`, a Blender-GUI gate — see
+the sync note above). (Was 303/305 at the last sync point: `filter/median` collapsed from a 3-pass
+seed/pass/final pipeline to a single exact-quickselect pass upstream, net -2 programs.)
 
 | Namespace | Definitions | State |
 |---|---|---|
@@ -29,8 +49,8 @@ a single exact-quickselect pass upstream, net -2 programs.)
 | `filter` | 116 | renders — color ops, convolutions, warps, multi-pass, feedback (byte-identical / ±1) |
 | `mixer` | 15 | renders (whole namespace) |
 | `classicNoisedeck` | 20 | renders — legacy generators |
-| `points` / `render` | 10 / 11 | renders — agents; deposit/billboards byte-identical, chaotic flows chaos-gated |
-| `synth3d` / `filter3d` | 7 / 2 | renders — 3D volumes, raymarch, cubemaps (byte-exact / 1-ULP); filter3d: palette3d byte-exact, flow3d (3D flow sim) chaos-gated |
+| `points` / `render` | 11 / 12 | renders — agents; deposit/billboards byte-identical (chaotic flows chaos-gated). NEW `points/heightGrid` (deterministic landscape grid) + `render/renderLandscape3d` (isometric/perspective voxel raymarch) not yet Metal-verified |
+| `synth3d` / `filter3d` | 8 / 2 | renders — 3D volumes, raymarch, cubemaps (byte-exact / 1-ULP); filter3d: palette3d byte-exact, flow3d (3D flow sim) chaos-gated. NEW `synth3d/heightmap3d` not yet Metal-verified |
 
 ## Parity
 

@@ -45,6 +45,10 @@
       "slot": 2,
       "components": "w"
     },
+    "zone0_bounds": {
+      "slot": 267,
+      "components": "xyzw"
+    },
     "zone0_v0": {
       "slot": 10,
       "components": "xyzw"
@@ -184,6 +188,10 @@
     "zone1_alpha": {
       "slot": 3,
       "components": "w"
+    },
+    "zone1_bounds": {
+      "slot": 268,
+      "components": "xyzw"
     },
     "zone1_v0": {
       "slot": 42,
@@ -325,6 +333,10 @@
       "slot": 4,
       "components": "w"
     },
+    "zone2_bounds": {
+      "slot": 269,
+      "components": "xyzw"
+    },
     "zone2_v0": {
       "slot": 74,
       "components": "xyzw"
@@ -464,6 +476,10 @@
     "zone3_alpha": {
       "slot": 5,
       "components": "w"
+    },
+    "zone3_bounds": {
+      "slot": 270,
+      "components": "xyzw"
     },
     "zone3_v0": {
       "slot": 106,
@@ -605,6 +621,10 @@
       "slot": 6,
       "components": "w"
     },
+    "zone4_bounds": {
+      "slot": 271,
+      "components": "xyzw"
+    },
     "zone4_v0": {
       "slot": 138,
       "components": "xyzw"
@@ -744,6 +764,10 @@
     "zone5_alpha": {
       "slot": 7,
       "components": "w"
+    },
+    "zone5_bounds": {
+      "slot": 272,
+      "components": "xyzw"
     },
     "zone5_v0": {
       "slot": 170,
@@ -885,6 +909,10 @@
       "slot": 8,
       "components": "w"
     },
+    "zone6_bounds": {
+      "slot": 273,
+      "components": "xyzw"
+    },
     "zone6_v0": {
       "slot": 202,
       "components": "xyzw"
@@ -1024,6 +1052,10 @@
     "zone7_alpha": {
       "slot": 9,
       "components": "w"
+    },
+    "zone7_bounds": {
+      "slot": 274,
+      "components": "xyzw"
     },
     "zone7_v0": {
       "slot": 234,
@@ -1203,6 +1235,16 @@
       "uniform": "zone0_alpha",
       "min": 0,
       "max": 1
+    },
+    "zone0_bounds": {
+      "type": "vec4",
+      "default": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "uniform": "zone0_bounds"
     },
     "zone0_v0": {
       "type": "vec4",
@@ -1543,6 +1585,16 @@
       "min": 0,
       "max": 1
     },
+    "zone1_bounds": {
+      "type": "vec4",
+      "default": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "uniform": "zone1_bounds"
+    },
     "zone1_v0": {
       "type": "vec4",
       "default": [
@@ -1881,6 +1933,16 @@
       "uniform": "zone2_alpha",
       "min": 0,
       "max": 1
+    },
+    "zone2_bounds": {
+      "type": "vec4",
+      "default": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "uniform": "zone2_bounds"
     },
     "zone2_v0": {
       "type": "vec4",
@@ -2221,6 +2283,16 @@
       "min": 0,
       "max": 1
     },
+    "zone3_bounds": {
+      "type": "vec4",
+      "default": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "uniform": "zone3_bounds"
+    },
     "zone3_v0": {
       "type": "vec4",
       "default": [
@@ -2559,6 +2631,16 @@
       "uniform": "zone4_alpha",
       "min": 0,
       "max": 1
+    },
+    "zone4_bounds": {
+      "type": "vec4",
+      "default": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "uniform": "zone4_bounds"
     },
     "zone4_v0": {
       "type": "vec4",
@@ -2899,6 +2981,16 @@
       "min": 0,
       "max": 1
     },
+    "zone5_bounds": {
+      "type": "vec4",
+      "default": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "uniform": "zone5_bounds"
+    },
     "zone5_v0": {
       "type": "vec4",
       "default": [
@@ -3238,6 +3330,16 @@
       "min": 0,
       "max": 1
     },
+    "zone6_bounds": {
+      "type": "vec4",
+      "default": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "uniform": "zone6_bounds"
+    },
     "zone6_v0": {
       "type": "vec4",
       "default": [
@@ -3576,6 +3678,16 @@
       "uniform": "zone7_alpha",
       "min": 0,
       "max": 1
+    },
+    "zone7_bounds": {
+      "type": "vec4",
+      "default": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "uniform": "zone7_bounds"
     },
     "zone7_v0": {
       "type": "vec4",

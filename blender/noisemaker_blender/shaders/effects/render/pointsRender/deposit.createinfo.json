@@ -9,10 +9,6 @@
       "density"
     ],
     [
-      "INT",
-      "viewMode"
-    ],
-    [
       "FLOAT",
       "rotateX"
     ],
@@ -35,6 +31,14 @@
     [
       "FLOAT",
       "posY"
+    ],
+    [
+      "FLOAT",
+      "posZ"
+    ],
+    [
+      "FLOAT",
+      "fieldOfView"
     ]
   ],
   "samplers": [

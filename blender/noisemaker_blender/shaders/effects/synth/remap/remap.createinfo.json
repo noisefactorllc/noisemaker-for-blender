@@ -69,7 +69,7 @@
       [
         "vec4",
         "data",
-        267
+        275
       ]
     ],
     "layout": {
@@ -108,6 +108,10 @@
       "zone0_alpha": {
         "slot": 2,
         "components": "w"
+      },
+      "zone0_bounds": {
+        "slot": 267,
+        "components": "xyzw"
       },
       "zone0_v0": {
         "slot": 10,
@@ -249,6 +253,10 @@
         "slot": 3,
         "components": "w"
       },
+      "zone1_bounds": {
+        "slot": 268,
+        "components": "xyzw"
+      },
       "zone1_v0": {
         "slot": 42,
         "components": "xyzw"
@@ -388,6 +396,10 @@
       "zone2_alpha": {
         "slot": 4,
         "components": "w"
+      },
+      "zone2_bounds": {
+        "slot": 269,
+        "components": "xyzw"
       },
       "zone2_v0": {
         "slot": 74,
@@ -529,6 +541,10 @@
         "slot": 5,
         "components": "w"
       },
+      "zone3_bounds": {
+        "slot": 270,
+        "components": "xyzw"
+      },
       "zone3_v0": {
         "slot": 106,
         "components": "xyzw"
@@ -668,6 +684,10 @@
       "zone4_alpha": {
         "slot": 6,
         "components": "w"
+      },
+      "zone4_bounds": {
+        "slot": 271,
+        "components": "xyzw"
       },
       "zone4_v0": {
         "slot": 138,
@@ -809,6 +829,10 @@
         "slot": 7,
         "components": "w"
       },
+      "zone5_bounds": {
+        "slot": 272,
+        "components": "xyzw"
+      },
       "zone5_v0": {
         "slot": 170,
         "components": "xyzw"
@@ -949,6 +973,10 @@
         "slot": 8,
         "components": "w"
       },
+      "zone6_bounds": {
+        "slot": 273,
+        "components": "xyzw"
+      },
       "zone6_v0": {
         "slot": 202,
         "components": "xyzw"
@@ -1088,6 +1116,10 @@
       "zone7_alpha": {
         "slot": 9,
         "components": "w"
+      },
+      "zone7_bounds": {
+        "slot": 274,
+        "components": "xyzw"
       },
       "zone7_v0": {
         "slot": 234,
