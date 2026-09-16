@@ -386,10 +386,16 @@ def rename_shadow_builtins(src):
     `nm_<name>`, scope-aware: the rename covers the declaration and its in-scope uses, but NOT
     the builtin call in the local's own initializer (`float max = max(...)` -> `float nm_max =
     max(...)`). A no-op for sources without such a shadow (lossless tokenize+reconstruct), so
-    it is safe to run on every effect. Verified non-regressing via compile_check."""
+    it is safe to run on every effect. Verified non-regressing via compile_check.
+
+    `pending` also covers a `for (int step = 0; step < N; step++)` init-declaration: unlike a
+    function parameter (only visible once the body's `{` flushes `pending` into a new scope),
+    the for-header's own condition/increment clauses are still inside the same open paren group
+    and need the rename BEFORE that `{` — so a use checks `pending` too, and `;` only clears it
+    at paren==0 (top-level statement end), not the for-header's own internal `;` separators."""
     out = []
     scopes = [{}]             # stack of {orig: renamed}
-    pending = {}              # param renames -> enter the next {}
+    pending = {}              # decl renames not yet in scope -> enter the next {}
     paren = 0
     last_sig = None
     member_next = False
@@ -410,7 +416,10 @@ def rename_shadow_builtins(src):
         elif t == ")":
             paren = max(0, paren - 1); out.append(t); last_sig = ")"; member_next = False
         elif t == ";":
-            decl_name = None; pending = {}; out.append(t); last_sig = ";"; member_next = False
+            decl_name = None
+            if paren == 0:
+                pending = {}
+            out.append(t); last_sig = ";"; member_next = False
         elif t == ".":
             out.append(t); last_sig = "."; member_next = True
         elif t[:1].isalpha() or t[:1] == "_":
@@ -423,10 +432,11 @@ def rename_shadow_builtins(src):
                     decl_name = t                                  # keep the builtin in its initializer
                 out.append(new); last_sig = t
             else:                                                  # a use
-                ren = None
-                for s in reversed(scopes):
-                    if t in s:
-                        ren = s[t]; break
+                ren = pending.get(t)
+                if ren is None:
+                    for s in reversed(scopes):
+                        if t in s:
+                            ren = s[t]; break
                 out.append(ren if (ren and t != decl_name) else t)
                 last_sig = t
             member_next = False

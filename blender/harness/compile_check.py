@@ -25,18 +25,31 @@ def default_defines(rel):
     """The compile-time #defines a pass would normally inject, at the effect's DEFAULT values —
     so define-gated shaders (render3d's INVERT/FILTERING, noise3d's OCTAVES/RIDGES/COLOR_MODE)
     compile standalone exactly as they do in-pipeline (the graph supplies these per-pass). Read
-    from the effect definition's `define`-marked globals; bool -> 0/1 for GLSL."""
+    from the effect definition's `define`-marked globals; bool -> 0/1 for GLSL.
+
+    Newer effects (pointsRender/pointsBillboardRender's viewMode-split deposit draws) instead
+    carry per-pass `defines` blocks keyed by `program` (one pass per shader-variant, e.g.
+    deposit_0/deposit_1/deposit_2 all with `program: deposit`), with no single effect-level
+    global default to read. Falls back to the first such pass's defines — enough to compile the
+    file under one real, valid combination; the render harness exercises the other variants."""
     parts = rel.split("/")
     if len(parts) < 2:
         return {}
     ej = os.path.join(EFFECTS, parts[0], parts[1] + ".json")
     if not os.path.exists(ej):
         return {}
+    data = json.load(open(ej))
     out = {}
-    for g in json.load(open(ej)).get("globals", {}).values():
+    for g in data.get("globals", {}).values():
         if isinstance(g, dict) and "define" in g:
             v = g.get("default", 0)
             out[g["define"]] = int(v) if isinstance(v, bool) else v
+    if out:
+        return out
+    program = parts[-1]
+    for p in data.get("passes", []):
+        if p.get("program") == program and p.get("defines"):
+            return dict(p["defines"])
     return out
 
 
