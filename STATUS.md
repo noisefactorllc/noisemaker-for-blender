@@ -23,12 +23,25 @@ render additionally gained depth-sorted alpha blending and aperture defocus), `s
 pattern (pointsRender/pointsBillboardRender's viewMode-split deposit draws) — see PORTING-GUIDE.md's
 "This round's compiler fixes". **Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py`
 all pass (19-20/20; `B5oBsA` is an intentional compile-error exclusion), plus every non-Blender-GUI
-`parity/test_*.py`.** These do not need Blender. **NOT verified this round:** Metal shader compilation
-(`blender/harness/compile_check.py`) and image-level render parity (`parity/integration.sh`,
-`parity/compare.py`) — both require launching the Blender GUI app to get a real GPU context (see
-"Good to know" in the README), which this porting session could not do. The catalogue-wide parity
-numbers below predate this sync; only the DSL-compiler-stage gates above are current for the new/
-changed effects until someone runs the Blender-GUI gates locally.*
+`parity/test_*.py`.** These do not need Blender.
+
+**Full Blender-GUI verification (2026-09-15, a second session with real Metal access):** two real
+bugs found and fixed (commit `a0e7a97`) — `std140.py`'s `rename_shadow_builtins()` mishandled a
+`for`-loop header's own paren scope, breaking `pointsBillboardRender/depthMerge.frag` and
+`renderLandscape3d/landscape.frag` (both shadow the builtin `step()` in a `for` condition/increment);
+and `blender/harness/compile_check.py`'s `default_defines()` didn't know about this round's
+per-pass-defines pattern, producing 3 false "FAIL"s on the viewMode-split deposit/depthKeys programs
+(confirmed harness-only by rendering through the real pipeline first, then fixed to fall back to the
+first pass whose `program` carries a `defines` block). Full-corpus `compile_check.py`: 310/312 (was
+305/312 before this round; +7 is this round's new shaders; the remaining 2 are the known
+`scope`/`spectrum` audio exclusions — no regressions). Render + parity via `render_all.py` +
+`export-and-render.mjs` against reference `0ed489ec4684`, all 4 new fixtures: `heightGrid_billboard`
+PASS, `heightGrid_billboard_alpha` PASS, `heightmap3d_landscape` PASS (1/65536 pixels at diff=3 vs
+tol=2, ULP-class, ssim=1.0), `heightGrid_pointsRender_perspective` PASS at `NM_FRAMES=8` (matches
+export-and-render.mjs's 8-frame settle protocol — `render/pointsRender`'s deposit pass is additive
+with no per-pass clear, so a `render_all.py` default of `NM_FRAMES=1` under-accumulates relative to
+the golden for any points-namespace fixture; not a port bug, just a frame-count mismatch between the
+two harnesses). No open issues from this round.
 
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
