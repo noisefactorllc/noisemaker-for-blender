@@ -43,6 +43,8 @@ with no per-pass clear, so a `render_all.py` default of `NM_FRAMES=1` under-accu
 the golden for any points-namespace fixture; not a port bug, just a frame-count mismatch between the
 two harnesses). No open issues from this round.
 
+*Incrementally synced 2026-09-17 to reference `688c514655d3` (`5a14256732b5..688c514655d3`) — audited upstream WebGPU frame export row-orientation fix (`5ceb97ba` and `688c5146`); confirmed inapplicable to Blender (Blender PyGPU runs via GLSL/MSL framebuffer readback). Compiler goldens regenerated and verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 84/84 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 
