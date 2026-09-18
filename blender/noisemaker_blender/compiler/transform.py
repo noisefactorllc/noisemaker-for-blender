@@ -37,6 +37,8 @@ def _find_step_by_index(compiled, step_index):
 
 def _check_is_starter(effect_name, search_order=None):
     """Port of ``checkIsStarter``."""
+    if not effect_name or not isinstance(effect_name, str):
+        return False
     search_order = search_order or []
     if is_starter_op(effect_name):
         return True
@@ -49,6 +51,8 @@ def _check_is_starter(effect_name, search_order=None):
 
 def _get_effect_spec(effect_name, search_order=None):
     """Port of ``getEffectSpec``."""
+    if not effect_name or not isinstance(effect_name, str):
+        return None
     search_order = search_order or []
     ops = _ops_mod.ops()
     if effect_name in ops:
@@ -79,7 +83,15 @@ def replace_effect(compiled, step_index, new_effect_name, new_args=None, options
     step = location["step"]
     old_effect_name = step.get("op")
 
-    is_starter_position = chain_index == 0
+    current_is_starter = _check_is_starter(old_effect_name, search_order)
+    # A step is in "starter position" if it is either:
+    # (a) the first step in the chain (chain_index == 0), OR
+    # (b) an inline surface producer — a registered starter effect with no
+    #     pipeline predecessor (from is None), which the compiler
+    #     flattened into the chain as a dependency of a surface-type parameter.
+    is_starter_position = chain_index == 0 or (
+        current_is_starter and (step.get("from") is None)
+    )
     new_is_starter = _check_is_starter(new_effect_name, search_order)
 
     new_spec = _get_effect_spec(new_effect_name, search_order)
@@ -164,8 +176,10 @@ def list_steps(compiled, options=None):
         if not plan or not plan.get("chain"):
             continue
         for chain_index, step in enumerate(plan["chain"]):
-            is_starter_position = chain_index == 0
             is_starter = _check_is_starter(step.get("op"), search_order)
+            is_starter_position = chain_index == 0 or (
+                is_starter and (step.get("from") is None)
+            )
             steps.append(
                 {
                     "stepIndex": step.get("temp"),
@@ -192,7 +206,11 @@ def get_compatible_replacements(compiled, step_index, options=None):
     if not location:
         return {"success": False, "error": "Step with index %s not found" % step_index}
     chain_index = location["chainIndex"]
-    is_starter_position = chain_index == 0
+    step = location.get("step") or {}
+    current_is_starter = _check_is_starter(step.get("op"), search_order)
+    is_starter_position = chain_index == 0 or (
+        current_is_starter and (step.get("from") is None)
+    )
     starters = []
     non_starters = []
     for op_name in _ops_mod.ops().keys():
