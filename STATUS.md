@@ -47,6 +47,8 @@ two harnesses). No open issues from this round.
 
 *Incrementally synced 2026-09-18 to reference `ead42a5df110` (`688c514655d3..ead42a5df110`) — ported starter position check in `compiler/transform.py` (`replace_effect`, `list_steps`, `get_compatible_replacements`) to correctly recognize inline surface producers (starter effects with no pipeline predecessor flattened into the chain). Updated `defaultProgram` in `effects/synth3d/heightmap3d.json` and `effects/render/renderLandscape3d.json` as well as `parity/programs/heightmap3d_landscape.dsl` to separate write/read chains format matching upstream. Added unit tests in `parity/test_transform.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 88/88 parity unit tests pass.*
 
+*Incrementally synced 2026-09-19 to reference `f1d2b46a2773` (`ead42a5df110..f1d2b46a2773`) — audited upstream release v1.0.154 (GAP-023: compiler phase-2 harness exit-status fix and chained variable test plan update checking terminal `_write` step; unified agent documentation). Verified in-Blender compiler parity: chained variable syntax (`let eff = ...\nnoise().eff().write(o0)`) compiles identically into 3 passes terminating in `_write_blit`. Added unit tests in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 94/94 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 
