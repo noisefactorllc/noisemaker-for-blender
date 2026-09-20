@@ -49,6 +49,8 @@ two harnesses). No open issues from this round.
 
 *Incrementally synced 2026-09-19 to reference `f1d2b46a2773` (`ead42a5df110..f1d2b46a2773`) — audited upstream release v1.0.154 (GAP-023: compiler phase-2 harness exit-status fix and chained variable test plan update checking terminal `_write` step; unified agent documentation). Verified in-Blender compiler parity: chained variable syntax (`let eff = ...\nnoise().eff().write(o0)`) compiles identically into 3 passes terminating in `_write_blit`. Added unit tests in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 94/94 parity unit tests pass.*
 
+*Incrementally synced 2026-09-19 to reference `2df19feb6ce1` (`f1d2b46a2773..2df19feb6ce1`) — audited upstream commit `2df19feb6ce1` (support for borrowed `VideoFrame` in `updateTextureFromSource` across WebGL2 and WebGPU backends with synchronous display size extraction, anamorphic display scaling rejection, and immediate caller frame closure). Confirmed inapplicable to Blender: the Blender addon runs in Blender's Python runtime via `gpu.types.GPUOffScreen`/`GPUTexture` on Metal/OpenGL and does not consume browser DOM / WebCodecs / WebGL2 / WebGPU media source pipelines. Zero effect definitions, DSL ops, or shaders were modified upstream. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 94/94 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 
