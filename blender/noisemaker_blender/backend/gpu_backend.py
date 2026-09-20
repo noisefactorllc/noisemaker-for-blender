@@ -143,10 +143,20 @@ class GpuBackend:
         for tid, spec in texspecs.items():
             if tid.startswith("global_"):
                 name = tid[len("global_"):]
-                if name not in self.surfaces:
-                    w, h = self.tex_dims[tid]
-                    fmt = self._fmt(spec)
-                    self.surfaces[name] = _Surface(self._new_off(w, h, fmt), self._new_off(w, h, fmt), fmt)
+                w, h = self.tex_dims[tid]
+                fmt = self._fmt(spec)
+                existing = self.surfaces.get(name)
+                if existing is not None:
+                    if (existing.read.width == w and existing.read.height == h and
+                        existing.write.width == w and existing.write.height == h and
+                        existing.fmt == fmt):
+                        continue
+                    existing.read.free()
+                    existing.write.free()
+                    self.frame_read.pop(name, None)
+                    self.frame_write.pop(name, None)
+                    self._fb_cache.clear()
+                self.surfaces[name] = _Surface(self._new_off(w, h, fmt), self._new_off(w, h, fmt), fmt)
         # Each pooled texture gets a physical offscreen keyed by (phys, w, h, fmt). Textures that
         # share a phys but differ in LOGICAL size get SEPARATE physical textures — the allocator
         # guarantees same-phys lifetimes don't overlap, so this only costs memory. Sizing one slot

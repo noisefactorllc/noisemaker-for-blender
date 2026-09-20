@@ -39,6 +39,20 @@ class MidiExpressionTests(unittest.TestCase):
                 self.assertTrue(value["_invalid"])
                 self.assertEqual(0, resolve_uniform_value(value, 0, external_state={"midi": self}))
 
+    def test_legacy_midi_note_mode_channels_must_be_static_integers(self):
+        modes = ("noteChange", "gateNote", "gateVelocity", "triggerNote", "velocity")
+        for mode in modes:
+            for channel in ("0", "17", "1.5", "true", '"1"', "osc()"):
+                with self.subTest(mode=mode, channel=channel):
+                    result, value = descriptor("midi(channel: %s, mode: midiMode.%s)" % (channel, mode))
+                    self.assertTrue(any(d["code"] in ("S001", "S002") for d in result["diagnostics"]))
+                    self.assertTrue(value.get("_invalid"))
+            for channel in (1, 16):
+                with self.subTest(mode=mode, channel=channel):
+                    result, value = descriptor("midi(channel: %s, mode: midiMode.%s)" % (channel, mode))
+                    self.assertEqual([], result["diagnostics"])
+                    self.assertEqual(channel, value.get("channel"))
+
     def test_mutually_exclusive_channel_and_zone(self):
         for args in ("channel: 2, zone: 0", "channel: 2, members: 3", "mode: 5"):
             with self.subTest(args=args), self.assertRaises(SyntaxError):

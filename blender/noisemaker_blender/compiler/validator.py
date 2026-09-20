@@ -1470,9 +1470,8 @@ def _compile_automation_descriptor(node, resolve_enum, push_diag, depth=0):
         channel_invalid = [False]
         channel = _UNDEF if has_zone else _resolve_automation_number(
             node.get("channel"), "midi", "channel", 1, resolve_enum, push_diag,
-            **({"integer": True, "minimum": 1, "maximum": 16,
-                "allow_member": False, "invalid_flag": channel_invalid}
-               if mode >= 5 else {"allow_boolean": True}), depth=depth,
+            integer=True, minimum=1, maximum=16, allow_member=False,
+            invalid_flag=channel_invalid, depth=depth,
         )
         cc_invalid = [False]
         cc = _UNDEF
