@@ -31,6 +31,9 @@ The line/col arithmetic mirrors the reference exactly, including a couple of spo
 reference recomputes col in a way that only matters for multi-line tokens.
 """
 
+import re
+
+_OUTPUT_REF_RE = re.compile(r"^o[0-7]$")
 
 # Reserved DSL keyword -> token-type map. Single source of truth (mirrors RESERVED_KEYWORDS
 # in the reference lexer.js, shared there with namespace validation).
@@ -159,6 +162,11 @@ def lex(src):
                 j += 1
             lexeme = src[i:j]
             token_type = "OUTPUT_REF" if ch == "o" else "SOURCE_REF"
+            is_member_segment = bool(tokens and tokens[-1]["type"] == "DOT")
+            if token_type == "OUTPUT_REF" and not is_member_segment and not _OUTPUT_REF_RE.match(lexeme):
+                raise SyntaxError_(
+                    f"Output surface reference '{lexeme}' is out of range; expected o0-o7 at line {start_line} col {start_col}"
+                )
             add(token_type, lexeme, start_line, start_col)
             col += j - i
             i = j

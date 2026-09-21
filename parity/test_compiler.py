@@ -78,6 +78,68 @@ class CompilerTests(unittest.TestCase):
         self.assertEqual(ctx.exception.code, "ERR_COMPILATION_FAILED")
         self.assertTrue(any(d.get("code") == "S001" for d in ctx.exception.diagnostics))
 
+    def test_compiler_rejects_output_surfaces_outside_o0_to_o7(self):
+        cases = [
+            ("render target", "search synth\nnoise().write(o0)\nrender(o8)", "o8"),
+            ("read source", "search synth\nread(o99).write(o0)\nrender(o0)", "o99"),
+            ("write target", "search synth\nnoise().write(o10)\nrender(o0)", "o10"),
+        ]
+        for name, dsl, ref in cases:
+            with self.subTest(name=name):
+                with self.assertRaises(SyntaxError) as ctx:
+                    compile(dsl)
+                self.assertIn(
+                    f"Output surface reference '{ref}' is out of range; expected o0-o7",
+                    str(ctx.exception),
+                )
+
+    def test_compiler_preserves_o0_and_o7_boundary_behavior(self):
+        dsl = "search synth\nread(o0).write(o7)\nrender(o7)"
+        result = compile(dsl)
+        self.assertEqual(
+            result["plans"][0]["chain"][0]["args"]["tex"],
+            {"kind": "output", "name": "o0"},
+        )
+        self.assertEqual(result["plans"][0]["write"], {"kind": "output", "name": "o7"})
+        self.assertEqual(result["render"], "o7")
+
+    def test_output_shaped_member_segments_and_other_reference_families(self):
+        dsl = (
+            "search synth\n"
+            "let low = foo.o0\n"
+            "let high = foo.o7\n"
+            "let extended = foo.o8\n"
+            "let many = foo.o99\n"
+            "let source = s99\n"
+            "let vol = vol99\n"
+            "let geo = geo99\n"
+            "let xyz = xyz99\n"
+            "let vel = vel99\n"
+            "let rgba = rgba99\n"
+            "let mesh = mesh99\n"
+        )
+        result = compile(dsl)
+        vars_ = [
+            v["expr"].get("path") or v["expr"].get("name")
+            for v in result.get("vars", [])
+        ]
+        self.assertEqual(
+            vars_,
+            [
+                ["foo", "o0"],
+                ["foo", "o7"],
+                ["foo", "o8"],
+                ["foo", "o99"],
+                "s99",
+                "vol99",
+                "geo99",
+                "xyz99",
+                "vel99",
+                "rgba99",
+                "mesh99",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
