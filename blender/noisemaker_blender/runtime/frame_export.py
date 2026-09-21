@@ -121,7 +121,7 @@ class FrameExportQueue:
             return
         self._closed = True
         self._configured = False
-        backend_lost = bool(options and options.get("backend_lost") is True)
+        backend_lost = bool(options and (options.get("backend_lost") is True or options.get("backendLost") is True))
         destroy_error = None
         if backend_lost:
             self._abandon_slots()
@@ -130,6 +130,11 @@ class FrameExportQueue:
         self.adapter = None
         if destroy_error is not None:
             raise destroy_error
+
+    def _drop(self, record):
+        if record["pending"]:
+            self.stats["dropped"] += 1
+        self._release(record)
 
     @staticmethod
     def _release(record):
@@ -149,7 +154,7 @@ class FrameExportQueue:
             adapter_slot = record["adapter_slot"]
             record["created"] = False
             record["adapter_slot"] = None
-            self._release(record)
+            self._drop(record)
             try:
                 self.adapter.destroy_slot(adapter_slot)
             except Exception as error:
@@ -161,7 +166,7 @@ class FrameExportQueue:
         for record in self._slots:
             record["created"] = False
             record["adapter_slot"] = None
-            self._release(record)
+            self._drop(record)
 
     def _report(self, error):
         if not callable(self._on_error):

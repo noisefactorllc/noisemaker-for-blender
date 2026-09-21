@@ -53,23 +53,20 @@ two harnesses). No open issues from this round.
 
 *Incrementally synced 2026-09-20 to reference `beabda385253` (`2df19feb6ce1..beabda385253`) — ported upstream static integer `1..16` validation for all channel-based MIDI modes (including legacy note modes) in `compiler/validator.py`. Updated `GpuBackend.setup` in `backend/gpu_backend.py` to refresh existing global surfaces when format or dimensions change instead of reusing stale allocations. Added focused regression tests in `parity/test_midi_expression.py` and `blender/harness/test_backend_contract.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 95/95 parity unit tests pass.*
 
+*Incrementally synced 2026-09-21 to reference `f61ac0732088` (`beabda385253..f61ac0732088`) — removed expired effects `bc`, `hs`, and `colorspace` from `effects/filter/` and shader catalog following consumer migration to `adjust`; regenerated definitions (210 total, filter down to 113) and shaders (309 programs total). Ported upstream frame export cancellation accounting into `runtime/frame_export.py` (`FrameExportQueue._drop` tracking canceled pending accepted frames in `stats["dropped"]` during slot destruction and abandonment on reconfiguration, close, and backend loss). Ported upstream 32-channel discrete modulation, zero crosstalk, and independent FFT band evaluation tests into `parity/test_automation_runtime.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 99/99 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 
 ## Coverage
 
-**213 effect definitions** across 8 namespaces (was 210 — see the 2026-09-15 sync note above for
-the +3 new effects and the def/shader regeneration). **301 / 303 shader programs compile on Metal**
-— the whole catalog except the two audio synths `scope` / `spectrum` (audio input is out of scope)
-— **as of the 75507112 crystallization; the 2026-09-15 sync's def/shader changes are not yet
-Metal-compile-verified** (would need `blender/harness/compile_check.py`, a Blender-GUI gate — see
-the sync note above). (Was 303/305 at the last sync point: `filter/median` collapsed from a 3-pass
-seed/pass/final pipeline to a single exact-quickselect pass upstream, net -2 programs.)
+**210 effect definitions** across 8 namespaces (was 213 — expired `bc`, `hs`, `colorspace` removed after consumer migration to `adjust`). **307 / 309 shader programs compile on Metal**
+— the whole catalog except the two audio synths `scope` / `spectrum` (audio input is out of scope).
 
 | Namespace | Definitions | State |
 |---|---|---|
 | `synth` | 29 | renders — generators, value/simplex/cell/curl noise, df64 fractals (byte-identical) |
-| `filter` | 116 | renders — color ops, convolutions, warps, multi-pass, feedback (byte-identical / ±1) |
+| `filter` | 113 | renders — color ops, convolutions, warps, multi-pass, feedback (byte-identical / ±1) |
 | `mixer` | 15 | renders (whole namespace) |
 | `classicNoisedeck` | 20 | renders — legacy generators |
 | `points` / `render` | 11 / 12 | renders — agents; deposit/billboards byte-identical (chaotic flows chaos-gated). NEW `points/heightGrid` (deterministic landscape grid) + `render/renderLandscape3d` (isometric/perspective voxel raymarch) not yet Metal-verified |
@@ -77,7 +74,7 @@ seed/pass/final pipeline to a single exact-quickselect pass upstream, net -2 pro
 
 ## Parity
 
-- **Shader compile (Metal):** 301 / 303 programs (`scope` / `spectrum` excluded — audio input).
+- **Shader compile (Metal):** 307 / 309 programs (`scope` / `spectrum` excluded — audio input).
 - **In-Blender DSL→graph compiler:** byte-identical to the reference across all gates
   (lex / parse / compile / expand / graph); the full 19-program blaster corpus compiles to
   byte-identical graphs. The addon needs **no external engine** to author or compile.

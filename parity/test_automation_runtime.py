@@ -44,6 +44,23 @@ class SelectedAudioState:
         }
 
 
+class MultiChannelAudioState:
+    def __init__(self, device_id):
+        self.device_id = device_id
+        self.channels = {}
+
+    def set_channel_values(self, channel, values):
+        val = dict(values)
+        if "raw" in val:
+            val["rawReady"] = True
+        self.channels[channel] = val
+
+    def get_device_channel_state(self, config):
+        if config.get("id") != self.device_id:
+            return None
+        return self.channels.get(config.get("channel"))
+
+
 class CaptureBackend:
     size = 64
 
@@ -155,6 +172,95 @@ class AutomationRuntimeTests(unittest.TestCase):
 
         self.assertEqual("surface", result)
         self.assertAlmostEqual(15, backend.uniforms[0]["amount"])
+
+    def test_32_discrete_channels_simultaneously_modulate_with_zero_crosstalk_and_zero_inversion(self):
+        device_id = "audio-fuse-32"
+        device_name = "Arturia AudioFuse 32"
+        audio_state = MultiChannelAudioState(device_id)
+
+        uniforms = {}
+        for c in range(1, 33):
+            uniforms["mod_%d" % c] = {
+                "type": "Audio",
+                "band": 4,
+                "min": 0,
+                "max": 1,
+                "channel": c,
+                "id": device_id,
+                "name": device_name,
+            }
+
+        # Linear ramp: raw sample on channel c = (c / 16) - 1, mapping to (raw + 1) * 0.5 = c / 32
+        for c in range(1, 33):
+            raw = (c / 16.0) - 1.0
+            audio_state.set_channel_values(c, {"raw": raw})
+
+        ext_state = {"audio": audio_state}
+
+        # Verify each uniform resolves to exactly c / 32
+        for c in range(1, 33):
+            expected = c / 32.0
+            actual = resolve_uniform_value(uniforms["mod_%d" % c], 0, external_state=ext_state)
+            self.assertAlmostEqual(
+                actual, expected, places=6,
+                msg="channel %d must resolve to %s, got %s" % (c, expected, actual),
+            )
+
+        # Zero crosstalk perturbation test: alter channel 17
+        original17 = resolve_uniform_value(uniforms["mod_17"], 0, external_state=ext_state)
+        audio_state.set_channel_values(17, {"raw": 1.0})
+        new17 = resolve_uniform_value(uniforms["mod_17"], 0, external_state=ext_state)
+        self.assertAlmostEqual(new17, 1.0, places=6)
+        self.assertNotEqual(new17, original17)
+
+        # Verify all other 31 channels have strictly 0.0 delta (zero crosstalk)
+        for c in range(1, 33):
+            if c == 17:
+                continue
+            expected = c / 32.0
+            actual = resolve_uniform_value(uniforms["mod_%d" % c], 0, external_state=ext_state)
+            self.assertEqual(
+                actual, expected,
+                "crosstalk detected on channel %d when channel 17 perturbed: expected %s, got %s"
+                % (c, expected, actual),
+            )
+
+        # Channel inversion check: verify monotonicity
+        previous = -1.0
+        for c in range(1, 33):
+            val = original17 if c == 17 else resolve_uniform_value(uniforms["mod_%d" % c], 0, external_state=ext_state)
+            self.assertGreater(
+                val, previous,
+                "channel %d (%s) must be strictly greater than channel %d (%s)"
+                % (c, val, c - 1, previous),
+            )
+            previous = val
+
+    def test_32_discrete_channels_evaluate_fft_frequency_bands_independently(self):
+        device_id = "audio-fft-32"
+        device_name = "Multichannel Interface"
+        audio_state = MultiChannelAudioState(device_id)
+
+        for c in range(1, 33):
+            audio_state.set_channel_values(c, {
+                "low": c / 32.0,
+                "mid": (33 - c) / 32.0,
+                "high": 0.8 if c % 2 == 0 else 0.2,
+                "vol": 0.5,
+            })
+
+        ext_state = {"audio": audio_state}
+
+        for c in range(1, 33):
+            low_config = {"type": "Audio", "band": 0, "min": 0, "max": 1, "channel": c, "id": device_id, "name": device_name}
+            mid_config = {"type": "Audio", "band": 1, "min": 0, "max": 1, "channel": c, "id": device_id, "name": device_name}
+            high_config = {"type": "Audio", "band": 2, "min": 0, "max": 1, "channel": c, "id": device_id, "name": device_name}
+            vol_config = {"type": "Audio", "band": 3, "min": 0, "max": 1, "channel": c, "id": device_id, "name": device_name}
+
+            self.assertAlmostEqual(resolve_uniform_value(low_config, 0, external_state=ext_state), c / 32.0, places=6)
+            self.assertAlmostEqual(resolve_uniform_value(mid_config, 0, external_state=ext_state), (33 - c) / 32.0, places=6)
+            self.assertAlmostEqual(resolve_uniform_value(high_config, 0, external_state=ext_state), 0.8 if c % 2 == 0 else 0.2, places=6)
+            self.assertAlmostEqual(resolve_uniform_value(vol_config, 0, external_state=ext_state), 0.5, places=6)
 
 
 if __name__ == "__main__":

@@ -154,7 +154,6 @@ Legend for columns:
 | Effect | func | Description | Passes | GLSL | WGSL | Points | State |
 |--------|------|-------------|--------|------|------|--------|-------|
 | adjust | `adjust` | Colorspace, hue/saturation, brightness/contrast | 1 | 1 | 1 | N | N |
-| bc | `bc` | *Deprecated* — use adjust. Brightness/contrast | 1 | 1 | 1 | N | N |
 | bloom | `bloom` | Multi-pass bloom: bright-pass + N-tap gather + composite | 3 | 3 | 3 | N | N |
 | blur | `blur` | Separable Gaussian blur (H + V passes) | 2 | 2 | 2 | N | N |
 | bulge | `bulge` | Bulge distortion from center | 1 | 1 | 1 | N | N |
@@ -164,7 +163,6 @@ Legend for columns:
 | chromaticAberration | `chromaticAberration` | Color fringing simulating lens aberration | 1 | 1 | 1 | N | N |
 | clouds | `clouds` | Cloud texture overlay | 1 | 1 | 1 | N | N |
 | colorReplace | `colorReplace` | Color replacement with alpha output | 1 | 1 | 1 | N | N |
-| colorspace | `colorspace` | *Deprecated* — use adjust. HSV/OKLab/OKLCH interpret | 1 | 1 | 1 | N | N |
 | convolutionFeedback | `convolutionFeedback` | Convolution feedback with blur and sharpen | 3 | 3 | 3 | N | Y |
 | corrupt | `corrupt` | Scanline-based data corruption | 1 | 1 | 1 | N | N |
 | crt | `crt` | CRT monitor simulation | 1 | 1 | 1 | N | N |
@@ -183,7 +181,6 @@ Legend for columns:
 | grain | `grain` | Film grain overlay | 1 | 1 | 1 | N | N |
 | grime | `grime` | Grunge/grime texture overlay | 1 | 1 | 1 | N | N |
 | historicPalette | `historicPalette` | Apply historical art color palettes | 1 | 1 | 1 | N | N |
-| hs | `hs` | *Deprecated* — use adjust. Hue/saturation | 1 | 1 | 1 | N | N |
 | invert | `invert` | Invert image luminance | 1 | 1 | 1 | N | N |
 | lens | `lens` | Barrel or pincushion lens distortion | 1 | 1 | 1 | N | N |
 | lensWarp | `lensWarp` | Noise-driven radial lens distortion | 1 | 1 | 1 | N | N |
