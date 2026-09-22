@@ -59,6 +59,8 @@ two harnesses). No open issues from this round.
 
 *Incrementally synced 2026-09-21 to reference `68d37721091a` (`50b8f909ff59..68d37721091a`) — ported upstream mutation introspection exclusion for builtins in `compiler/transform.py` (`_find_step_by_index` ignores steps with `builtin: True`, and `list_steps` skips them; `replace_effect` and `get_compatible_replacements` reject builtin step indices with descriptive not-found errors). Added unit test suite in `parity/test_transform.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 105/105 parity unit tests pass.*
 
+*Incrementally synced 2026-09-22 to reference `e5bd2013087e` (`68d37721091a..e5bd2013087e`) — ported upstream diagnostic location source column preservation in `compiler/validator.py` (`push_diag` location extraction inspects `loc.column` with fallback to `loc.col`, preserving exact columns on caller-supplied AST nodes and parser tokens while omitting location for unlocated AST nodes). Added unit test suite in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 109/109 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 

@@ -174,12 +174,9 @@ def validate(ast):
         location = None
         loc = node.get("loc") if isinstance(node, dict) else None
         if loc:
-            # The reference reads node.loc.column, but the parser emits 'col';
-            # ``column`` is therefore undefined and dropped by JSON.stringify,
-            # leaving only ``line``.
             location = {"line": loc.get("line")}
-            col = loc.get("column", _UNDEF)
-            if col is not _UNDEF:
+            col = loc.get("column") if loc.get("column") is not None else loc.get("col")
+            if col is not None:
                 location["column"] = col
         diag = {
             "code": code,

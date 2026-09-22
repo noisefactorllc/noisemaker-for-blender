@@ -11,6 +11,9 @@ from noisemaker_blender.compiler import (  # noqa: E402
     CompilationError,
     compile,
     compile_graph,
+    lex,
+    parse,
+    validate,
 )
 
 
@@ -139,6 +142,42 @@ class CompilerTests(unittest.TestCase):
                 "mesh99",
             ],
         )
+
+    def test_compile_preserves_exact_read_and_write_diagnostic_columns(self):
+        result = compile("search synth\n  read(123).write(o0)")
+        self.assertEqual(
+            [(d["code"], d.get("location")) for d in result["diagnostics"]],
+            [
+                ("S001", {"line": 2, "column": 3}),
+                ("S005", {"line": 2, "column": 13}),
+            ],
+        )
+
+    def test_compile_locates_inline_read_after_blank_lines_and_indentation(self):
+        result = compile("search synth\n\n    noise().read(o0).write(o1)")
+        self.assertEqual(len(result["diagnostics"]), 1)
+        self.assertEqual(
+            result["diagnostics"][0],
+            {
+                "code": "S001",
+                "message": "read() is a starter node and cannot be chained inline. Use standalone read() to start a new chain.: '[Read]'",
+                "severity": "error",
+                "location": {"line": 3, "column": 13},
+                "identifier": "[Read]",
+            },
+        )
+
+    def test_validate_preserves_explicit_column_on_caller_supplied_ast_locations(self):
+        ast = parse(lex("search synth\n  read(123).write(o0)"))
+        ast["plans"][0]["chain"][0]["loc"]["column"] = 9
+        result = validate(ast)
+        self.assertEqual(result["diagnostics"][0]["location"], {"line": 2, "column": 9})
+
+    def test_compile_does_not_invent_location_for_unlocated_ast_node(self):
+        result = compile("search synth\n  missing().write(o0)")
+        diagnostic = next(d for d in result["diagnostics"] if d.get("identifier") == "missing")
+        self.assertEqual(diagnostic["code"], "S001")
+        self.assertNotIn("location", diagnostic)
 
 
 if __name__ == "__main__":
