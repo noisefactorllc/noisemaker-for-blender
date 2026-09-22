@@ -5,6 +5,8 @@
 
 # Noisemaker for Blender
 
+Current audit findings and acceptance criteria: [completion gaps](docs/COMPLETION_GAPS.md).
+
 > Run **Noisemaker**'s procedural visuals inside **Blender**.
 
 > This package supports the "Export Shader Pipeline" feature in Noisedeck.app. The
