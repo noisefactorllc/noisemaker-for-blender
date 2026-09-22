@@ -61,6 +61,8 @@ two harnesses). No open issues from this round.
 
 *Incrementally synced 2026-09-22 to reference `e5bd2013087e` (`68d37721091a..e5bd2013087e`) — ported upstream diagnostic location source column preservation in `compiler/validator.py` (`push_diag` location extraction inspects `loc.column` with fallback to `loc.col`, preserving exact columns on caller-supplied AST nodes and parser tokens while omitting location for unlocated AST nodes). Added unit test suite in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 109/109 parity unit tests pass.*
 
+*Incrementally synced 2026-09-22 to reference `643b2be1e28b` (`e5bd2013087e..643b2be1e28b`) — ported upstream structured DSL lexer diagnostics into `compiler/lexer.py` and `compiler/lang_data.py` (added L003 unterminated comment and L004 output surface reference out of range to diagnostics table; attached structured `.diagnostic` payload with code, stage, severity, message, 1-based line/col location, and 0-based UTF-16 character span to `SyntaxError_` on lexer failures). Added unit test suite in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 111/111 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 

@@ -179,6 +179,115 @@ class CompilerTests(unittest.TestCase):
         self.assertEqual(diagnostic["code"], "S001")
         self.assertNotIn("location", diagnostic)
 
+    def test_lexer_diagnostic_payloads(self):
+        cases = [
+            {
+                "name": "unexpected character after CRLF, tab, and UTF-16 text",
+                "source": "// 😀\r\n\t@",
+                "code": "L001",
+                "message": "Unexpected character '@' at line 2 col 2",
+                "location": {"line": 2, "column": 2},
+                "span": {"start": 8, "end": 9},
+            },
+            {
+                "name": "unterminated double-quoted string at EOF",
+                "source": '"abc',
+                "code": "L002",
+                "message": "Unterminated string literal at line 1 col 1",
+                "location": {"line": 1, "column": 1},
+                "span": {"start": 0, "end": 4},
+            },
+            {
+                "name": "unterminated single-quoted string at LF",
+                "source": " 'abc\nnext",
+                "code": "L002",
+                "message": "Unterminated string literal at line 1 col 2",
+                "location": {"line": 1, "column": 2},
+                "span": {"start": 1, "end": 5},
+            },
+            {
+                "name": "unterminated triple-quoted string across lines",
+                "source": '\n  """a\nb',
+                "code": "L002",
+                "message": "Unterminated triple-quoted string at line 2 col 3",
+                "location": {"line": 2, "column": 3},
+                "span": {"start": 3, "end": 9},
+            },
+            {
+                "name": "unterminated block comment across lines",
+                "source": "\n /* a\nb",
+                "code": "L003",
+                "message": "Unterminated comment at line 2 col 2",
+                "location": {"line": 2, "column": 2},
+                "span": {"start": 2, "end": 8},
+            },
+            {
+                "name": "out-of-range output reference",
+                "source": "search synth\nrender(o99)",
+                "code": "L004",
+                "message": "Output surface reference 'o99' is out of range; expected o0-o7 at line 2 col 8",
+                "location": {"line": 2, "column": 8},
+                "span": {"start": 20, "end": 23},
+            },
+            {
+                "name": "UTF-16 columns after a string",
+                "source": '"😀" @',
+                "code": "L001",
+                "message": "Unexpected character '@' at line 1 col 6",
+                "location": {"line": 1, "column": 6},
+                "span": {"start": 5, "end": 6},
+            },
+            {
+                "name": "source coordinates after a multiline function token",
+                "source": "() => (1\n + 2), @",
+                "code": "L001",
+                "message": "Unexpected character '@' at line 1 col 17",
+                "location": {"line": 2, "column": 8},
+                "span": {"start": 16, "end": 17},
+            },
+            {
+                "name": "source coordinates after an escaped LF in a string",
+                "source": '"a\\\nb" @',
+                "code": "L001",
+                "message": "Unexpected character '@' at line 1 col 8",
+                "location": {"line": 2, "column": 4},
+                "span": {"start": 7, "end": 8},
+            },
+        ]
+
+        for case in cases:
+            for entry_point in (lex, compile):
+                with self.subTest(case=case["name"], entry_point=entry_point.__name__):
+                    with self.assertRaises(SyntaxError) as cm:
+                        entry_point(case["source"])
+                    err = cm.exception
+                    self.assertEqual(str(err), case["message"])
+                    self.assertTrue(hasattr(err, "diagnostic"))
+                    self.assertEqual(
+                        err.diagnostic,
+                        {
+                            "code": case["code"],
+                            "stage": "lexer",
+                            "severity": "error",
+                            "message": case["message"],
+                            "location": case["location"],
+                            "span": case["span"],
+                        },
+                    )
+
+    def test_structured_lexer_failures_leave_successful_tokens_unchanged(self):
+        self.assertEqual(
+            lex('/*x*/\nfoo.o99 "😀"'),
+            [
+                {"type": "COMMENT", "lexeme": "/*x*/", "line": 1, "col": 1},
+                {"type": "IDENT", "lexeme": "foo", "line": 2, "col": 1},
+                {"type": "DOT", "lexeme": ".", "line": 2, "col": 4},
+                {"type": "OUTPUT_REF", "lexeme": "o99", "line": 2, "col": 5},
+                {"type": "STRING", "lexeme": "😀", "line": 2, "col": 9},
+                {"type": "EOF", "lexeme": "", "line": 2, "col": 13},
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

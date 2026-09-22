@@ -31,7 +31,11 @@ The line/col arithmetic mirrors the reference exactly, including a couple of spo
 reference recomputes col in a way that only matters for multi-line tokens.
 """
 
+from __future__ import annotations
+
 import re
+
+from .lang_data import DIAGNOSTICS
 
 _OUTPUT_REF_RE = re.compile(r"^o[0-7]$")
 
@@ -61,6 +65,8 @@ class SyntaxError_(SyntaxError):
     Named with a trailing underscore so it does not shadow the builtin ``SyntaxError`` at the
     use sites below, while still subclassing it so ``except SyntaxError`` also catches it.
     """
+
+    diagnostic: dict | None = None
 
 
 # Characters JS String.prototype.trim() removes. DSL exprs are ASCII, but match the JS set so
@@ -95,6 +101,30 @@ def lex(src):
     def add(type_, lexeme, ln, cl):
         tokens.append({"type": type_, "lexeme": lexeme, "line": ln, "col": cl})
 
+    # Only scan source coordinates on failure. Successful tokens and legacy
+    # error messages retain their existing position bookkeeping.
+    def fail(code, message, start, end):
+        error_line = 1
+        column = 1
+        for ch_ in src[:start]:
+            if ch_ == "\n":
+                error_line += 1
+                column = 1
+            else:
+                column += 2 if ord(ch_) > 0xFFFF else 1
+        start_u16 = len(src[:start].encode("utf-16-le")) // 2
+        end_u16 = len(src[:end].encode("utf-16-le")) // 2
+        err = SyntaxError_(message)
+        err.diagnostic = {
+            "code": code,
+            "stage": DIAGNOSTICS[code]["stage"],
+            "severity": DIAGNOSTICS[code]["severity"],
+            "message": message,
+            "location": {"line": error_line, "column": column},
+            "span": {"start": start_u16, "end": end_u16},
+        }
+        raise err
+
     # Bounds-safe character access. JS returns ``undefined`` for out-of-range string indices,
     # which never equals a real char and is never a digit/letter; "" reproduces that behavior.
     def at(idx):
@@ -127,7 +157,7 @@ def lex(src):
                 j += 1
             text = src[i:j]
             add("COMMENT", text, start_line, start_col)
-            col += j - i
+            col += len(text.encode("utf-16-le")) // 2
             i = j
             continue
 
@@ -141,11 +171,14 @@ def lex(src):
                     end_line += 1
                     end_col = 1
                 else:
-                    end_col += 1
+                    end_col += 2 if ord(src[j]) > 0xFFFF else 1
                 j += 1
             if j >= n:
-                raise SyntaxError_(
-                    "Unterminated comment at line %d col %d" % (start_line, start_col)
+                fail(
+                    "L003",
+                    "Unterminated comment at line %d col %d" % (start_line, start_col),
+                    i,
+                    n,
                 )
             j += 2
             text = src[i:j]
@@ -164,8 +197,11 @@ def lex(src):
             token_type = "OUTPUT_REF" if ch == "o" else "SOURCE_REF"
             is_member_segment = bool(tokens and tokens[-1]["type"] == "DOT")
             if token_type == "OUTPUT_REF" and not is_member_segment and not _OUTPUT_REF_RE.match(lexeme):
-                raise SyntaxError_(
-                    f"Output surface reference '{lexeme}' is out of range; expected o0-o7 at line {start_line} col {start_col}"
+                fail(
+                    "L004",
+                    f"Output surface reference '{lexeme}' is out of range; expected o0-o7 at line {start_line} col {start_col}",
+                    i,
+                    j,
                 )
             add(token_type, lexeme, start_line, start_col)
             col += j - i
@@ -391,9 +427,12 @@ def lex(src):
             if j >= n - 2 or not (
                 at(j) == '"' and at(j + 1) == '"' and at(j + 2) == '"'
             ):
-                raise SyntaxError_(
+                fail(
+                    "L002",
                     "Unterminated triple-quoted string at line %d col %d"
-                    % (start_line, start_col)
+                    % (start_line, start_col),
+                    i,
+                    n,
                 )
             # Extract string content without the triple quotes
             content = src[i + 3 : j]
@@ -401,9 +440,9 @@ def lex(src):
             # Update position past closing """
             lines = content.split("\n")
             if len(lines) > 1:
-                col = len(lines[-1]) + 4  # +3 for closing """ +1 for next char
+                col = len(lines[-1].encode("utf-16-le")) // 2 + 4  # +3 for closing """ +1 for next char
             else:
-                col += j - i + 3
+                col += len(src[i : j + 3].encode("utf-16-le")) // 2
             i = j + 3
             continue
 
@@ -417,13 +456,16 @@ def lex(src):
                 else:
                     j += 1
             if j >= n or src[j] == "\n":
-                raise SyntaxError_(
-                    "Unterminated string literal at line %d col %d" % (line, col)
+                fail(
+                    "L002",
+                    "Unterminated string literal at line %d col %d" % (line, col),
+                    i,
+                    j,
                 )
             # Extract string content without quotes
             content = src[i + 1 : j]
             add("STRING", content, start_line, start_col)
-            col += j - i + 1
+            col += len(src[i : j + 1].encode("utf-16-le")) // 2
             i = j + 1
             continue
 
@@ -454,8 +496,11 @@ def lex(src):
             i = j
             continue
 
-        raise SyntaxError_(
-            "Unexpected character '%s' at line %d col %d" % (ch, line, col)
+        fail(
+            "L001",
+            "Unexpected character '%s' at line %d col %d" % (ch, line, col),
+            i,
+            i + 1,
         )
 
     add("EOF", "", line, col)
