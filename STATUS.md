@@ -57,6 +57,8 @@ two harnesses). No open issues from this round.
 
 *Incrementally synced 2026-09-21 to reference `50b8f909ff59` (`f61ac0732088..50b8f909ff59`) — ported upstream DSL output surface reference range enforcement into `compiler/lexer.py` (GAP-001: restricts non-member-segment `OUTPUT_REF` to `o0`–`o7`, raising `SyntaxError_` for out-of-range references while preserving member property accesses like `foo.o8` and other reference families like `s99` or `vol99`). Updated frontend specification in `reference/01-dsl-frontend.md`. Added unit test suite in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 102/102 parity unit tests pass.*
 
+*Incrementally synced 2026-09-21 to reference `68d37721091a` (`50b8f909ff59..68d37721091a`) — ported upstream mutation introspection exclusion for builtins in `compiler/transform.py` (`_find_step_by_index` ignores steps with `builtin: True`, and `list_steps` skips them; `replace_effect` and `get_compatible_replacements` reject builtin step indices with descriptive not-found errors). Added unit test suite in `parity/test_transform.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 105/105 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 

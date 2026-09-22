@@ -30,7 +30,7 @@ def _find_step_by_index(compiled, step_index):
         if not plan or not plan.get("chain"):
             continue
         for chain_index, step in enumerate(plan["chain"]):
-            if step.get("temp") == step_index:
+            if not step.get("builtin") and step.get("temp") == step_index:
                 return {"planIndex": plan_index, "chainIndex": chain_index, "step": step}
     return None
 
@@ -176,6 +176,8 @@ def list_steps(compiled, options=None):
         if not plan or not plan.get("chain"):
             continue
         for chain_index, step in enumerate(plan["chain"]):
+            if step.get("builtin"):
+                continue
             is_starter = _check_is_starter(step.get("op"), search_order)
             is_starter_position = chain_index == 0 or (
                 is_starter and (step.get("from") is None)

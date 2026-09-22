@@ -121,6 +121,29 @@ class TransformTests(unittest.TestCase):
         self.assertIsNone(_get_effect_spec(None))
         self.assertIsNone(_get_effect_spec(123))
 
+    def test_list_steps_excludes_builtin_steps(self):
+        compiled = compile("search synth, filter\nnoise(10).blur().write(o0)\nrender(o0)")
+        steps = list_steps(compiled)
+        self.assertEqual(len(steps), 2)
+        self.assertEqual(steps[0]["effectName"], "synth.noise")
+        self.assertEqual(steps[0]["stepIndex"], 0)
+        self.assertEqual(steps[1]["effectName"], "filter.blur")
+        self.assertEqual(steps[1]["stepIndex"], 1)
+
+    def test_replace_effect_builtin_step_fails(self):
+        compiled = compile("search synth, filter\nnoise(10).write(o0)\nrender(o0)")
+        builtin_step = next(s for s in compiled["plans"][0]["chain"] if s.get("builtin"))
+        res = replace_effect(compiled, builtin_step["temp"], "bloom")
+        self.assertFalse(res["success"])
+        self.assertEqual(res["error"], "Step with index %s not found" % builtin_step["temp"])
+
+    def test_get_compatible_replacements_builtin_step_fails(self):
+        compiled = compile("search synth, filter\nnoise(10).write(o0)\nrender(o0)")
+        builtin_step = next(s for s in compiled["plans"][0]["chain"] if s.get("builtin"))
+        res = get_compatible_replacements(compiled, builtin_step["temp"])
+        self.assertFalse(res["success"])
+        self.assertEqual(res["error"], "Step with index %s not found" % builtin_step["temp"])
+
 
 if __name__ == "__main__":
     unittest.main()
