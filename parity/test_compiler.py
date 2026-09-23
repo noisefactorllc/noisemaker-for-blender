@@ -288,6 +288,90 @@ class CompilerTests(unittest.TestCase):
             ],
         )
 
+    def test_parser_expectation_diagnostics(self):
+        cases = [
+            ("opening parenthesis", "search synth\nrender o0", "P001", "Expect '(' at line 2 col 8", 2, 8),
+            ("closing parenthesis at EOF", "search synth\nrender(o0", "P002", "Expect ')' at line 2 col 10", 2, 10),
+            ("identifier", "search synth\nlet = 1", "P001", "Expected identifier at line 2 col 5", 2, 5),
+            ("assignment sign", "search synth\nlet x 1", "P001", "Expect '=' at line 2 col 7", 2, 7),
+            ("block opening", "search synth\nif(true) return 1", "P001", "Expect '{' at line 2 col 10", 2, 10),
+            ("end of input", "search synth\nrender(o0) xyz", "P001", "Expected end of input at line 2 col 12", 2, 12),
+            ("call closing parenthesis", "search synth\nfoo(1", "P002", "Expect ')' at line 2 col 6", 2, 6),
+            ("write3d separator", "search synth\nfoo().write3d(tex3d0 geo0)", "P001", "Expect ',' between tex3d and geo in write3d() at line 2 col 22", 2, 22),
+            ("CRLF and tab", "// 😀\r\nsearch synth\r\n\trender(o0", "P002", "Expect ')' at line 3 col 11", 3, 11),
+            ("UTF-16 column", 'search synth\nlet x = "😀"; render o0', "P001", "Expect '(' at line 2 col 22", 2, 22),
+        ]
+        parse_entry = lambda s: parse(lex(s))
+        parse_entry.__name__ = "parse"
+        for name, source, code, message, line, column in cases:
+            for entry_point in (parse_entry, compile):
+                with self.subTest(case=name, entry_point=entry_point.__name__):
+                    with self.assertRaises(SyntaxError) as cm:
+                        entry_point(source)
+                    err = cm.exception
+                    self.assertEqual(str(err), message)
+                    self.assertTrue(hasattr(err, "diagnostic"))
+                    self.assertEqual(
+                        err.diagnostic,
+                        {
+                            "code": code,
+                            "stage": "parser",
+                            "severity": "error",
+                            "message": message,
+                            "location": {"line": line, "column": column},
+                            "span": None,
+                        },
+                    )
+
+    def test_render_landscape_filtering_define(self):
+        dsl_iso = (
+            "search synth, synth3d, render\n"
+            "noise(colorMode: mono).write(o1)\n"
+            "gradient().write(o2)\n"
+            "heightmap3d(heightTex: read(o1), tex: read(o2))\n"
+            "  .renderLandscape3d(filtering: isosurface).write(o0)\n"
+            "render(o0)\n"
+        )
+        graph_iso = compile_graph(dsl_iso)
+        pass_iso = next(p for p in graph_iso["passes"] if "landscape" in p.get("program", ""))
+        self.assertEqual(pass_iso["defines"].get("FILTERING"), 0)
+
+        dsl_vox = (
+            "search synth, synth3d, render\n"
+            "noise(colorMode: mono).write(o1)\n"
+            "gradient().write(o2)\n"
+            "heightmap3d(heightTex: read(o1), tex: read(o2))\n"
+            "  .renderLandscape3d(filtering: voxel).write(o0)\n"
+            "render(o0)\n"
+        )
+        graph_vox = compile_graph(dsl_vox)
+        pass_vox = next(p for p in graph_vox["passes"] if "landscape" in p.get("program", ""))
+        self.assertEqual(pass_vox["defines"].get("FILTERING"), 1)
+
+    def test_parser_expectation_diagnostics_represent_unavailable_caller_token_coordinates_explicitly(self):
+        for coordinates in [{}, {"line": 1}, {"line": 0, "col": 1}, {"line": 1, "col": float("nan")}]:
+            tokens = [
+                {"type": tok["type"], "lexeme": tok["lexeme"], **coordinates} if tok["type"] == "OUTPUT_REF" else tok
+                for tok in lex("search synth\nrender o0")
+            ]
+            with self.assertRaises(SyntaxError) as cm:
+                parse(tokens)
+            err = cm.exception
+            expected_line = coordinates.get("line", "undefined")
+            expected_col = coordinates.get("col", "undefined")
+            self.assertEqual(str(err), f"Expect '(' at line {expected_line} col {expected_col}")
+            self.assertEqual(
+                err.diagnostic,
+                {
+                    "code": "P001",
+                    "stage": "parser",
+                    "severity": "error",
+                    "message": str(err),
+                    "location": None,
+                    "span": None,
+                },
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2,13 +2,12 @@
   "name": "Render Landscape 3D",
   "namespace": "render",
   "func": "renderLandscape3d",
+  "starter": false,
   "tags": [
     "3d"
   ],
+  "description": "Isometric and perspective voxel renderer with face lighting",
   "paramAliases": {},
-  "defaultProgram": "search synth, synth3d, render\n\nnoise(scaleX: 90, scaleY: 90, colorMode: mono, speed: 0).write(o1)\ngradient(type: fourCorners, color1: #006e94, color2: #24e4ff, color3: #bcff46, color4: #efffff).write(o2)\nheightmap3d(heightTex: read(o1), tex: read(o2)).renderLandscape3d(panY: -0.18).write(o0)\nrender(o0)",
-  "outputTex3d": "inputTex3d",
-  "outputGeo": "screenGeoBuffer",
   "globals": {
     "volumeSize": {
       "type": "int",
@@ -162,6 +161,15 @@
       "uniform": "fieldOfView",
       "min": 10,
       "max": 150
+    },
+    "filtering": {
+      "type": "int",
+      "default": 1,
+      "define": "FILTERING",
+      "choices": {
+        "isosurface": 0,
+        "voxel": 1
+      }
     }
   },
   "passes": [
@@ -176,7 +184,6 @@
         "color": "outputTex",
         "geoOut": "screenGeoBuffer"
       },
-      "uniforms": {},
       "drawBuffers": 2,
       "type": "compute"
     }
@@ -187,5 +194,8 @@
       "height": "screen",
       "format": "rgba16f"
     }
-  }
+  },
+  "defaultProgram": "search synth, synth3d, render\n\nnoise(scaleX: 90, scaleY: 90, colorMode: mono, speed: 0).write(o1)\ngradient(type: fourCorners, color1: #006e94, color2: #24e4ff, color3: #bcff46, color4: #efffff).write(o2)\nheightmap3d(heightTex: read(o1), tex: read(o2)).renderLandscape3d(panY: -0.18).write(o0)\nrender(o0)",
+  "outputTex3d": "inputTex3d",
+  "outputGeo": "screenGeoBuffer"
 }

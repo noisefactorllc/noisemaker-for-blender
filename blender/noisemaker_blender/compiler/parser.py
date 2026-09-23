@@ -38,6 +38,7 @@ production. ``parse(tokens)`` is the primary entry point; ``parse_source(src)`` 
 
 import math
 
+from .lang_data import DIAGNOSTICS
 from .lexer import lex
 
 
@@ -47,6 +48,8 @@ class SyntaxError_(SyntaxError):
     Named with a trailing underscore so it does not shadow the builtin ``SyntaxError`` at the
     use sites below, while still subclassing it so ``except SyntaxError`` also catches it.
     """
+
+    diagnostic: dict | None = None
 
 
 # Built-in namespace IDs accepted by the `search` directive. Mirrors the seed set in
@@ -156,7 +159,30 @@ def parse(tokens):
         token = peek()
         if token["type"] == type_:
             return advance()
-        raise SyntaxError_("%s at line %d col %d" % (msg, token["line"], token["col"]))
+        token_line = token.get("line")
+        token_col = token.get("col")
+        line_str = "undefined" if "line" not in token else token["line"]
+        col_str = "undefined" if "col" not in token else token["col"]
+        msg_str = f"{msg} at line {line_str} col {col_str}"
+        error = SyntaxError_(msg_str)
+        code = "P002" if type_ == "RPAREN" else "P001"
+        has_location = (
+            isinstance(token_line, int)
+            and not isinstance(token_line, bool)
+            and token_line > 0
+            and isinstance(token_col, int)
+            and not isinstance(token_col, bool)
+            and token_col > 0
+        )
+        error.diagnostic = {
+            "code": code,
+            "stage": DIAGNOSTICS[code]["stage"],
+            "severity": DIAGNOSTICS[code]["severity"],
+            "message": msg_str,
+            "location": {"line": token_line, "column": token_col} if has_location else None,
+            "span": None,
+        }
+        raise error
 
     def collect_comments():
         """Collect and consume any pending COMMENT tokens; return list of lexeme strings."""
