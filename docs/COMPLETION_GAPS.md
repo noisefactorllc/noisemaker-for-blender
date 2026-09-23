@@ -22,6 +22,13 @@ Publication scope contains only this document and its README link.
 The existing workflow excludes these paths. Their publication does not trigger a kit, package, tag, site, or deployment.
 The shared audit state records the publication commit and remote verification after the push.
 
+Review date: 2026-09-23. Current source: `e9299fd8af7d546d27491959677211e8e89b1dc1`.
+Current kit `0.1.18` records that source. Earlier measurements below retain their original source and date.
+The current source adds landscape filtering and parser diagnostics after the audit checkpoint.
+
+Live upstream at review: `532ed64775000635e43caac085e4451c06e71afc`. Published runtime: `1.0.169` at `44bc4ed4ac729bddaa95b083d64bee942ade35da`.
+The review does not qualify every upstream change after the recorded port authority.
+
 ## 2. Completion claims
 
 | Claim ID | Claim source | Claimed scope | Finding | Evidence |
@@ -33,7 +40,7 @@ The shared audit state records the publication commit and remote verification af
 | C-005 | README, first render | Install, bake, then use the Image | unverified | Archive import and DSL compilation pass. Installation, visible output, and material use require Blender. |
 | C-006 | README, ecosystem fit | Legacy add-on produces ordinary Images | partial | Archive structure follows the legacy installation model. Host registration and Image integration remain unverified. |
 | C-007 | Published kit | Installable, maintainable distribution | partial | 632/632 files match inventory hashes. Archive sources match the reviewed revision. Host and standalone packaging qualification remain open. |
-| C-008 | Latest synchronization record | Authority checkpoint through `643b2be1e28b` | supported | That checkpoint remains explicit. Current upstream adds an unsupported landscape parameter. |
+| C-008 | Latest synchronization record | Authority checkpoint through `643b2be1e28b` | supported | That checkpoint describes the original audit. Current source and archive accept landscape filtering. Render qualification remains open. |
 
 The old whole-catalog parity language does not establish current mode coverage.
 Equal effect identifiers do not establish equal parameters, shader behavior, or host support.
@@ -108,10 +115,31 @@ Remote evidence:
 - [Immutable kit inventory](https://kits.noisedeck.app/blender/0.1.17/kit.json).
 - [Authority changes since the checkpoint](https://github.com/noisefactorllc/noisemaker/compare/643b2be1e28b...ae4e3302e2d379450ad56745da5be506b329f84d).
 
+### Daily review evidence, 2026-09-23
+
+Review evidence resides in `review-20260923-01/noisemaker-for-blender` in the shared store.
+`python3 -m unittest discover -s parity -p 'test_compiler.py' -v` passes 16 tests, exit 0.
+`python3 parity/compiler/check_compile.py` still exits 1 with 19/20 matches.
+The retained failure still concerns the additional diagnostic column. No golden changed.
+
+The reviewer downloaded kit `0.1.18` ZIP, README, and compatibility data at their inventory hashes.
+The two changed kit files pass fresh hash checks. The other 630 inventory hashes match the prior kit.
+The published archive compiles both landscape choices. `packed-compiler.json` retains their graphs.
+The ZIP still contains 868 entries and no license file. The enclosing kit retains both MIT notices.
+The README still calls bloom and lens broken. The compatibility list still includes both effects.
+These independent checks support GAP-001 and GAP-006. They do not determine bloom or lens pixel correctness.
+
+[Current source CI](https://github.com/noisefactorllc/noisemaker-for-blender/actions/runs/35807778200) passed.
+[Downstream CI](https://github.com/noisefactorllc/scaffold/actions/runs/35807785546) passed 97 builder tests without a test skip.
+The workflow excluded other-kit suites. No Blender host render ran in that workflow.
+The reviewer found no Blender executable on PATH or in the standard Applications directory.
+Host installation, useful Image output, recovery, accessibility, and platform qualification remain unverified.
+Official Blender 5.1 search excerpts still describe legacy ZIP installation. Direct manual retrieval remained unavailable.
+
 ## 4. Known gaps
 
 P1 means false completion or a major correctness gap. P2 means incomplete coverage or integration. P3 means inconsistent documentation.
-All gaps below were last checked on 2026-09-22. No gap closed during this pass.
+Original gap evidence dates to 2026-09-22. Dated review evidence below supplements those findings. No gap closed.
 
 ### GAP-001: Conflicting runtime support claims
 
@@ -120,22 +148,24 @@ All gaps below were last checked on 2026-09-22. No gap closed during this pass.
 - Expected: each advertised effect has a consistent supported status backed by executable evidence.
 - Observed: README claims all non-audio effects work. The shipped template says bloom and lens render incorrectly, but compatibility includes both.
 - Evidence: C-003 and the immutable kit README/compatibility files.
-- Next action: test existing bloom and lens fixtures at the frozen checkpoint, then reconcile the claims with those results.
+- Next action: run the existing bloom and lens fixtures through `blender/harness/render_all.py` on a qualified host.
+- Review evidence: kit `0.1.18` retains the contradictory README and compatibility entries. Last checked 2026-09-23.
 - Dependencies: GAP-003 supplies the Blender host. Do not assume either conflicting runtime statement is correct.
 - Required checks: public bake path, unchanged authority images, explicit existing tolerances, and both individual effects and a chain.
 - Acceptance: both effects have source-bound results and consistent descriptions. Any failure remains visible as unsupported or an open defect.
 
-### GAP-002: Current authority exceeds the frozen checkpoint
+### GAP-002: Updated landscape authority lacks host qualification
 
 - Status: open. Priority: P2. Category: authority.
 - Scope: landscape parameter coverage and authority descriptions.
 - Expected: developers can distinguish the recorded checkpoint from current upstream behavior.
-- Observed: current upstream accepts both filtering choices. This port rejects the parameter.
+- Historical observation: the audited source rejected both filtering choices.
+- Current observation: source `e9299fd8` and kit `0.1.18` compile both choices. Their Blender pixels remain unverified.
 - Evidence: `public-probes.json`, source definitions, and the recorded upstream comparison.
-- Next action: preserve the checkpoint and document its boundary. Do not port the new parameter during this audit.
-- Dependencies: none. Any future synchronization needs separate implementation authority.
-- Required checks: identify source and authority revisions for each completion claim. Retain the bounded rejection probes.
-- Acceptance: checkpoint claims exclude later behavior, and no current-authority completion claim conceals the difference.
+- Next action: qualify both existing choices on the same Blender host used for GAP-003. Preserve the earlier rejection evidence.
+- Dependencies: GAP-003 supplies the host. Further synchronization remains outside this review.
+- Required checks: compiler tests, packed compiler graphs, and source-bound renders for default, voxel, and isosurface modes.
+- Acceptance: source and archive choices compile and render against their declared authority. Record both source revisions and unchanged comparison tolerances.
 
 ### GAP-003: Host qualification is unavailable
 
@@ -179,13 +209,14 @@ All gaps below were last checked on 2026-09-22. No gap closed during this pass.
 
 ### GAP-006: Standalone archive qualification is incomplete
 
-- Status: open. Priority: P2. Category: release.
+- Status: open. Priority: P1. Category: release.
 - Scope: the legacy ZIP, license notices, version identification, and upgrade behavior.
 - Expected: each distributed form retains required notices and supports reproducible version identification.
 - Observed: the enclosing kit includes MIT notices. Its 868-entry add-on ZIP contains no license text.
 - Observed: add-on metadata says `0.1.0`. The enclosing kit says `0.1.17`. The README also describes building a standalone ZIP.
 - Evidence: `kit-verification.json`, `bl_info`, README installation command, and published kit metadata.
-- Next action: qualify the standalone distribution and define the mapping between add-on and kit versions.
+- Next action: include the required license in each standalone ZIP through the existing builder. Define add-on and kit version mapping.
+- Review evidence: the current ZIP still lacks license text. The missing standalone notice warrants P1 priority.
 - Dependencies: GAP-003 for install, upgrade, removal, and project persistence checks.
 - Required checks: inspect the standalone archive inventory, notices, source revision, entry point, and upgrade identity.
 - Acceptance: every distributed form carries its notices and identifies its source. A clean host can install, upgrade, and remove it.
@@ -208,9 +239,11 @@ All gaps below were last checked on 2026-09-22. No gap closed during this pass.
 
 These actions describe acceptance work at the existing checkpoint. They do not authorize implementation or an authority upgrade.
 
-1. Preserve the checkpoint and classify later authority differences in this register. Keep the current rejection evidence for GAP-002.
-2. Locate a qualified Blender 5.1 host. Execute the existing installation and integration checks for GAP-003.
-3. Test bloom and lens before repeating broad completion claims. Resolve GAP-001 from output evidence, not document precedence.
+1. Record the existing source update under GAP-002. Preserve the old rejection results without describing them as current behavior.
+2. Locate a Blender 5.1 GPU host for GAP-003. Run `blender --factory-startup --python blender/harness/test_integration.py`.
+   Require successful registration, bake, Image readback, comparison, and cleanup. Use isolated preferences and a disposable project.
+3. Render existing bloom and lens DSL fixtures with `NM_JOBS` through `blender/harness/render_all.py`. Compare candidates with `parity/compare.py`.
+   Preserve established dimensions, times, goldens, and tolerances. Record each effect and chain result before reconciling GAP-001.
 4. Establish golden provenance and retain the diagnostic failure until the reviewer records its cause. Complete GAP-004's evidence boundaries.
 5. Test long bakes and Image name collisions in a disposable project. Record GAP-005's user-visible recovery behavior.
 6. Qualify notices, version mapping, upgrade, and removal for the actual ZIP. Apply GAP-006's acceptance checks.
@@ -224,6 +257,7 @@ Implementation remains with the separate job. No additional effect port is part 
 | Date | Source | Changes and tested scope | Remaining limits |
 | --- | --- | --- | --- |
 | 2026-09-22 | `0efbdc47dcf3050575af1e0c9b22e5425fd1fb84` | Initial register. Seven gaps. Compiler and package checks described above. | No host qualification or closures. Checkpoint unchanged. |
+| 2026-09-23 | `e9299fd8af7d546d27491959677211e8e89b1dc1` | Reviewed original evidence. Rechecked packed compiler, conflicting support claims, missing ZIP license, and current CI. Corrected GAP-002 and raised GAP-006. | Seven gaps remain. GPU and host qualification remain blocked. No closure. |
 
 Historical results remain in STATUS and the existing platform and chaos documents.
 This register records current uncertainty without replacing those records.
