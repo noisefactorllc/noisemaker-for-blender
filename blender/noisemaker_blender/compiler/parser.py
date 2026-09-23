@@ -155,17 +155,17 @@ def parse(tokens):
             return tokens[idx]
         return None
 
-    def expect(type_, msg):
-        token = peek()
-        if token["type"] == type_:
-            return advance()
-        token_line = token.get("line")
-        token_col = token.get("col")
-        line_str = "undefined" if "line" not in token else token["line"]
-        col_str = "undefined" if "col" not in token else token["col"]
-        msg_str = f"{msg} at line {line_str} col {col_str}"
+    def loc_suffix(tok):
+        line_str = "undefined" if not isinstance(tok, dict) or "line" not in tok else tok["line"]
+        col_str = "undefined" if not isinstance(tok, dict) or "col" not in tok else tok["col"]
+        return f"at line {line_str} col {col_str}"
+
+    def parser_error(code, msg_str, token):
         error = SyntaxError_(msg_str)
-        code = "P002" if type_ == "RPAREN" else "P001"
+        token_line = token.get("line") if isinstance(token, dict) else None
+        token_col = token.get("col") if isinstance(token, dict) else None
+        if token_col is None and isinstance(token, dict):
+            token_col = token.get("column")
         has_location = (
             isinstance(token_line, int)
             and not isinstance(token_line, bool)
@@ -182,7 +182,15 @@ def parse(tokens):
             "location": {"line": token_line, "column": token_col} if has_location else None,
             "span": None,
         }
-        raise error
+        return error
+
+    def expect(type_, msg):
+        token = peek()
+        if token["type"] == type_:
+            return advance()
+        msg_str = f"{msg} {loc_suffix(token)}"
+        code = "P002" if type_ == "RPAREN" else "P001"
+        raise parser_error(code, msg_str, token)
 
     def collect_comments():
         """Collect and consume any pending COMMENT tokens; return list of lexeme strings."""
@@ -233,9 +241,10 @@ def parse(tokens):
 
         for key in kwargs.keys():
             if key not in valid_params:
-                raise SyntaxError_(
-                    "osc() unknown parameter '%s' at line %d col %d. Valid: %s"
-                    % (key, name_token["line"], name_token["col"], ", ".join(param_order))
+                raise parser_error(
+                    "P003",
+                    f"osc() unknown parameter '{key}' {loc_suffix(name_token)}. Valid: {', '.join(param_order)}",
+                    name_token,
                 )
 
         resolved = {}
@@ -271,20 +280,17 @@ def parse(tokens):
         keyword_only_params = ["name", "id", "cc", "nrpn", "zone", "members"]
         valid_params = param_order + keyword_only_params
         if len(args) > len(param_order):
-            raise SyntaxError_(
-                "midi() name, id, cc, nrpn, zone and members are keyword-only at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"midi() name, id, cc, nrpn, zone and members are keyword-only {loc_suffix(name_token)}",
+                name_token,
             )
         for key in kwargs.keys():
             if key not in valid_params:
-                raise SyntaxError_(
-                    "midi() unknown parameter '%s' at line %d col %d. Valid: %s"
-                    % (
-                        key,
-                        name_token["line"],
-                        name_token["col"],
-                        ", ".join(valid_params),
-                    )
+                raise parser_error(
+                    "P003",
+                    f"midi() unknown parameter '{key}' {loc_suffix(name_token)}. Valid: {', '.join(valid_params)}",
+                    name_token,
                 )
         defaults = {
             "mode": {"type": "Member", "path": ["midiMode", "velocity"]},
@@ -305,43 +311,50 @@ def parse(tokens):
                 resolved[param_name] = defaults[param_name]
 
         if pos_cursor < len(args):
-            raise SyntaxError_(
-                "midi() has an excess positional argument at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"midi() has an excess positional argument {loc_suffix(name_token)}",
+                name_token,
             )
         if not resolved.get("channel") and kwargs.get("zone") is None:
-            raise SyntaxError_(
-                "midi() requires 'channel' or 'zone' argument at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"midi() requires 'channel' or 'zone' argument {loc_suffix(name_token)}",
+                name_token,
             )
         if resolved.get("channel") and kwargs.get("zone") is not None:
-            raise SyntaxError_(
-                "midi() 'channel' and 'zone' are mutually exclusive at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"midi() 'channel' and 'zone' are mutually exclusive {loc_suffix(name_token)}",
+                name_token,
             )
         if kwargs.get("members") is not None and kwargs.get("zone") is None:
-            raise SyntaxError_(
-                "midi() 'members' requires 'zone' at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"midi() 'members' requires 'zone' {loc_suffix(name_token)}",
+                name_token,
             )
         if kwargs.get("id") is not None and kwargs.get("name") is None:
-            raise SyntaxError_(
-                "midi() 'id' requires readable 'name' at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"midi() 'id' requires readable 'name' {loc_suffix(name_token)}",
+                name_token,
             )
         for param_name in ("name", "id"):
             value = kwargs.get(param_name)
             if value is None:
                 continue
             if value.get("type") != "String":
-                raise SyntaxError_(
-                    "midi() '%s' requires a quoted string at line %d col %d"
-                    % (param_name, name_token["line"], name_token["col"])
+                raise parser_error(
+                    "P003",
+                    f"midi() '{param_name}' requires a quoted string {loc_suffix(name_token)}",
+                    name_token,
                 )
             if len(value.get("value", "")) == 0:
-                raise SyntaxError_(
-                    "midi() '%s' must not be empty at line %d col %d"
-                    % (param_name, name_token["line"], name_token["col"])
+                raise parser_error(
+                    "P003",
+                    f"midi() '{param_name}' must not be empty {loc_suffix(name_token)}",
+                    name_token,
                 )
 
         node = {
@@ -371,20 +384,17 @@ def parse(tokens):
         keyword_only_params = ["channel", "name", "id"]
         valid_params = param_order + keyword_only_params
         if len(args) > len(param_order):
-            raise SyntaxError_(
-                "audio() channel, name and id are keyword-only at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"audio() channel, name and id are keyword-only {loc_suffix(name_token)}",
+                name_token,
             )
         for key in kwargs.keys():
             if key not in valid_params:
-                raise SyntaxError_(
-                    "audio() unknown parameter '%s' at line %d col %d. Valid: %s"
-                    % (
-                        key,
-                        name_token["line"],
-                        name_token["col"],
-                        ", ".join(valid_params),
-                    )
+                raise parser_error(
+                    "P003",
+                    f"audio() unknown parameter '{key}' {loc_suffix(name_token)}. Valid: {', '.join(valid_params)}",
+                    name_token,
                 )
         defaults = {
             "min": {"type": "Number", "value": 0},
@@ -403,38 +413,44 @@ def parse(tokens):
                 resolved[param_name] = defaults[param_name]
 
         if pos_cursor < len(args):
-            raise SyntaxError_(
-                "audio() has an excess positional argument at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"audio() has an excess positional argument {loc_suffix(name_token)}",
+                name_token,
             )
         if not resolved.get("band"):
-            raise SyntaxError_(
-                "audio() requires 'band' argument at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"audio() requires 'band' argument {loc_suffix(name_token)}",
+                name_token,
             )
         if kwargs.get("id") is not None and kwargs.get("name") is None:
-            raise SyntaxError_(
-                "audio() 'id' requires readable 'name' at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"audio() 'id' requires readable 'name' {loc_suffix(name_token)}",
+                name_token,
             )
         if kwargs.get("name") is not None and kwargs.get("channel") is None:
-            raise SyntaxError_(
-                "audio() selected device requires both 'name' and 'channel' at line %d col %d"
-                % (name_token["line"], name_token["col"])
+            raise parser_error(
+                "P003",
+                f"audio() selected device requires both 'name' and 'channel' {loc_suffix(name_token)}",
+                name_token,
             )
         for param_name in ("name", "id"):
             value = kwargs.get(param_name)
             if value is None:
                 continue
             if value.get("type") != "String":
-                raise SyntaxError_(
-                    "audio() '%s' requires a quoted string at line %d col %d"
-                    % (param_name, name_token["line"], name_token["col"])
+                raise parser_error(
+                    "P003",
+                    f"audio() '{param_name}' requires a quoted string {loc_suffix(name_token)}",
+                    name_token,
                 )
             if len(value.get("value", "")) == 0:
-                raise SyntaxError_(
-                    "audio() '%s' must not be empty at line %d col %d"
-                    % (param_name, name_token["line"], name_token["col"])
+                raise parser_error(
+                    "P003",
+                    f"audio() '{param_name}' must not be empty {loc_suffix(name_token)}",
+                    name_token,
                 )
 
         node = {

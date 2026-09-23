@@ -63,6 +63,10 @@ two harnesses). No open issues from this round.
 
 *Incrementally synced 2026-09-22 to reference `643b2be1e28b` (`e5bd2013087e..643b2be1e28b`) — ported upstream structured DSL lexer diagnostics into `compiler/lexer.py` and `compiler/lang_data.py` (added L003 unterminated comment and L004 output surface reference out of range to diagnostics table; attached structured `.diagnostic` payload with code, stage, severity, message, 1-based line/col location, and 0-based UTF-16 character span to `SyntaxError_` on lexer failures). Added unit test suite in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 111/111 parity unit tests pass.*
 
+*Incrementally synced 2026-09-22 to reference `44bc4ed4ac72` (`643b2be1e28b..44bc4ed4ac72`) — ported upstream structured parser expectation diagnostics (`P001` unexpected token, `P002` expected closing parenthesis) into `compiler/parser.py` and added `renderLandscape3d` isosurface filtering variant (`FILTERING` define 0 for isosurface, 1 for voxel). Added unit test suite in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass, and 113/113 parity unit tests pass.*
+
+*Incrementally synced 2026-09-23 to reference `e32a5a4a2e1f` (`44bc4ed4ac72..e32a5a4a2e1f`) — ported upstream structured automation argument diagnostics (`P003` invalid automation arguments) into `compiler/parser.py` and `compiler/lang_data.py` (attached structured `.diagnostic` payload with code, stage, severity, message, and 1-based line/col location to `SyntaxError_` for `osc()`, `midi()`, and `audio()` invocation validation errors). Added unit test suite in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 114/114 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 

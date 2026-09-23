@@ -372,6 +372,104 @@ class CompilerTests(unittest.TestCase):
                 },
             )
 
+    def test_automation_argument_diagnostics(self):
+        automation_failures = [
+            ("osc(type: oscKind.sine, bogus: 1)", "osc() unknown parameter 'bogus'", ". Valid: type, min, max, speed, offset, seed"),
+            ("midi(1, 2, 3, 4, 5, 6)", "midi() name, id, cc, nrpn, zone and members are keyword-only", ""),
+            ("midi(bogus: 1)", "midi() unknown parameter 'bogus'", ". Valid: channel, mode, min, max, sensitivity, name, id, cc, nrpn, zone, members"),
+            ("midi(1, 2, 3, 4, 5, channel: 1)", "midi() has an excess positional argument", ""),
+            ("midi()", "midi() requires 'channel' or 'zone' argument", ""),
+            ("midi(1, zone: 1)", "midi() 'channel' and 'zone' are mutually exclusive", ""),
+            ("midi(1, members: 2)", "midi() 'members' requires 'zone'", ""),
+            ('midi(1, id: "port")', "midi() 'id' requires readable 'name'", ""),
+            ("midi(1, name: 1)", "midi() 'name' requires a quoted string", ""),
+            ('midi(1, name: "")', "midi() 'name' must not be empty", ""),
+            ('midi(1, name: "port", id: 1)', "midi() 'id' requires a quoted string", ""),
+            ('midi(1, name: "port", id: "")', "midi() 'id' must not be empty", ""),
+            ("audio(1, 2, 3, 4)", "audio() channel, name and id are keyword-only", ""),
+            ("audio(bogus: 1)", "audio() unknown parameter 'bogus'", ". Valid: band, min, max, channel, name, id"),
+            ("audio(1, 2, 3, band: 1)", "audio() has an excess positional argument", ""),
+            ("audio()", "audio() requires 'band' argument", ""),
+            ('audio(1, id: "device")', "audio() 'id' requires readable 'name'", ""),
+            ('audio(1, name: "device")', "audio() selected device requires both 'name' and 'channel'", ""),
+            ("audio(1, channel: 1, name: 1)", "audio() 'name' requires a quoted string", ""),
+            ('audio(1, channel: 1, name: "")', "audio() 'name' must not be empty", ""),
+            ('audio(1, channel: 1, name: "device", id: 1)', "audio() 'id' requires a quoted string", ""),
+            ('audio(1, channel: 1, name: "device", id: "")', "audio() 'id' must not be empty", ""),
+        ]
+        parse_entry = lambda s: parse(lex(s))
+        parse_entry.__name__ = "parse"
+        for invocation, prefix, suffix in automation_failures:
+            source = f"search synth\nlet x = {invocation}"
+            message = f"{prefix} at line 2 col 9{suffix}"
+            for entry_point in (parse_entry, compile):
+                with self.subTest(invocation=invocation, entry_point=entry_point.__name__):
+                    with self.assertRaises(SyntaxError) as cm:
+                        entry_point(source)
+                    err = cm.exception
+                    self.assertEqual(str(err), message)
+                    self.assertTrue(hasattr(err, "diagnostic"))
+                    self.assertEqual(
+                        err.diagnostic,
+                        {
+                            "code": "P003",
+                            "stage": "parser",
+                            "severity": "error",
+                            "message": message,
+                            "location": {"line": 2, "column": 9},
+                            "span": None,
+                        },
+                    )
+
+    def test_automation_argument_diagnostics_crlf_tabs_and_coordinates(self):
+        source = 'search synth\r\n\tlet x = "😀"; let y = midi()'
+        parse_entry = lambda s: parse(lex(s))
+        parse_entry.__name__ = "parse"
+        for entry_point in (parse_entry, compile):
+            with self.subTest(entry_point=entry_point.__name__):
+                with self.assertRaises(SyntaxError) as cm:
+                    entry_point(source)
+                err = cm.exception
+                self.assertEqual(str(err), "midi() requires 'channel' or 'zone' argument at line 2 col 24")
+                self.assertEqual(
+                    err.diagnostic,
+                    {
+                        "code": "P003",
+                        "stage": "parser",
+                        "severity": "error",
+                        "message": str(err),
+                        "location": {"line": 2, "column": 24},
+                        "span": None,
+                    },
+                )
+
+        for invocation in ["osc(type: 1, bogus: 1)", "midi()", "audio()"]:
+            for coordinates in [{}, {"line": 1}, {"line": 0, "col": 1}, {"line": 1, "col": float("nan")}]:
+                tokens = [
+                    {"type": tok["type"], "lexeme": tok["lexeme"], **coordinates}
+                    if tok["lexeme"] in ("osc", "midi", "audio")
+                    else tok
+                    for tok in lex(f"search synth\nlet x = {invocation}")
+                ]
+                with self.subTest(invocation=invocation, coordinates=coordinates):
+                    with self.assertRaises(SyntaxError) as cm:
+                        parse(tokens)
+                    err = cm.exception
+                    expected_line = coordinates.get("line", "undefined")
+                    expected_col = coordinates.get("col", "undefined")
+                    self.assertIn(f"at line {expected_line} col {expected_col}", str(err))
+                    self.assertEqual(
+                        err.diagnostic,
+                        {
+                            "code": "P003",
+                            "stage": "parser",
+                            "severity": "error",
+                            "message": str(err),
+                            "location": None,
+                            "span": None,
+                        },
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()
