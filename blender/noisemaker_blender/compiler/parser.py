@@ -553,7 +553,7 @@ def parse(tokens):
         advance()
         expect("LPAREN", "Expect '('")
         if peek()["type"] != "OUTPUT_REF":
-            raise SyntaxError_("Expected output reference in render()")
+            raise parser_error("P005", "Expected output reference in render()", peek())
         out = {"type": "OutputRef", "name": advance()["lexeme"]}
         expect("RPAREN", "Expect ')'")
         return out
@@ -804,9 +804,10 @@ def parse(tokens):
             if next_type == "WRITE" or next_type == "WRITE3D":
                 if context == "expression":
                     t = peek()
-                    raise SyntaxError_(
-                        "'.write()' is only allowed in statement context "
-                        "at line %d col %d" % (t["line"], t["col"])
+                    raise parser_error(
+                        "P005",
+                        f"'.write()' is only allowed in statement context {loc_suffix(t)}",
+                        t,
                     )
                 write_node = parse_write_call()
                 if len(all_comments) > 0:
@@ -827,9 +828,11 @@ def parse(tokens):
 
     def parse_write_call():
         tok = peek()
-        token_type = tok["type"]
-        token_line = tok["line"]
-        token_col = tok["col"]
+        token_type = tok.get("type") if isinstance(tok, dict) else None
+        token_line = tok.get("line") if isinstance(tok, dict) else None
+        token_col = tok.get("col") if isinstance(tok, dict) else None
+        if token_col is None and isinstance(tok, dict):
+            token_col = tok.get("column")
 
         if token_type == "WRITE":
             advance()  # consume 'write'
@@ -849,10 +852,10 @@ def parse(tokens):
             elif p["type"] == "IDENT" and p["lexeme"] == "none":
                 surface = {"type": "OutputRef", "name": advance()["lexeme"]}
             else:
-                raise SyntaxError_(
-                    "write() requires an explicit surface reference "
-                    "(e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line %d col %d"
-                    % (peek()["line"], peek()["col"])
+                raise parser_error(
+                    "P005",
+                    f"write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) {loc_suffix(peek())}",
+                    peek(),
                 )
             expect("RPAREN", "Expect ')'")
             return {
@@ -874,9 +877,10 @@ def parse(tokens):
                 else:
                     tex3d = {"type": "Ident", "name": advance()["lexeme"]}
             else:
-                raise SyntaxError_(
-                    "Expected tex3d reference in write3d() at line %d col %d"
-                    % (peek()["line"], peek()["col"])
+                raise parser_error(
+                    "P005",
+                    f"Expected tex3d reference in write3d() {loc_suffix(peek())}",
+                    peek(),
                 )
             expect("COMMA", "Expect ',' between tex3d and geo in write3d()")
             geo = None
@@ -890,9 +894,10 @@ def parse(tokens):
                 else:
                     geo = {"type": "Ident", "name": advance()["lexeme"]}
             else:
-                raise SyntaxError_(
-                    "Expected geo reference in write3d() at line %d col %d"
-                    % (peek()["line"], peek()["col"])
+                raise parser_error(
+                    "P005",
+                    f"Expected geo reference in write3d() {loc_suffix(peek())}",
+                    peek(),
                 )
             expect("RPAREN", "Expect ')'")
             return {

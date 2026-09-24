@@ -569,5 +569,135 @@ class CompilerTests(unittest.TestCase):
                 )
 
 
+    def test_parser_output_operation_diagnostics(self):
+        cases = [
+            ("invalid render target", "search synth\nrender(1)", "Expected output reference in render()", 2, 8),
+            ("render target at EOF", "search synth\nrender(", "Expected output reference in render()", 2, 8),
+            (
+                "write in expression",
+                "search synth\nlet x = diagProbe().write(o0)",
+                "'.write()' is only allowed in statement context at line 2 col 21",
+                2,
+                21,
+            ),
+            (
+                "write3d in expression",
+                "search synth\nlet x = diagProbe().write3d(vol0, geo0)",
+                "'.write()' is only allowed in statement context at line 2 col 21",
+                2,
+                21,
+            ),
+            (
+                "missing write surface",
+                "search synth\ndiagProbe().write()",
+                "write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line 2 col 19",
+                2,
+                19,
+            ),
+            (
+                "write surface at EOF",
+                "search synth\ndiagProbe().write(",
+                "write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line 2 col 19",
+                2,
+                19,
+            ),
+            (
+                "invalid write surface",
+                "search synth\ndiagProbe().write(1)",
+                "write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) at line 2 col 19",
+                2,
+                19,
+            ),
+            (
+                "invalid write3d texture",
+                "search synth\ndiagProbe().write3d(1, geo0)",
+                "Expected tex3d reference in write3d() at line 2 col 21",
+                2,
+                21,
+            ),
+            (
+                "write3d texture at EOF",
+                "search synth\ndiagProbe().write3d(",
+                "Expected tex3d reference in write3d() at line 2 col 21",
+                2,
+                21,
+            ),
+            (
+                "invalid write3d geometry",
+                "search synth\ndiagProbe().write3d(vol0, 1)",
+                "Expected geo reference in write3d() at line 2 col 27",
+                2,
+                27,
+            ),
+            (
+                "write3d geometry at EOF",
+                "search synth\ndiagProbe().write3d(vol0,",
+                "Expected geo reference in write3d() at line 2 col 26",
+                2,
+                26,
+            ),
+            (
+                "CRLF and tab render target",
+                "// 😀\r\nsearch synth\r\n\trender(\"😀\")",
+                "Expected output reference in render()",
+                3,
+                9,
+            ),
+            (
+                "UTF-16 render target column",
+                'search synth\nlet x = "😀"; render(none)',
+                "Expected output reference in render()",
+                2,
+                22,
+            ),
+        ]
+        for name, source, message, expected_line, expected_col in cases:
+            with self.subTest(name=name):
+                with self.assertRaises(SyntaxError) as cm:
+                    parse(lex(source))
+                err = cm.exception
+                self.assertEqual(str(err), message)
+                self.assertEqual(
+                    err.diagnostic,
+                    {
+                        "code": "P005",
+                        "stage": "parser",
+                        "severity": "error",
+                        "message": message,
+                        "location": {"line": expected_line, "column": expected_col},
+                        "span": None,
+                    },
+                )
+
+    def test_parser_output_diagnostics_preserve_unavailable_caller_token_coordinates(self):
+        cases = [
+            "search synth\nrender(1)",
+            "search synth\nlet x = diagProbe().write(o0)",
+            "search synth\ndiagProbe().write(1)",
+            "search synth\ndiagProbe().write3d(1, geo0)",
+            "search synth\ndiagProbe().write3d(vol0, 1)",
+        ]
+        for source in cases:
+            for coords in [{}, {"line": 1}, {"line": 0, "col": 1}, {"line": 1, "col": float("nan")}]:
+                tokens = [
+                    {k: v for k, v in t.items() if k not in ("line", "col", "column")} | coords
+                    for t in lex(source)
+                ]
+                with self.assertRaises(SyntaxError) as cm:
+                    parse(tokens)
+                err = cm.exception
+                self.assertEqual(
+                    err.diagnostic,
+                    {
+                        "code": "P005",
+                        "stage": "parser",
+                        "severity": "error",
+                        "message": str(err),
+                        "location": None,
+                        "span": None,
+                    },
+                )
+
+
 if __name__ == "__main__":
     unittest.main()
