@@ -104,6 +104,50 @@ class PipelineSinkTests(unittest.TestCase):
         self.assertEqual(result, "pixels")
         self.assertFalse(any(event[0] in ("configure", "submit") for event in events))
 
+    def test_render_skips_frame_when_sink_defers_render_and_resumes_afterward(self):
+        events = []
+        backend = RecordingBackend(events)
+        graph = EmptyGraph()
+        manager = SinkManager()
+
+        class DeferrableSink(RecordingSink):
+            def __init__(self, events):
+                super().__init__(events)
+                self.call_count = 0
+
+            def defer_render(self):
+                self.call_count += 1
+                return self.call_count <= 2
+
+        sink = DeferrableSink(events)
+        manager.add(sink)
+
+        result = pipeline.render(backend, graph, frames=3, sink_manager=manager)
+        self.assertEqual(result, "pixels")
+        # Only 1 frame was drawn on backend (frame 2)
+        frame_begins = [e for e in events if e[0] == "frame_begin"]
+        self.assertEqual(len(frame_begins), 1)
+        submissions = [e for e in events if e[0] == "submit"]
+        self.assertEqual(len(submissions), 1)
+
+    def test_render_handles_non_callable_should_defer_render_attribute(self):
+        events = []
+        backend = RecordingBackend(events)
+        graph = EmptyGraph()
+
+        class DuckManager:
+            should_defer_render = True
+
+            def configure(self, desc):
+                pass
+
+            def submit(self, binding, ts):
+                pass
+
+        result = pipeline.render(backend, graph, frames=1, sink_manager=DuckManager())
+        self.assertEqual(result, "pixels")
+        self.assertEqual(len([e for e in events if e[0] == "frame_begin"]), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

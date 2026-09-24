@@ -623,6 +623,8 @@ def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None,
         tt = (time + f * timestep) % 1.0 if timestep else time
         dt = 0.0 if (prev_tt is None) else (tt - prev_tt)
         prev_tt = tt
+        if sink_manager is not None and callable(getattr(sink_manager, "should_defer_render", None)) and sink_manager.should_defer_render():
+            continue
         engine = default_engine(backend.size, tt, f, dt)
         lookup = dict(engine)
         lookup.update(defaults)

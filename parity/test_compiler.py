@@ -470,6 +470,104 @@ class CompilerTests(unittest.TestCase):
                         },
                     )
 
+    def test_valid_automation_invocations_retain_ast_defaults(self):
+        source = "search synth\nlet a = osc(); let b = midi(1); let c = audio(audioBand.low)"
+        vars_ = parse(lex(source))["vars"]
+        self.assertEqual(
+            [v["expr"] for v in vars_],
+            [
+                {
+                    "type": "Oscillator",
+                    "oscType": {"type": "Member", "path": ["oscKind", "sine"]},
+                    "min": {"type": "Number", "value": 0},
+                    "max": {"type": "Number", "value": 1},
+                    "speed": {"type": "Number", "value": 1},
+                    "offset": {"type": "Number", "value": 0},
+                    "seed": {"type": "Number", "value": 1},
+                    "loc": {"line": 2, "col": 9},
+                },
+                {
+                    "type": "Midi",
+                    "channel": {"type": "Number", "value": 1},
+                    "mode": {"type": "Member", "path": ["midiMode", "velocity"]},
+                    "min": {"type": "Number", "value": 0},
+                    "max": {"type": "Number", "value": 1},
+                    "sensitivity": {"type": "Number", "value": 1},
+                    "loc": {"line": 2, "col": 24},
+                },
+                {
+                    "type": "Audio",
+                    "band": {"type": "Member", "path": ["audioBand", "low"]},
+                    "min": {"type": "Number", "value": 0},
+                    "max": {"type": "Number", "value": 1},
+                    "loc": {"line": 2, "col": 41},
+                },
+            ],
+        )
+
+    def test_parser_search_directive_diagnostics(self):
+        missing_msg = (
+            "Missing required 'search' directive. Every program must start with "
+            "'search <namespace>, ...' to specify namespace search order."
+        )
+        cases = [
+            ("empty program", "", missing_msg, 1, 1),
+            ("missing directive after statements", "let x = 1", missing_msg, 1, 10),
+            ("duplicate directive", "search synth search filter", "Only one search directive is allowed per program at line 1 col 14", 1, 14),
+            ("invalid namespace", "search bogus", "Invalid namespace 'bogus' at line 1 col 8. Valid namespaces: io, classicNoisedeck, synth, mixer, filter, render, points, synth3d, filter3d, user", 1, 8),
+            ("missing first namespace", "search", "Expected namespace identifier after search at line 1 col 7", 1, 7),
+            ("missing additional namespace", "search synth,", "Expected namespace identifier after comma at line 1 col 14", 1, 14),
+            ("misplaced directive", "let x = 1; search synth", "'search' directive must appear before other statements at line 1 col 12", 1, 12),
+            ("nested directive", "search synth\nif(true) { search filter }", "'search' directive is only allowed at the start of the program at line 2 col 12", 2, 12),
+            ("CRLF and tab", "// 😀\r\n\tsearch 1", "Expected namespace identifier after search at line 2 col 9", 2, 9),
+            ("UTF-16 column", 'search synth\nlet x = "😀"; search filter', "'search' directive must appear before other statements at line 2 col 15", 2, 15),
+        ]
+        for name, source, message, expected_line, expected_col in cases:
+            with self.subTest(name=name):
+                with self.assertRaises(SyntaxError) as cm:
+                    parse(lex(source))
+                err = cm.exception
+                self.assertEqual(str(err), message)
+                self.assertEqual(
+                    err.diagnostic,
+                    {
+                        "code": "P004",
+                        "stage": "parser",
+                        "severity": "error",
+                        "message": message,
+                        "location": {"line": expected_line, "column": expected_col},
+                        "span": None,
+                    },
+                )
+
+    def test_parser_search_diagnostics_preserve_unavailable_caller_token_coordinates(self):
+        cases = [
+            "",
+            "search bogus",
+            "search",
+            "search synth search filter",
+        ]
+        for source in cases:
+            for coords in [{}, {"line": 1}, {"line": 0, "col": 1}, {"line": 1, "col": float("nan")}]:
+                tokens = [
+                    {k: v for k, v in t.items() if k not in ("line", "col", "column")} | coords
+                    for t in lex(source)
+                ]
+                with self.assertRaises(SyntaxError) as cm:
+                    parse(tokens)
+                err = cm.exception
+                self.assertEqual(
+                    err.diagnostic,
+                    {
+                        "code": "P004",
+                        "stage": "parser",
+                        "severity": "error",
+                        "message": str(err),
+                        "location": None,
+                        "span": None,
+                    },
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

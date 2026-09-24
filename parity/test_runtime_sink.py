@@ -231,6 +231,47 @@ class SinkManagerTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             manager.add(RecordingSink())
 
+    def test_should_defer_render_only_when_active_sink_returns_true(self):
+        class DeferrableSink(RecordingSink):
+            def __init__(self, defer_value):
+                super().__init__()
+                self.defer_value = defer_value
+
+            def defer_render(self):
+                return self.defer_value
+
+        manager = SinkManager()
+        manager.add(RecordingSink())
+        defer_sink = DeferrableSink(False)
+        remove = manager.add(defer_sink)
+        # Non-boolean return (e.g. 1) must not defer
+        manager.add(DeferrableSink(1))
+
+        self.assertFalse(manager.should_defer_render())
+        defer_sink.defer_value = True
+        self.assertTrue(manager.should_defer_render())
+        remove()
+        self.assertFalse(manager.should_defer_render())
+
+        manager.add(DeferrableSink(True))
+        manager.close()
+        self.assertFalse(manager.should_defer_render())
+
+    def test_should_defer_render_reports_throwing_sink_and_does_not_defer(self):
+        reported = []
+        manager = SinkManager(on_error=lambda err, sink: reported.append((str(err), sink)))
+
+        class FailingSink(RecordingSink):
+            def defer_render(self):
+                raise RuntimeError("backlog probe failed")
+
+        sink = FailingSink()
+        manager.add(sink)
+
+        self.assertFalse(manager.should_defer_render())
+        self.assertEqual(reported, [("backlog probe failed", sink)])
+        self.assertEqual(manager.stats[sink]["failed"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

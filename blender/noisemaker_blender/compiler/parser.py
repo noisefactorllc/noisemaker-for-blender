@@ -157,7 +157,10 @@ def parse(tokens):
 
     def loc_suffix(tok):
         line_str = "undefined" if not isinstance(tok, dict) or "line" not in tok else tok["line"]
-        col_str = "undefined" if not isinstance(tok, dict) or "col" not in tok else tok["col"]
+        col = tok.get("col") if isinstance(tok, dict) else None
+        if col is None and isinstance(tok, dict):
+            col = tok.get("column")
+        col_str = "undefined" if col is None else col
         return f"at line {line_str} col {col_str}"
 
     def parser_error(code, msg_str, token):
@@ -589,9 +592,10 @@ def parse(tokens):
         def parse_search_directive():
             if program_search_order["value"] is not None:
                 t = peek()
-                raise SyntaxError_(
-                    "Only one search directive is allowed per program at line %d col %d"
-                    % (t["line"], t["col"])
+                raise parser_error(
+                    "P004",
+                    f"Only one search directive is allowed per program {loc_suffix(t)}",
+                    t,
                 )
             advance()  # consume 'search'
             namespaces = []
@@ -599,16 +603,18 @@ def parse(tokens):
             def validate_namespace(token):
                 ns = token["lexeme"]
                 if not _is_valid_namespace(ns):
-                    raise SyntaxError_(
-                        "Invalid namespace '%s' at line %d col %d. Valid namespaces: %s"
-                        % (ns, token["line"], token["col"], ", ".join(VALID_NAMESPACES))
+                    raise parser_error(
+                        "P004",
+                        f"Invalid namespace '{ns}' {loc_suffix(token)}. Valid namespaces: {', '.join(VALID_NAMESPACES)}",
+                        token,
                     )
 
             first_token = peek()
             if first_token["type"] not in namespace_token_types:
-                raise SyntaxError_(
-                    "Expected namespace identifier after search at line %d col %d"
-                    % (first_token["line"], first_token["col"])
+                raise parser_error(
+                    "P004",
+                    f"Expected namespace identifier after search {loc_suffix(first_token)}",
+                    first_token,
                 )
             advance()
             validate_namespace(first_token)
@@ -617,9 +623,10 @@ def parse(tokens):
                 advance()  # consume ','
                 ns_token = peek()
                 if ns_token["type"] not in namespace_token_types:
-                    raise SyntaxError_(
-                        "Expected namespace identifier after comma at line %d col %d"
-                        % (ns_token["line"], ns_token["col"])
+                    raise parser_error(
+                        "P004",
+                        f"Expected namespace identifier after comma {loc_suffix(ns_token)}",
+                        ns_token,
                     )
                 advance()
                 validate_namespace(ns_token)
@@ -648,9 +655,10 @@ def parse(tokens):
             if peek()["type"] == "SEARCH":
                 if len(plans) or len(variables) or render["value"]:
                     t = peek()
-                    raise SyntaxError_(
-                        "'search' directive must appear before other statements "
-                        "at line %d col %d" % (t["line"], t["col"])
+                    raise parser_error(
+                        "P004",
+                        f"'search' directive must appear before other statements {loc_suffix(t)}",
+                        t,
                     )
                 parse_search_directive()
                 continue
@@ -669,11 +677,13 @@ def parse(tokens):
             while peek()["type"] == "SEMICOLON":
                 advance()
 
-        expect("EOF", "Expected end of input")
+        eof = expect("EOF", "Expected end of input")
         if not program_search_order["value"] or len(program_search_order["value"]) == 0:
-            raise SyntaxError_(
+            raise parser_error(
+                "P004",
                 "Missing required 'search' directive. Every program must start with "
-                "'search <namespace>, ...' to specify namespace search order."
+                "'search <namespace>, ...' to specify namespace search order.",
+                eof,
             )
 
         program = {"type": "Program", "plans": plans, "render": render["value"]}
@@ -708,9 +718,10 @@ def parse(tokens):
     def parse_statement():
         if peek()["type"] == "SEARCH":
             t = peek()
-            raise SyntaxError_(
-                "'search' directive is only allowed at the start of the program "
-                "at line %d col %d" % (t["line"], t["col"])
+            raise parser_error(
+                "P004",
+                f"'search' directive is only allowed at the start of the program {loc_suffix(t)}",
+                t,
             )
         if peek()["type"] == "LET":
             advance()
