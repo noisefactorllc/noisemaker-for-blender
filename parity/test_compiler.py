@@ -698,6 +698,164 @@ class CompilerTests(unittest.TestCase):
                     },
                 )
 
+    def test_parser_subchain_diagnostics_attach_metadata(self):
+        cases = [
+            (
+                "non-string argument",
+                "search synth\nread(o0).subchain(name: 1) { .diagProbe() }",
+                "Expected string value for subchain name at line 2 col 25",
+                2,
+                25,
+            ),
+            (
+                "argument at EOF",
+                "search synth\nread(o0).subchain(name:",
+                "Expected string value for subchain name at line 2 col 24",
+                2,
+                24,
+            ),
+            (
+                "missing body dot",
+                "search synth\nread(o0).subchain() { diagProbe() }",
+                "Expected '.' before chain element in subchain body at line 2 col 23",
+                2,
+                23,
+            ),
+            (
+                "body at EOF",
+                "search synth\nread(o0).subchain() {",
+                "Expected '.' before chain element in subchain body at line 2 col 22",
+                2,
+                22,
+            ),
+            (
+                "empty body",
+                "search synth\nread(o0).subchain() {}",
+                "Subchain body cannot be empty at line 2 col 10",
+                2,
+                10,
+            ),
+            (
+                "comment-only body",
+                "search synth\nread(o0).subchain() { /* empty */ }",
+                "Subchain body cannot be empty at line 2 col 10",
+                2,
+                10,
+            ),
+            (
+                "CRLF tab and UTF-16 argument",
+                '// 😀\r\nsearch synth\r\n\tread(o0).subchain(name: "😀", id: 1) { .diagProbe() }',
+                "Expected string value for subchain id at line 3 col 36",
+                3,
+                36,
+            ),
+            (
+                "missing dot after comment",
+                "search synth\nread(o0).subchain() { /* 😀 */ missing() }",
+                "Expected '.' before chain element in subchain body at line 2 col 32",
+                2,
+                32,
+            ),
+            (
+                "unclosed nonempty body",
+                "search synth\nread(o0).subchain() { .diagProbe()",
+                "Expected '.' before chain element in subchain body at line 2 col 35",
+                2,
+                35,
+            ),
+        ]
+        for name, source, message, expected_line, expected_col in cases:
+            with self.subTest(name=name):
+                with self.assertRaises(SyntaxError) as cm:
+                    parse(lex(source))
+                err = cm.exception
+                self.assertEqual(str(err), message)
+                self.assertEqual(
+                    err.diagnostic,
+                    {
+                        "code": "P006",
+                        "stage": "parser",
+                        "severity": "error",
+                        "message": message,
+                        "location": {"line": expected_line, "column": expected_col},
+                        "span": None,
+                    },
+                )
+
+    def test_parser_subchain_diagnostics_preserve_unavailable_caller_token_coordinates(self):
+        cases = [
+            "search synth\nread(o0).subchain(name: 1) { .diagProbe() }",
+            "search synth\nread(o0).subchain() { diagProbe() }",
+            "search synth\nread(o0).subchain() {}",
+        ]
+        for source in cases:
+            for coords in [{}, {"line": 1}, {"line": 0, "col": 1}, {"line": 1, "col": float("nan")}]:
+                tokens = [
+                    {k: v for k, v in t.items() if k not in ("line", "col", "column")} | coords
+                    for t in lex(source)
+                ]
+                with self.assertRaises(SyntaxError) as cm:
+                    parse(tokens)
+                err = cm.exception
+                self.assertEqual(
+                    err.diagnostic,
+                    {
+                        "code": "P006",
+                        "stage": "parser",
+                        "severity": "error",
+                        "message": str(err),
+                        "location": None,
+                        "span": None,
+                    },
+                )
+
+    def test_parser_subchain_syntax_preserves_shared_expectation_precedence(self):
+        cases = [
+            ("search synth\nread(o0).subchain(1) {}", "P002", "Expect ')' after subchain arguments at line 2 col 19"),
+            ("search synth\nread(o0).subchain() { . }", "P001", "Expected identifier at line 2 col 25"),
+        ]
+        for source, code, message in cases:
+            with self.assertRaises(SyntaxError) as cm:
+                parse(lex(source))
+            err = cm.exception
+            self.assertEqual(str(err), message)
+            self.assertEqual(err.diagnostic["code"], code)
+
+    def test_valid_subchains_parse_and_compile(self):
+        cases = [
+            ("", None, None),
+            ('"positional"', "positional", None),
+            ('name: "named", id: "s"', "named", "s"),
+            ('foo: "x" name: "a" name: "b" id: "s"', "b", "s"),
+        ]
+        for args, expected_name, expected_id in cases:
+            with self.subTest(args=args):
+                source = f"search synth, filter\nread(o0).subchain({args}) {{ .invert() }}.write(o1)"
+                ast = parse(lex(source))
+                subchain_node = ast["plans"][0]["chain"][1]
+                self.assertEqual(subchain_node["type"], "Subchain")
+                self.assertEqual(subchain_node["name"], expected_name)
+                self.assertEqual(subchain_node["id"], expected_id)
+                self.assertEqual(subchain_node["loc"], {"line": 2, "col": 10})
+                self.assertEqual(len(subchain_node["body"]), 1)
+                self.assertEqual(subchain_node["body"][0]["name"], "invert")
+
+                result = compile(source)
+                self.assertEqual(result.get("diagnostics", []), [])
+                chain = result["plans"][0]["chain"]
+                self.assertEqual(chain[0]["op"], "_read")
+                self.assertEqual(chain[1]["op"], "_subchain_begin")
+                self.assertEqual(chain[1]["args"], {"name": expected_name, "id": expected_id})
+                self.assertEqual(chain[3]["op"], "_subchain_end")
+                self.assertEqual(chain[3]["args"], {"name": expected_name, "id": expected_id})
+                self.assertEqual(chain[4]["op"], "_write")
+
+        # Also verify end-to-end full program compile_graph
+        full_source = 'search synth, filter\nnoise().write(o0)\nread(o0).subchain(name: "sub") { .invert() }.write(o1)\nrender(o1)'
+        compiled = compile_graph(full_source)
+        self.assertIn("passes", compiled)
+        self.assertEqual(compiled["renderSurface"], "o1")
+
 
 if __name__ == "__main__":
     unittest.main()

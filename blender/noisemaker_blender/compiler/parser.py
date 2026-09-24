@@ -155,8 +155,15 @@ def parse(tokens):
             return tokens[idx]
         return None
 
+    def tok_loc(tok):
+        line = tok.get("line") if isinstance(tok, dict) else None
+        col = tok.get("col") if isinstance(tok, dict) else None
+        if col is None and isinstance(tok, dict):
+            col = tok.get("column")
+        return {"line": line, "col": col}
+
     def loc_suffix(tok):
-        line_str = "undefined" if not isinstance(tok, dict) or "line" not in tok else tok["line"]
+        line_str = "undefined" if not isinstance(tok, dict) or tok.get("line") is None else tok["line"]
         col = tok.get("col") if isinstance(tok, dict) else None
         if col is None and isinstance(tok, dict):
             col = tok.get("column")
@@ -267,7 +274,7 @@ def parse(tokens):
             "speed": resolved.get("speed"),
             "offset": resolved.get("offset"),
             "seed": resolved.get("seed"),
-            "loc": {"line": name_token["line"], "col": name_token["col"]},
+            "loc": tok_loc(name_token),
         }
 
     def transform_midi_invocation(call, name_token):
@@ -366,7 +373,7 @@ def parse(tokens):
             "min": resolved.get("min"),
             "max": resolved.get("max"),
             "sensitivity": resolved.get("sensitivity"),
-            "loc": {"line": name_token["line"], "col": name_token["col"]},
+            "loc": tok_loc(name_token),
         }
         if resolved.get("channel") is not None:
             node["channel"] = resolved["channel"]
@@ -461,7 +468,7 @@ def parse(tokens):
             "band": resolved.get("band"),
             "min": resolved.get("min"),
             "max": resolved.get("max"),
-            "loc": {"line": name_token["line"], "col": name_token["col"]},
+            "loc": tok_loc(name_token),
         }
         for param_name in keyword_only_params:
             if kwargs.get(param_name) is not None:
@@ -912,8 +919,6 @@ def parse(tokens):
 
     def parse_subchain_call():
         tok = peek()
-        token_line = tok["line"]
-        token_col = tok["col"]
 
         advance()  # consume 'subchain'
         expect("LPAREN", "Expect '(' after subchain")
@@ -933,9 +938,10 @@ def parse(tokens):
                     key = advance()["lexeme"]
                     advance()  # consume ':'
                     if peek()["type"] != "STRING":
-                        raise SyntaxError_(
-                            "Expected string value for subchain %s at line %d col %d"
-                            % (key, peek()["line"], peek()["col"])
+                        raise parser_error(
+                            "P006",
+                            f"Expected string value for subchain {key} {loc_suffix(peek())}",
+                            peek(),
                         )
                     kwargs[key] = {"type": "String", "value": advance()["lexeme"]}
                     if peek()["type"] == "COMMA":
@@ -950,9 +956,10 @@ def parse(tokens):
             if peek()["type"] == "RBRACE":
                 break
             if peek()["type"] != "DOT":
-                raise SyntaxError_(
-                    "Expected '.' before chain element in subchain body "
-                    "at line %d col %d" % (peek()["line"], peek()["col"])
+                raise parser_error(
+                    "P006",
+                    f"Expected '.' before chain element in subchain body {loc_suffix(peek())}",
+                    peek(),
                 )
             advance()  # consume '.'
             post_dot_comments = collect_comments()
@@ -965,8 +972,10 @@ def parse(tokens):
         expect("RBRACE", "Expect '}' to end subchain body")
 
         if len(body) == 0:
-            raise SyntaxError_(
-                "Subchain body cannot be empty at line %d col %d" % (token_line, token_col)
+            raise parser_error(
+                "P006",
+                f"Subchain body cannot be empty {loc_suffix(tok)}",
+                tok,
             )
 
         name_node = kwargs.get("name")
@@ -976,7 +985,7 @@ def parse(tokens):
             "name": (name_node["value"] if name_node else None),
             "id": (id_node["value"] if id_node else None),
             "body": body,
-            "loc": {"line": token_line, "col": token_col},
+            "loc": tok_loc(tok),
         }
 
     def parse_call():
@@ -1071,7 +1080,7 @@ def parse(tokens):
             node = {
                 "type": "Read",
                 "surface": surface,
-                "loc": {"line": name_token["line"], "col": name_token["col"]},
+                "loc": tok_loc(name_token),
             }
             skip = kwargs.get("_skip")
             if skip and skip.get("type") == "Boolean" and skip.get("value") is True:
@@ -1085,7 +1094,7 @@ def parse(tokens):
                 "type": "Read3D",
                 "tex3d": tex3d,
                 "geo": geo if geo else None,
-                "loc": {"line": name_token["line"], "col": name_token["col"]},
+                "loc": tok_loc(name_token),
             }
             skip = kwargs.get("_skip")
             if skip and skip.get("type") == "Boolean" and skip.get("value") is True:

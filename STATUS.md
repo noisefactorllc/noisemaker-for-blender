@@ -71,6 +71,8 @@ two harnesses). No open issues from this round.
 
 *Incrementally synced 2026-09-24 to reference `c9ee8a049b2b` (`5b81e04f8a4b..c9ee8a049b2b`) — ported upstream structured output validation diagnostics (`P005` invalid output operation) into `compiler/parser.py` and `compiler/lang_data.py` (attached structured `.diagnostic` payload with code, stage, severity, message, and 1-based line/col location to `SyntaxError_` for invalid render targets, expression-context writes, and invalid write/write3d surface, texture, and geometry references). Added unit test suite in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 125/125 parity unit tests pass.*
 
+*Incrementally synced 2026-09-24 to reference `13fa8b540025` (`c9ee8a049b2b..13fa8b540025`) — ported upstream structured subchain validation diagnostics (`P006` invalid subchain) into `compiler/parser.py` and `compiler/lang_data.py` (attached structured `.diagnostic` payload with code, stage, severity, message, and 1-based line/col location to `SyntaxError_` for subchain keyword argument validation, chain element dot syntax, and empty body validation). Added unit test suite in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 129/129 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 
