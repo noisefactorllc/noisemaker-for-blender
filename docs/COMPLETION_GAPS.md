@@ -1,5 +1,7 @@
 # noisemaker-for-blender: completion gaps
 
+Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
+
 ## 1. Scope and source revisions
 
 Audit date: 2026-09-22. Run ID: `20260922-blender-02`.
@@ -136,6 +138,15 @@ The reviewer found no Blender executable on PATH or in the standard Applications
 Host installation, useful Image output, recovery, accessibility, and platform qualification remain unverified.
 Official Blender 5.1 search excerpts still describe legacy ZIP installation. Direct manual retrieval remained unavailable.
 
+### Native observations, 2026-09-24
+
+Blender 5.1.2 with factory startup and a copied addon. 3 selected fixtures rendered. Exact comparison: 2 passes and 1 differences.
+The candidate source is the source listed in the [compatibility report](COMPATIBILITY.md#1-source-and-authority-revisions).
+These probes compare retained historical goldens. They do not establish full current-authority parity.
+224 of 227 tracked fixtures did not execute in this bounded pass.
+[Per-case measurements](COMPATIBILITY.md#native-observations-2026-09-24) retain every difference and the unexecuted fixture inventory.
+No gap closes. The next rendered gate must include all missing fixtures and resolve authority provenance without replacing goldens.
+
 ## 4. Known gaps
 
 P1 means false completion or a major correctness gap. P2 means incomplete coverage or integration. P3 means inconsistent documentation.
@@ -167,14 +178,16 @@ Original gap evidence dates to 2026-09-22. Dated review evidence below supplemen
 - Required checks: compiler tests, packed compiler graphs, and source-bound renders for default, voxel, and isosurface modes.
 - Acceptance: source and archive choices compile and render against their declared authority. Record both source revisions and unchanged comparison tolerances.
 
-### GAP-003: Host qualification is unavailable
+### GAP-003: Host qualification remains incomplete
 
-- Status: blocked. Priority: P2. Category: verification.
+- Status: open. Priority: P2. Category: verification.
 - Scope: Blender 5.1 installation, GPU output, normal Image workflows, and supported platform declarations.
 - Expected: the actual distribution installs and produces useful output through documented public entry points.
-- Observed: archive compilation passes. The audit cannot run Blender, GPU shaders, panels, materials, or project persistence.
+- Historical observation: archive compilation passed, but the earlier audit could not run Blender.
+- Current observation: Blender 5.1.2 rendered three probes. Panels, materials, installation, and project persistence remain unverified.
 - Evidence: `backend.log`, environment checks, and the host workflow list above.
-- Blocker: the auditor could not locate a usable Blender runtime.
+- Earlier blocker: no usable Blender runtime. The 2026-09-24 native run resolves runtime availability only.
+- Current evidence: [native observations](COMPATIBILITY.md#native-observations-2026-09-24). Full host qualification remains open.
 - Next action: execute the existing integration and render harnesses in isolated Blender 5.1 preferences on a supported GPU host.
 - Dependencies: the frozen source, its distribution archive, and unchanged authority fixtures.
 - Required checks: install/enable, quick start, material/compositor use, save/reopen, error recovery, cleanup, disable/remove, and keyboard interaction.
@@ -261,3 +274,5 @@ Implementation remains with the separate job. No additional effect port is part 
 
 Historical results remain in STATUS and the existing platform and chaos documents.
 This register records current uncertainty without replacing those records.
+
+2026-09-24 report initialization: added the maintained compatibility report and bounded native measurements. No full-parity closure.

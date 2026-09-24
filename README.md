@@ -5,6 +5,8 @@
 
 # Noisemaker for Blender
 
+Current measured support: [compatibility report](docs/COMPATIBILITY.md).
+
 Current audit findings and acceptance criteria: [completion gaps](docs/COMPLETION_GAPS.md).
 
 > Run **Noisemaker**'s procedural visuals inside **Blender**.
