@@ -7,7 +7,7 @@ Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
 Daily review: 2026-09-25. Current inspected source: [`9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`](https://github.com/noisefactorllc/noisemaker-for-blender/commit/9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc).
 Full rendered parity remains **unverified**. No release approval or new closure follows from this review.
 Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
-The observations below retain their original source and authority identities; they do not qualify later updates.
+The observations below retain their original source and authority identities. They do not qualify later updates.
 Current served kit: `0.1.22`, source `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
 
 ### Earlier source observations
@@ -63,7 +63,7 @@ Review CI boundary: Exact-source runs: Export kit. A passing export dispatch doe
 
 ### Daily review, 2026-09-25
 
-136 harness tests pass. Actual Blender rendering of the current runtime produced noise with zero byte differences and bloom with maximum difference 1 in 34,690 channels. Both used retained historical goldens; current-authority full parity remains unverified. [Raw evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-native-comparisons.json).
+136 harness tests pass. Actual Blender rendering of the current runtime produced noise with zero byte differences and bloom with maximum difference 1 in 34,690 channels. Both used retained historical goldens. Current-authority full parity remains unverified. [Raw evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-native-comparisons.json).
 The review checked source changes, worker evidence, source-bound CI where present, and current served inventories. Full installed-host and platform qualification remains incomplete.
 
 Raw evidence resides in the automation state under `evidence-20260922-blender-02`.
@@ -265,7 +265,7 @@ Original gap evidence dates to 2026-09-22. Dated review evidence below supplemen
 
 ## 5. Ordered next actions
 
-Current first action: Identify immutable authority graphs and goldens, then run the existing Blender render_all.py entry point across the full tracked fixture inventory. Count missing graphs and mismatches explicitly. After parity, install the served add-on in an isolated Blender profile and verify render, invalid-input recovery, removal, and the declared minimum version.
+Current first action: Identify immutable authority graphs and goldens, then run the existing Blender render_all.py entry point across the full tracked fixture inventory. Count missing graphs and mismatches explicitly. After parity, install the served add-on in an isolated Blender profile and check render, invalid-input recovery, removal, and the declared minimum version.
 Subsequent historical actions remain dependent on that evidence. No implementation is authorized by this audit.
 
 These actions describe acceptance work at the existing checkpoint. They do not authorize implementation or an authority upgrade.
@@ -285,7 +285,7 @@ Implementation remains with the separate job. No additional effect port is part 
 
 ## 6. Pass history
 
-2026-09-25 daily review at `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`: source freshness and bounded evidence reviewed; open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-native-comparisons.json). No new closure claimed.
+2026-09-25 daily review at `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`: source freshness and bounded evidence reviewed. Open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-native-comparisons.json). No new closure claimed.
 
 | Date | Source | Changes and tested scope | Remaining limits |
 | --- | --- | --- | --- |
