@@ -74,7 +74,18 @@
         "geoOut": "geoBuffer"
       },
       "uniforms": {},
-      "drawBuffers": 2
+      "drawBuffers": 2,
+      "viewport": {
+        "width": {
+          "param": "volumeSize",
+          "default": 64
+        },
+        "height": {
+          "param": "volumeSize",
+          "power": 2,
+          "default": 4096
+        }
+      }
     }
   ],
   "textures": {

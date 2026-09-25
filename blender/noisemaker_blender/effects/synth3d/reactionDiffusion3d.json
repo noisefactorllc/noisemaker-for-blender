@@ -112,7 +112,18 @@
         "color": "global_rd_state"
       },
       "uniforms": {},
-      "repeat": "iterations"
+      "repeat": "iterations",
+      "viewport": {
+        "width": {
+          "param": "volumeSize",
+          "default": 32
+        },
+        "height": {
+          "param": "volumeSize",
+          "power": 2,
+          "default": 1024
+        }
+      }
     }
   ],
   "textures": {

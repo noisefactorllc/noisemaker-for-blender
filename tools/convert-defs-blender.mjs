@@ -234,6 +234,8 @@ function projectPass (pass) {
   if (pass.workgroups !== undefined) out.workgroups = pass.workgroups
   if (pass.storageBuffers !== undefined) out.storageBuffers = pass.storageBuffers
   if (pass.storageTextures !== undefined) out.storageTextures = pass.storageTextures
+  if (pass.viewport !== undefined) out.viewport = pass.viewport
+  if (pass.samplerTypes !== undefined) out.samplerTypes = pass.samplerTypes
   return out
 }
 

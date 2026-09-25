@@ -22,6 +22,7 @@ from gpu.types import (GPUOffScreen, GPUFrameBuffer, GPUVertFormat, GPUVertBuf, 
 from gpu_extras.batch import batch_for_shader
 
 from . import shader_build, std140
+from ..runtime.pipeline import resolve_dimension
 
 _FS_TRI = {"pos": [(-1.0, -1.0), (3.0, -1.0), (-1.0, 3.0)]}
 _BLIT_FRAG = ("#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))),"
@@ -92,32 +93,7 @@ class GpuBackend:
 
     # ---- dimension resolution (reference/04 §resolveDimension) -------------
     def resolve_dim(self, spec, uniforms):
-        s = self.size
-        if isinstance(spec, (int, float)) and not isinstance(spec, bool):
-            return max(1, int(math.floor(spec)))
-        if isinstance(spec, str):
-            if spec in ("screen", "auto"):
-                return s
-            if spec.endswith("%"):
-                return max(1, int(math.floor(s * float(spec[:-1]) / 100.0)))
-            return s
-        if isinstance(spec, dict):
-            if spec.get("param") is not None:
-                val = uniforms.get(spec["param"], spec.get("paramDefault", 64))
-                if spec.get("multiply") is not None:
-                    val *= spec["multiply"]
-                if spec.get("power") is not None:
-                    val = val ** spec["power"]
-                if (spec.get("power") is not None or spec.get("multiply") is not None) \
-                        and uniforms.get(spec["param"]) is None and spec.get("default") is not None:
-                    val = spec["default"]
-                return max(1, int(math.floor(val)))
-            if spec.get("screenDivide") is not None:
-                div = uniforms.get(spec["screenDivide"], spec.get("default", 1)) or 1
-                return max(1, int(round(s / div)))
-            if spec.get("scale") is not None:
-                return max(1, int(math.floor(s * spec["scale"])))
-        return s
+        return resolve_dimension(spec, self.size, uniforms)
 
     def _fmt(self, spec):
         return _FORMAT.get(str(spec.get("format", "rgba16f")).lower(), "RGBA16F")
@@ -373,13 +349,28 @@ class GpuBackend:
         # blend: true -> additive ONE/ONE.
         return 'ADDITIVE_PREMULT'
 
+    def _resolve_pass_viewport_box(self, p, merged, default_w, default_h):
+        vp = p.get("viewportResolved") or p.get("viewport")
+        if not isinstance(vp, dict):
+            return 0, 0, default_w, default_h
+        vx = self.resolve_dim(vp.get("x", 0), merged) if vp.get("x") is not None else 0
+        vy = self.resolve_dim(vp.get("y", 0), merged) if vp.get("y") is not None else 0
+        w_spec = vp.get("w", vp.get("width"))
+        h_spec = vp.get("h", vp.get("height"))
+        vw = self.resolve_dim(w_spec, merged) if w_spec is not None else default_w
+        vh = self.resolve_dim(h_spec, merged) if h_spec is not None else default_h
+        return int(vx), int(vy), int(vw), int(vh)
+
     def _render(self, compiled, merged, inputs, p, graph):
         shader, desc, rev = compiled
         write_offs, w, h = self._resolve_outputs(desc, p, graph)
+        vx, vy, vw, vh = self._resolve_pass_viewport_box(p, merged, w, h)
         mrt = len(write_offs) > 1
         ctx = self._mrt_fb(write_offs).bind() if mrt else write_offs[0].bind()
         with ctx:
-            gpu.state.viewport_set(0, 0, w, h)
+            if p.get("clear"):
+                gpu.state.active_framebuffer_get().clear(color=(0.0, 0.0, 0.0, 0.0))
+            gpu.state.viewport_set(vx, vy, vw, vh)
             gpu.state.blend_set(self._blend_mode(p))
             shader.bind()
             self._bind_inputs(shader, desc, rev, merged, inputs, graph)
@@ -390,12 +381,15 @@ class GpuBackend:
         shader, desc, rev = compiled
         offs, w, h = self._resolve_outputs(desc, p, graph)
         target = offs[0]
+        vx, vy, vw, vh = self._resolve_pass_viewport_box(p, merged, w, h)
         # count='input' -> one primitive per agent texel (xyzTex dims product).
         src = inputs.get("xyzTex") or next(iter(inputs.values()))
         src_off = self._read(src, graph)
         count = src_off.width * src_off.height * per_particle
         with target.bind():
-            gpu.state.viewport_set(0, 0, w, h)
+            if p.get("clear"):
+                gpu.state.active_framebuffer_get().clear(color=(0.0, 0.0, 0.0, 0.0))
+            gpu.state.viewport_set(vx, vy, vw, vh)
             gpu.state.blend_set(self._blend_mode(p))
             shader.bind()
             self._bind_inputs(shader, desc, rev, merged, inputs, graph)

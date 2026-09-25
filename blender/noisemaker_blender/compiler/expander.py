@@ -638,6 +638,18 @@ def expand(compilation_result, options=None):
                     "workgroups": pass_def.get("workgroups", _UNDEFINED),
                     "storageBuffers": pass_def.get("storageBuffers", _UNDEFINED),
                     "storageTextures": pass_def.get("storageTextures", _UNDEFINED),
+                    # GAP-005: pass labels and per-pass execution controls are
+                    # copied verbatim. `name`/`type` stay queryable metadata
+                    # (backend shader-kind dispatch remains source-derived);
+                    # `viewport` is resolved to backend x/y/w/h numbers by
+                    # Pipeline.resolve_pass_viewport(); `clear` drives the
+                    # WebGPU render-pass loadOp; `samplerTypes` selects
+                    # per-binding samplers in the WebGPU backend.
+                    "name": pass_def.get("name", _UNDEFINED),
+                    "type": pass_def.get("type", _UNDEFINED),
+                    "clear": pass_def.get("clear", _UNDEFINED),
+                    "viewport": pass_def.get("viewport", _UNDEFINED),
+                    "samplerTypes": pass_def.get("samplerTypes", _UNDEFINED),
                     "inputs": {},
                     "outputs": {},
                     "uniforms": {},

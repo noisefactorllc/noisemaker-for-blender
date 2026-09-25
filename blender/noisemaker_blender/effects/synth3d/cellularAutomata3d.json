@@ -112,7 +112,18 @@
       "outputs": {
         "color": "global_ca_state"
       },
-      "uniforms": {}
+      "uniforms": {},
+      "viewport": {
+        "width": {
+          "param": "volumeSize",
+          "default": 32
+        },
+        "height": {
+          "param": "volumeSize",
+          "power": 2,
+          "default": 1024
+        }
+      }
     }
   ],
   "textures": {

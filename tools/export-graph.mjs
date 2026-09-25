@@ -273,6 +273,8 @@ function normalizePass (pass, programs, defineMap) {
   if (pass.repeat !== undefined) out.repeat = pass.repeat
   if (pass.clear !== undefined) out.clear = pass.clear
   if (pass.conditions !== undefined) out.conditions = pass.conditions
+  if (pass.viewport !== undefined) out.viewport = pass.viewport
+  if (pass.samplerTypes !== undefined) out.samplerTypes = pass.samplerTypes
 
   // Metadata.
   out.effectKey = pass.effectKey ?? null

@@ -403,6 +403,10 @@ def _normalize_pass(pass_, programs, define_map):
         out["clear"] = pass_["clear"]
     if "conditions" in pass_:
         out["conditions"] = pass_["conditions"]
+    if "viewport" in pass_:
+        out["viewport"] = pass_["viewport"]
+    if "samplerTypes" in pass_:
+        out["samplerTypes"] = pass_["samplerTypes"]
 
     # Metadata.
     out["effectKey"] = _coalesce(pass_.get("effectKey"))

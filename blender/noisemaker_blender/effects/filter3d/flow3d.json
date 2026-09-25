@@ -122,6 +122,19 @@
       },
       "uniforms": {
         "intensity": "intensity"
+      },
+      "viewport": {
+        "width": {
+          "param": "volumeSize",
+          "default": 32,
+          "inputOverride": "inputTex3d"
+        },
+        "height": {
+          "param": "volumeSize",
+          "power": 2,
+          "default": 1024,
+          "inputOverride": "inputTex3d"
+        }
       }
     },
     {
@@ -133,7 +146,20 @@
       "outputs": {
         "fragColor": "global_flow3d_trail"
       },
-      "uniforms": {}
+      "uniforms": {},
+      "viewport": {
+        "width": {
+          "param": "volumeSize",
+          "default": 32,
+          "inputOverride": "inputTex3d"
+        },
+        "height": {
+          "param": "volumeSize",
+          "power": 2,
+          "default": 1024,
+          "inputOverride": "inputTex3d"
+        }
+      }
     },
     {
       "name": "deposit",
@@ -151,7 +177,20 @@
       },
       "drawMode": "points",
       "count": 262144,
-      "blend": true
+      "blend": true,
+      "viewport": {
+        "width": {
+          "param": "volumeSize",
+          "default": 32,
+          "inputOverride": "inputTex3d"
+        },
+        "height": {
+          "param": "volumeSize",
+          "power": 2,
+          "default": 1024,
+          "inputOverride": "inputTex3d"
+        }
+      }
     },
     {
       "name": "blend",
@@ -165,6 +204,19 @@
       },
       "uniforms": {
         "inputIntensity": "inputIntensity"
+      },
+      "viewport": {
+        "width": {
+          "param": "volumeSize",
+          "default": 32,
+          "inputOverride": "inputTex3d"
+        },
+        "height": {
+          "param": "volumeSize",
+          "power": 2,
+          "default": 1024,
+          "inputOverride": "inputTex3d"
+        }
       }
     }
   ],

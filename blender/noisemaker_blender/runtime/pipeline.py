@@ -571,6 +571,78 @@ def should_skip(p, lookup):
     return False
 
 
+def resolve_dimension(spec, screen_size, uniforms=None):
+    """Resolve an authored dimension expression against screen size and uniforms."""
+    if uniforms is None:
+        uniforms = {}
+    if isinstance(spec, (int, float)) and not isinstance(spec, bool):
+        return max(1, int(math.floor(spec)))
+    if isinstance(spec, str):
+        if spec in ("screen", "auto"):
+            return screen_size
+        if spec.endswith("%"):
+            return max(1, int(math.floor(screen_size * float(spec[:-1]) / 100.0)))
+        return screen_size
+    if isinstance(spec, dict):
+        if spec.get("param") is not None:
+            val = uniforms.get(spec["param"], spec.get("default", spec.get("paramDefault", 64)))
+            if isinstance(val, dict):
+                val = spec.get("default", 64)
+            if spec.get("multiply") is not None:
+                val *= spec["multiply"]
+            if spec.get("power") is not None:
+                val = val ** spec["power"]
+            if (spec.get("power") is not None or spec.get("multiply") is not None) \
+                    and uniforms.get(spec["param"]) is None and spec.get("default") is not None:
+                val = spec["default"]
+            return max(1, int(math.floor(val)))
+        if spec.get("screenDivide") is not None:
+            div = uniforms.get(spec["screenDivide"], spec.get("default", 1)) or 1
+            return max(1, int(round(screen_size / div)))
+        if spec.get("scale") is not None:
+            return max(1, int(math.floor(screen_size * spec["scale"])))
+    return screen_size
+
+
+def resolve_pass_viewport(pass_obj, width, height, cache_holder=None):
+    """Mirror reference Pipeline.resolvePassViewport (GAP-005).
+
+    Resolves an authored pass.viewport spec ({ x, y, width, height } or
+    { x, y, w, h } with dimension expressions or raw numbers) into a concrete
+    { x, y, w, h } integer pixel box on `viewportResolved`.
+    """
+    if cache_holder is None:
+        cache_holder = pass_obj
+    spec = cache_holder.get("viewport")
+    if not spec or not isinstance(spec, dict):
+        return None
+
+    is_numeric_box = (
+        isinstance(spec.get("x"), (int, float)) and not isinstance(spec.get("x"), bool) and
+        isinstance(spec.get("y"), (int, float)) and not isinstance(spec.get("y"), bool) and
+        isinstance(spec.get("w"), (int, float)) and not isinstance(spec.get("w"), bool) and
+        isinstance(spec.get("h"), (int, float)) and not isinstance(spec.get("h"), bool)
+    )
+    if is_numeric_box:
+        cache_holder["viewportResolved"] = spec
+        if pass_obj is not cache_holder:
+            pass_obj["viewportResolved"] = spec
+        return spec
+
+    uniforms = pass_obj.get("uniforms") or {}
+    x = resolve_dimension(spec.get("x", 0), width, uniforms) if spec.get("x") is not None else 0
+    y = resolve_dimension(spec.get("y", 0), height, uniforms) if spec.get("y") is not None else 0
+    width_spec = spec.get("w", spec.get("width"))
+    height_spec = spec.get("h", spec.get("height"))
+    w = resolve_dimension(width_spec, width, uniforms) if width_spec is not None else width
+    h = resolve_dimension(height_spec, height, uniforms) if height_spec is not None else height
+    box = {"x": x, "y": y, "w": w, "h": h}
+    cache_holder["viewportResolved"] = box
+    if pass_obj is not cache_holder:
+        pass_obj["viewportResolved"] = box
+    return box
+
+
 def resolve_repeat_count(p, lookup):
     rep = p.get("repeat")
     if rep is None:
@@ -633,6 +705,7 @@ def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None,
             if should_skip(p, lookup):
                 continue
             effective_pass = _resolve_pass_uniforms(p, tt, external_state or {})
+            resolve_pass_viewport(effective_pass, backend.size, backend.size, cache_holder=p)
             effective_lookup = dict(engine)
             effective_lookup.update(effective_pass.get("uniforms") or {})
             count = resolve_repeat_count(effective_pass, effective_lookup)

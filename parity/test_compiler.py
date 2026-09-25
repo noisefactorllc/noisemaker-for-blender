@@ -1242,6 +1242,114 @@ class CompilerTests(unittest.TestCase):
                         msg=f"Effect {eff_name} alias '{alias}' -> '{target}' not found in globals",
                     )
 
+    def test_gap005_pass_field_propagation_and_viewport_resolution(self):
+        from noisemaker_blender.runtime.pipeline import resolve_dimension, resolve_pass_viewport
+
+        # 1. Plain pass carries no viewport by default
+        dsl_plain = "search synth\nnoise().write(o0)\nrender(o0)"
+        graph_plain = compile_graph(dsl_plain)
+        self.assertNotIn("viewport", graph_plain["passes"][0])
+        self.assertNotIn("viewportResolved", graph_plain["passes"][0])
+        self.assertNotIn("samplerTypes", graph_plain["passes"][0])
+
+        # 2. 3D effects preserve authored pass viewport during expansion
+        dsl_3d = "search synth3d\nnoise3d().write(o0)\nrender(o0)"
+        graph_3d = compile_graph(dsl_3d)
+        p0 = graph_3d["passes"][0]
+        self.assertIn("viewport", p0)
+        self.assertEqual(
+            p0["viewport"],
+            {
+                "width": {"param": "volumeSize", "default": 64},
+                "height": {"param": "volumeSize", "power": 2, "default": 4096},
+            },
+        )
+
+        # 3. Numeric viewport resolves directly
+        numeric_pass = {"viewport": {"x": 2, "y": 3, "w": 8, "h": 8}, "uniforms": {}}
+        resolved = resolve_pass_viewport(numeric_pass, 256, 256)
+        self.assertEqual(resolved, {"x": 2, "y": 3, "w": 8, "h": 8})
+        self.assertEqual(numeric_pass["viewportResolved"], {"x": 2, "y": 3, "w": 8, "h": 8})
+
+        # 4. Dimension expression viewport resolves against pass uniforms
+        dim_pass = {
+            "viewport": {"x": 2, "y": 4, "width": {"param": "vol", "default": 16}, "height": 64},
+            "uniforms": {"vol": 32},
+        }
+        resolved_dim = resolve_pass_viewport(dim_pass, 256, 256)
+        self.assertEqual(resolved_dim, {"x": 2, "y": 4, "w": 32, "h": 64})
+        self.assertEqual(dim_pass["viewportResolved"], {"x": 2, "y": 4, "w": 32, "h": 64})
+
+    def test_expander_pass_field_propagation_all_gap005_fields(self):
+        from noisemaker_blender.compiler.expander import expand
+        from noisemaker_blender.compiler.registry import _register
+
+        test_def = {
+            "name": "GAP005 Probe",
+            "namespace": "test",
+            "func": "probe",
+            "passes": [
+                {
+                    "program": "test_probe",
+                    "name": "customProbePass",
+                    "type": "compute",
+                    "clear": True,
+                    "viewport": {"x": 10, "y": 20, "w": 30, "h": 40},
+                    "samplerTypes": {"src": "nearest"},
+                }
+            ],
+            "globals": {},
+        }
+        _register(test_def)
+
+        plan = {
+            "plans": [
+                {
+                    "chain": [
+                        {
+                            "op": "test.probe",
+                            "temp": 0,
+                            "args": {},
+                        }
+                    ]
+                }
+            ]
+        }
+        expanded = expand(plan)
+        self.assertEqual(len(expanded["passes"]), 1)
+        p = expanded["passes"][0]
+        self.assertEqual(p["name"], "customProbePass")
+        self.assertEqual(p["type"], "compute")
+        self.assertEqual(p["clear"], True)
+        self.assertEqual(p["viewport"], {"x": 10, "y": 20, "w": 30, "h": 40})
+        self.assertEqual(p["samplerTypes"], {"src": "nearest"})
+
+    def test_resolve_dimension_all_branches(self):
+        from noisemaker_blender.runtime.pipeline import resolve_dimension
+
+        # Number
+        self.assertEqual(resolve_dimension(128, 256), 128)
+        self.assertEqual(resolve_dimension(64.8, 256), 64)
+
+        # String
+        self.assertEqual(resolve_dimension("screen", 256), 256)
+        self.assertEqual(resolve_dimension("auto", 256), 256)
+        self.assertEqual(resolve_dimension("50%", 256), 128)
+        self.assertEqual(resolve_dimension("25%", 256), 64)
+
+        # Dict with param
+        self.assertEqual(resolve_dimension({"param": "foo", "default": 32}, 256, {}), 32)
+        self.assertEqual(resolve_dimension({"param": "foo", "default": 32}, 256, {"foo": 48}), 48)
+        self.assertEqual(resolve_dimension({"param": "foo", "multiply": 2}, 256, {"foo": 16}), 32)
+        self.assertEqual(resolve_dimension({"param": "foo", "power": 2}, 256, {"foo": 8}), 64)
+
+        # Dict with screenDivide
+        self.assertEqual(resolve_dimension({"screenDivide": "div", "default": 2}, 256, {}), 128)
+        self.assertEqual(resolve_dimension({"screenDivide": "div", "default": 2}, 256, {"div": 4}), 64)
+
+        # Dict with scale
+        self.assertEqual(resolve_dimension({"scale": 0.5}, 256), 128)
+
 
 if __name__ == "__main__":
     unittest.main()

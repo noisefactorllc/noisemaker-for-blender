@@ -58,7 +58,18 @@
       },
       "uniforms": {},
       "drawBuffers": 2,
-      "type": "compute"
+      "type": "compute",
+      "viewport": {
+        "width": {
+          "param": "volumeSize",
+          "default": 64
+        },
+        "height": {
+          "param": "volumeSize",
+          "power": 2,
+          "default": 4096
+        }
+      }
     }
   ],
   "textures": {
