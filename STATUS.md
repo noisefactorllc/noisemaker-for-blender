@@ -77,6 +77,8 @@ two harnesses). No open issues from this round.
 
 *Incrementally synced 2026-09-25 to reference `240740dd8aef` (`4891b995642e..240740dd8aef`, v1.0.180) — ported upstream coordinate span derivation for parser diagnostics and array literal numeric coercion diagnostics; ported GAP-027 subchain argument validation contract (`P008` unknown key, `P009` duplicate key, `P010` missing comma separator) with AST preservation (last value wins for duplicate keys) and strict rejection opt-in mode (`subchainArguments: "strict"`) into `compiler/lexer.py`, `compiler/parser.py`, `compiler/validator.py`, and `compiler/compile.py`. Added unit tests in `parity/test_compiler.py`. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 139/139 parity unit tests pass.*
 
+*Incrementally synced 2026-09-25 to reference `9d3474dfdc6c` (`240740dd8aef..9d3474dfdc6c`, v1.0.181) — audited upstream GAP-003 effect definition validation contract; updated `tools/convert-defs-blender.mjs` to validate all effect definitions against spec at extraction time via `validateEffectDefinition`; added specification conformance tests in `parity/test_compiler.py` covering all 210 registered effects. Confirmed all 210 effect definitions and 309 shader programs remain in full parity. Verified: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion), and 140/140 parity unit tests pass.*
+
 This file holds the detailed coverage and parity numbers. For what the project is and how to use it,
 see the [README](README.md).
 

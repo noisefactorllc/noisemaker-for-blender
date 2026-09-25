@@ -65,6 +65,17 @@ async function collectEffects (filter) {
   // call into it, but importing keeps init side effects in lockstep.
   await import(pathToFileURL(SRC_INDEX).href)
 
+  let validateEffectDefinition = null
+  const validatorPath = join(REFERENCE_ROOT, 'shaders', 'src', 'runtime', 'effect-validator.js')
+  if (existsSync(validatorPath)) {
+    try {
+      const validatorMod = await import(pathToFileURL(validatorPath).href)
+      validateEffectDefinition = validatorMod.validateEffectDefinition || null
+    } catch (err) {
+      process.stderr.write(`[convert-defs] WARNING: failed to load effect-validator.js: ${err?.message || err}\n`)
+    }
+  }
+
   const out = []
   const namespaces = readdirSync(EFFECTS_DIR, { withFileTypes: true })
     .filter(d => d.isDirectory())
@@ -100,6 +111,13 @@ async function collectEffects (filter) {
       // infers it from the directory at registration. Mirror that here so the
       // normalized def (and its registry keys) carry the authoritative namespace.
       if (!instance.namespace) instance.namespace = namespace
+      if (validateEffectDefinition) {
+        const valErrors = validateEffectDefinition(instance)
+        if (valErrors.length > 0) {
+          process.stderr.write(`[convert-defs] validation failure for ${namespace}/${name}: ${valErrors.join('; ')}\n`)
+          process.exitCode = 1
+        }
+      }
       out.push({ namespace, name, instance })
     }
   }
@@ -288,6 +306,9 @@ async function main () {
   const filter = argv.find(a => !a.startsWith('--')) || null
 
   const collected = await collectEffects(filter)
+  if (process.exitCode) {
+    throw new Error('[convert-defs] Aborting: validation errors encountered during collection')
+  }
 
   // Clean regen: remove stale per-namespace dirs so a renamed/removed effect
   // doesn't leave an orphan JSON behind. Only when doing a full (unfiltered) run.

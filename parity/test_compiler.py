@@ -1191,6 +1191,57 @@ class CompilerTests(unittest.TestCase):
         mixed = parse(lex("search synth\nlet a = midi(1, channel: 2)"))
         self.assertEqual(mixed["vars"][0]["expr"]["channel"]["value"], 2)
 
+    def test_registered_effect_definitions_satisfy_specification(self):
+        from noisemaker_blender.compiler import registry
+
+        registry.load()
+        effects = registry.all_effects()
+        self.assertEqual(len(effects), 210)
+        for defn in effects:
+            eff_name = f"{defn.get('namespace', '?')}.{defn.get('func', '?')}"
+            self.assertTrue(
+                isinstance(defn.get("name"), str) and defn["name"],
+                msg=f"Effect {eff_name} has invalid 'name'",
+            )
+            self.assertTrue(
+                isinstance(defn.get("namespace"), str) and defn["namespace"],
+                msg=f"Effect {eff_name} has invalid 'namespace'",
+            )
+            self.assertTrue(
+                isinstance(defn.get("func"), str) and defn["func"],
+                msg=f"Effect {eff_name} has invalid 'func'",
+            )
+            self.assertTrue(
+                isinstance(defn.get("passes"), list) and len(defn["passes"]) > 0,
+                msg=f"Effect {eff_name} has invalid 'passes'",
+            )
+            for p in defn["passes"]:
+                self.assertTrue(
+                    isinstance(p.get("program"), str) and p["program"],
+                    msg=f"Effect {eff_name} has invalid pass 'program'",
+                )
+            globals_dict = defn.get("globals", {})
+            if "globals" in defn:
+                self.assertIsInstance(globals_dict, dict, msg=f"Effect {eff_name} 'globals' not a dict")
+                for k, v in globals_dict.items():
+                    self.assertIsInstance(v, dict, msg=f"Effect {eff_name} global '{k}' not a dict")
+                    self.assertTrue(
+                        isinstance(v.get("type"), str) and v["type"],
+                        msg=f"Effect {eff_name} global '{k}' missing valid 'type'",
+                    )
+            if "paramAliases" in defn:
+                self.assertIsInstance(
+                    defn["paramAliases"],
+                    dict,
+                    msg=f"Effect {eff_name} 'paramAliases' not a dict",
+                )
+                for alias, target in defn["paramAliases"].items():
+                    self.assertIn(
+                        target,
+                        globals_dict,
+                        msg=f"Effect {eff_name} alias '{alias}' -> '{target}' not found in globals",
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()
