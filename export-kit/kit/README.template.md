@@ -70,11 +70,13 @@ Anything marked with a warning glyph above is not supported by this port and wil
 even though the rest of the program still does. `scope` and `spectrum` are the two the Blender port
 excludes outright: they read live audio and MIDI, which the add-on has no host for.
 
-Two more were previously suspected of rendering incorrectly. **bloom** and **lens** were re-verified
-on a Blender 5.1 host on 2026-09-25: both bake through the public bake path and match reference-derived
-graphs byte-exactly (see the add-on repository's compatibility record for that dated evidence). A small
-difference from what the app showed you can still appear on your GPU, as with any effect in this port.
-They are in the supported set, and a program using either bakes with the rest of the program unaffected.
+Two more were previously described as rendering incorrectly. On 2026-09-25 **bloom** and **lens** were
+measured on a Blender 5.1 host: both bake through the public bake path and match reference-derived
+graphs exactly there, so a program using either bakes with the rest of the program unaffected. They
+remain in the supported set. One open defect is still on record: an exact comparison against the
+retained authority golden showed a small bloom difference (at most 1 in 255) that is not yet explained
+or reproduced; see the add-on repository's compatibility record for that dated evidence. Expect small
+differences from what the app showed you, on top of any effect still carrying an open defect.
 
 ## The engine
 
