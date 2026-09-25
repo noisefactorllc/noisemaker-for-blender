@@ -86,6 +86,11 @@ def _is_hex(c):
     return ("0" <= c <= "9") or ("a" <= c <= "f") or ("A" <= c <= "F")
 
 
+class Token(dict):
+    """Token dictionary subclass carrying private position metadata."""
+    position: dict | None = None
+
+
 def lex(src):
     """Tokenize DSL source.
 
@@ -97,9 +102,64 @@ def lex(src):
     i = 0
     line = 1
     col = 1
+    # Correct source coordinates for structured diagnostics. The scanner's
+    # legacy line/col bookkeeping drifts after some multiline tokens, so
+    # positions are recomputed from source offsets anchored at the previous
+    # token's end. Successful token fields are untouched.
+    src_line = 1
+    src_col = 1
+    anchor = 0
+    has_surrogates = any(ord(c) > 0xFFFF for c in src)
 
-    def add(type_, lexeme, ln, cl):
-        tokens.append({"type": type_, "lexeme": lexeme, "line": ln, "col": cl})
+    def u16(offset):
+        if not has_surrogates:
+            return offset
+        return len(src[:offset].encode("utf-16-le")) // 2
+
+    def add(type_, lexeme, ln, cl, end=None):
+        nonlocal src_line, src_col, anchor
+        if end is not None:
+            if has_surrogates:
+                for offset in range(anchor, i):
+                    if src[offset] == "\n":
+                        src_line += 1
+                        src_col = 1
+                    else:
+                        src_col += 2 if ord(src[offset]) > 0xFFFF else 1
+                start_l = src_line
+                start_c = src_col
+                for offset in range(i, end):
+                    if src[offset] == "\n":
+                        src_line += 1
+                        src_col = 1
+                    else:
+                        src_col += 2 if ord(src[offset]) > 0xFFFF else 1
+            else:
+                for offset in range(anchor, i):
+                    if src[offset] == "\n":
+                        src_line += 1
+                        src_col = 1
+                    else:
+                        src_col += 1
+                start_l = src_line
+                start_c = src_col
+                for offset in range(i, end):
+                    if src[offset] == "\n":
+                        src_line += 1
+                        src_col = 1
+                    else:
+                        src_col += 1
+            anchor = end
+            tok = Token({"type": type_, "lexeme": lexeme, "line": ln, "col": cl})
+            tok.position = {
+                "line": start_l,
+                "column": start_c,
+                "start": u16(i),
+                "end": u16(end),
+            }
+        else:
+            tok = Token({"type": type_, "lexeme": lexeme, "line": ln, "col": cl})
+        tokens.append(tok)
 
     # Only scan source coordinates on failure. Successful tokens and legacy
     # error messages retain their existing position bookkeeping.
@@ -156,7 +216,7 @@ def lex(src):
             while j < n and src[j] != "\n":
                 j += 1
             text = src[i:j]
-            add("COMMENT", text, start_line, start_col)
+            add("COMMENT", text, start_line, start_col, j)
             col += len(text.encode("utf-16-le")) // 2
             i = j
             continue
@@ -182,7 +242,7 @@ def lex(src):
                 )
             j += 2
             text = src[i:j]
-            add("COMMENT", text, start_line, start_col)
+            add("COMMENT", text, start_line, start_col, j)
             line = end_line
             col = end_col + 2
             i = j
@@ -203,7 +263,7 @@ def lex(src):
                     i,
                     j,
                 )
-            add(token_type, lexeme, start_line, start_col)
+            add(token_type, lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
@@ -214,7 +274,7 @@ def lex(src):
             while j < n and _is_digit(src[j]):
                 j += 1
             lexeme = src[i:j]
-            add("VOL_REF", lexeme, start_line, start_col)
+            add("VOL_REF", lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
@@ -225,7 +285,7 @@ def lex(src):
             while j < n and _is_digit(src[j]):
                 j += 1
             lexeme = src[i:j]
-            add("GEO_REF", lexeme, start_line, start_col)
+            add("GEO_REF", lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
@@ -236,7 +296,7 @@ def lex(src):
             while j < n and _is_digit(src[j]):
                 j += 1
             lexeme = src[i:j]
-            add("XYZ_REF", lexeme, start_line, start_col)
+            add("XYZ_REF", lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
@@ -247,7 +307,7 @@ def lex(src):
             while j < n and _is_digit(src[j]):
                 j += 1
             lexeme = src[i:j]
-            add("VEL_REF", lexeme, start_line, start_col)
+            add("VEL_REF", lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
@@ -264,7 +324,7 @@ def lex(src):
             while j < n and _is_digit(src[j]):
                 j += 1
             lexeme = src[i:j]
-            add("RGBA_REF", lexeme, start_line, start_col)
+            add("RGBA_REF", lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
@@ -281,7 +341,7 @@ def lex(src):
             while j < n and _is_digit(src[j]):
                 j += 1
             lexeme = src[i:j]
-            add("MESH_REF", lexeme, start_line, start_col)
+            add("MESH_REF", lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
@@ -294,7 +354,7 @@ def lex(src):
             length = j - i
             if length == 4 or length == 7 or length == 9:
                 lexeme = src[i:j]
-                add("HEX", lexeme, start_line, start_col)
+                add("HEX", lexeme, start_line, start_col, j)
                 col += length
                 i = j
                 continue
@@ -323,7 +383,7 @@ def lex(src):
                             break
                     j += 1
                 expr = src[expr_start:j].strip(_JS_TRIM_CHARS)
-                add("FUNC", expr, start_line, start_col)
+                add("FUNC", expr, start_line, start_col, j)
                 col += j - i
                 i = j
                 continue
@@ -333,82 +393,82 @@ def lex(src):
             while j < n and _is_digit(src[j]):
                 j += 1
             lexeme = src[i:j]
-            add("NUMBER", lexeme, start_line, start_col)
+            add("NUMBER", lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
         if ch == ".":
-            add("DOT", ".", start_line, start_col)
+            add("DOT", ".", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "(":
-            add("LPAREN", "(", start_line, start_col)
+            add("LPAREN", "(", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == ")":
-            add("RPAREN", ")", start_line, start_col)
+            add("RPAREN", ")", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "{":
-            add("LBRACE", "{", start_line, start_col)
+            add("LBRACE", "{", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "}":
-            add("RBRACE", "}", start_line, start_col)
+            add("RBRACE", "}", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "[":
-            add("LBRACKET", "[", start_line, start_col)
+            add("LBRACKET", "[", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "]":
-            add("RBRACKET", "]", start_line, start_col)
+            add("RBRACKET", "]", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == ",":
-            add("COMMA", ",", start_line, start_col)
+            add("COMMA", ",", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == ":":
-            add("COLON", ":", start_line, start_col)
+            add("COLON", ":", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "=":
-            add("EQUAL", "=", start_line, start_col)
+            add("EQUAL", "=", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == ";":
-            add("SEMICOLON", ";", start_line, start_col)
+            add("SEMICOLON", ";", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "+":
-            add("PLUS", "+", start_line, start_col)
+            add("PLUS", "+", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "-":
-            add("MINUS", "-", start_line, start_col)
+            add("MINUS", "-", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "*":
-            add("STAR", "*", start_line, start_col)
+            add("STAR", "*", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
         if ch == "/":
-            add("SLASH", "/", start_line, start_col)
+            add("SLASH", "/", start_line, start_col, i + 1)
             i += 1
             col += 1
             continue
@@ -436,7 +496,7 @@ def lex(src):
                 )
             # Extract string content without the triple quotes
             content = src[i + 3 : j]
-            add("STRING", content, start_line, start_col)
+            add("STRING", content, start_line, start_col, j + 3)
             # Update position past closing """
             lines = content.split("\n")
             if len(lines) > 1:
@@ -464,7 +524,7 @@ def lex(src):
                 )
             # Extract string content without quotes
             content = src[i + 1 : j]
-            add("STRING", content, start_line, start_col)
+            add("STRING", content, start_line, start_col, j + 1)
             col += len(src[i : j + 1].encode("utf-16-le")) // 2
             i = j + 1
             continue
@@ -478,7 +538,7 @@ def lex(src):
                 while j < n and _is_digit(src[j]):
                     j += 1
             lexeme = src[i:j]
-            add("NUMBER", lexeme, start_line, start_col)
+            add("NUMBER", lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
@@ -489,9 +549,9 @@ def lex(src):
                 j += 1
             lexeme = src[i:j]
             if lexeme in keywords:
-                add(keywords[lexeme], lexeme, start_line, start_col)
+                add(keywords[lexeme], lexeme, start_line, start_col, j)
             else:
-                add("IDENT", lexeme, start_line, start_col)
+                add("IDENT", lexeme, start_line, start_col, j)
             col += j - i
             i = j
             continue
@@ -503,5 +563,5 @@ def lex(src):
             i + 1,
         )
 
-    add("EOF", "", line, col)
+    add("EOF", "", line, col, n)
     return tokens

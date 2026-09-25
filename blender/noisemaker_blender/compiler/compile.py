@@ -37,13 +37,15 @@ from .parser import parse
 from .validator import validate
 
 
-def compile(source):  # noqa: A001 - mirrors the reference export name ``compile``
+def compile(source, options=None):  # noqa: A001 - mirrors the reference export name ``compile``
     """Parse + validate ``source`` into the validated program dict.
 
     Parameters
     ----------
     source : str
         DSL source code.
+    options : dict, optional
+        Compiler options (e.g. ``{"subchainArguments": "strict"}``).
 
     Returns
     -------
@@ -52,5 +54,5 @@ def compile(source):  # noqa: A001 - mirrors the reference export name ``compile
         ``diagnostics`` list.
     """
     tokens = lex(source)
-    ast = parse(tokens)
+    ast = parse(tokens, options=options)
     return validate(ast)

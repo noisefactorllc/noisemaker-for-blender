@@ -17,6 +17,17 @@ from noisemaker_blender.compiler import (  # noqa: E402
 )
 
 
+def source_position(source, line, column):
+    matches = [
+        token for token in lex(source)
+        if getattr(token, "position", {}).get("line") == line
+        and getattr(token, "position", {}).get("column") == column
+    ]
+    assert len(matches) == 1, f"Expected 1 match for line {line}, col {column}, got {len(matches)}"
+    pos = matches[0].position
+    return {"start": pos["start"], "end": pos["end"]}
+
+
 class CompilerTests(unittest.TestCase):
     def test_chained_variable_alias_syntax(self):
         dsl = (
@@ -319,9 +330,30 @@ class CompilerTests(unittest.TestCase):
                             "severity": "error",
                             "message": message,
                             "location": {"line": line, "column": column},
-                            "span": None,
+                            "span": source_position(source, line, column),
                         },
                     )
+
+    def test_parser_diagnostics_preserve_null_span_for_caller_supplied_tokens_without_positions(self):
+        tokens = [
+            {"type": tok["type"], "lexeme": tok["lexeme"], "line": tok["line"], "col": tok["col"]}
+            for tok in lex("search synth\nrender o0")
+        ]
+        with self.assertRaises(SyntaxError) as cm:
+            parse(tokens)
+        err = cm.exception
+        self.assertEqual(str(err), "Expect '(' at line 2 col 8")
+        self.assertEqual(
+            err.diagnostic,
+            {
+                "code": "P001",
+                "stage": "parser",
+                "severity": "error",
+                "message": "Expect '(' at line 2 col 8",
+                "location": {"line": 2, "column": 8},
+                "span": None,
+            },
+        )
 
     def test_render_landscape_filtering_define(self):
         dsl_iso = (
@@ -417,7 +449,7 @@ class CompilerTests(unittest.TestCase):
                             "severity": "error",
                             "message": message,
                             "location": {"line": 2, "column": 9},
-                            "span": None,
+                            "span": source_position(source, 2, 9),
                         },
                     )
 
@@ -439,7 +471,7 @@ class CompilerTests(unittest.TestCase):
                         "severity": "error",
                         "message": str(err),
                         "location": {"line": 2, "column": 24},
-                        "span": None,
+                        "span": source_position(source, 2, 24),
                     },
                 )
 
@@ -536,7 +568,7 @@ class CompilerTests(unittest.TestCase):
                         "severity": "error",
                         "message": message,
                         "location": {"line": expected_line, "column": expected_col},
-                        "span": None,
+                        "span": source_position(source, expected_line, expected_col),
                     },
                 )
 
@@ -665,7 +697,7 @@ class CompilerTests(unittest.TestCase):
                         "severity": "error",
                         "message": message,
                         "location": {"line": expected_line, "column": expected_col},
-                        "span": None,
+                        "span": source_position(source, expected_line, expected_col),
                     },
                 )
 
@@ -778,7 +810,7 @@ class CompilerTests(unittest.TestCase):
                         "severity": "error",
                         "message": message,
                         "location": {"line": expected_line, "column": expected_col},
-                        "span": None,
+                        "span": source_position(source, expected_line, expected_col),
                     },
                 )
 
@@ -841,7 +873,11 @@ class CompilerTests(unittest.TestCase):
                 self.assertEqual(subchain_node["body"][0]["name"], "invert")
 
                 result = compile(source)
-                self.assertEqual(result.get("diagnostics", []), [])
+                if args == 'foo: "x" name: "a" name: "b" id: "s"':
+                    codes = [d["code"] for d in result.get("diagnostics", [])]
+                    self.assertEqual(codes, ["P008", "P010", "P010", "P009", "P010"])
+                else:
+                    self.assertEqual(result.get("diagnostics", []), [])
                 chain = result["plans"][0]["chain"]
                 self.assertEqual(chain[0]["op"], "_read")
                 self.assertEqual(chain[1]["op"], "_subchain_begin")
@@ -883,7 +919,7 @@ class CompilerTests(unittest.TestCase):
                             "severity": "error",
                             "message": message,
                             "location": {"line": expected_line, "column": expected_col},
-                            "span": None,
+                            "span": source_position(source, expected_line, expected_col),
                         },
                     )
 
@@ -942,7 +978,7 @@ class CompilerTests(unittest.TestCase):
                             "severity": "error",
                             "message": message,
                             "location": {"line": expected_line, "column": expected_col},
-                            "span": None,
+                            "span": source_position(source, expected_line, expected_col),
                         },
                     )
 
@@ -1009,9 +1045,129 @@ class CompilerTests(unittest.TestCase):
                     "severity": "error",
                     "message": "Expected number",
                     "location": {"line": 2, "column": 13},
-                    "span": None,
+                    "span": source_position(source, 2, 13),
                 },
             )
+
+    def test_subchain_argument_validation_and_strict_mode(self):
+        # GAP-027 validation: P008 unknown key (discarded)
+        p008_src = 'search synth, filter\nread(o0).subchain(nme: "typo", name: "ok") { .invert() }.write(o1)'
+        res = compile(p008_src)
+        p008_diags = [d for d in res.get("diagnostics", []) if d.get("code") == "P008"]
+        self.assertEqual(len(p008_diags), 1)
+        self.assertIn("nme", p008_diags[0]["message"])
+        self.assertEqual(p008_diags[0]["severity"], "warning")
+        self.assertEqual(p008_diags[0]["location"], {"line": 2, "column": 19})
+        chain = res["plans"][0]["chain"]
+        begin_step = next(s for s in chain if s.get("op") == "_subchain_begin")
+        self.assertEqual(begin_step["args"]["name"], "ok")
+        self.assertIsNone(begin_step["args"]["id"])
+
+        # P009 duplicate key (last value wins)
+        p009_src = 'search synth, filter\nread(o0).subchain(name: "first", name: "second") { .invert() }.write(o1)'
+        res = compile(p009_src)
+        p009_diags = [d for d in res.get("diagnostics", []) if d.get("code") == "P009"]
+        self.assertEqual(len(p009_diags), 1)
+        self.assertIn("name", p009_diags[0]["message"])
+        chain = res["plans"][0]["chain"]
+        begin_step = next(s for s in chain if s.get("op") == "_subchain_begin")
+        self.assertEqual(begin_step["args"]["name"], "second")
+
+        # P010 missing comma separator
+        p010_src = 'search synth, filter\nread(o0).subchain(name: "a" id: "b") { .invert() }.write(o1)'
+        res = compile(p010_src)
+        p010_diags = [d for d in res.get("diagnostics", []) if d.get("code") == "P010"]
+        self.assertEqual(len(p010_diags), 1)
+        self.assertEqual(p010_diags[0]["location"], {"line": 2, "column": 29})
+
+        # Strict mode rejection with SyntaxError
+        with self.assertRaises(SyntaxError) as cm:
+            compile(p008_src, options={"subchainArguments": "strict"})
+        err = cm.exception
+        self.assertEqual(err.diagnostic["code"], "P008")
+        self.assertEqual(err.diagnostic["severity"], "error")
+        self.assertEqual(err.diagnostic["location"], {"line": 2, "column": 19})
+        self.assertEqual(err.diagnostic["span"], source_position(p008_src, 2, 19))
+
+        with self.assertRaises(SyntaxError) as cm:
+            parse(lex(p009_src), options={"subchainArguments": "strict"})
+        err = cm.exception
+        self.assertEqual(err.diagnostic["code"], "P009")
+        self.assertEqual(err.diagnostic["severity"], "error")
+
+        with self.assertRaises(SyntaxError) as cm:
+            parse(lex(p010_src), options={"subchainArguments": "strict"})
+        err = cm.exception
+        self.assertEqual(err.diagnostic["code"], "P010")
+        self.assertEqual(err.diagnostic["severity"], "error")
+
+        # Repeated unknown keys: P008 once per occurrence, never P009
+        repeated_src = 'search synth, filter\nread(o0).subchain(nme: "a", nme: "b", name: "ok") { .invert() }.write(o1)'
+        res = compile(repeated_src)
+        p008_diags = [d for d in res.get("diagnostics", []) if d.get("code") == "P008"]
+        p009_diags = [d for d in res.get("diagnostics", []) if d.get("code") == "P009"]
+        self.assertEqual(len(p008_diags), 2)
+        self.assertEqual(len(p009_diags), 0)
+
+        # Fallback to token line/col when position attribute is missing
+        tokens_no_pos = [
+            {"type": tok["type"], "lexeme": tok["lexeme"], "line": tok["line"], "col": tok["col"]}
+            for tok in lex(p008_src)
+        ]
+        res_no_pos = validate(parse(tokens_no_pos))
+        report_no_pos = next(d for d in res_no_pos.get("diagnostics", []) if d.get("code") == "P008")
+        self.assertEqual(report_no_pos["code"], "P008")
+        self.assertEqual(report_no_pos["location"], {"line": 2, "column": 19})
+        self.assertNotIn("span", report_no_pos)
+
+        # Carry no location when tokens lack all position data
+        tokens_bare = [
+            {"type": tok["type"], "lexeme": tok["lexeme"]}
+            for tok in lex(p008_src)
+        ]
+        res_bare = validate(parse(tokens_bare))
+        report_bare = next(d for d in res_bare.get("diagnostics", []) if d.get("code") == "P008")
+        self.assertEqual(report_bare["code"], "P008")
+        self.assertNotIn("location", report_bare)
+        self.assertNotIn("span", report_bare)
+
+    def test_parser_diagnostic_source_coordinates_survive_legacy_scanner_drift(self):
+        cases = [
+            (
+                "multiline function token drift",
+                "search synth\nlet x = () => (1\n + 2); render o0",
+                "P001",
+                "Expect '(' at line 2 col 32",
+                {"line": 3, "column": 15},
+                {"start": 44, "end": 46},
+            ),
+            (
+                "escaped LF string drift",
+                'search synth\nlet x = "a\\\nb"; render o0',
+                "P001",
+                "Expect '(' at line 2 col 24",
+                {"line": 3, "column": 12},
+                {"start": 36, "end": 38},
+            ),
+        ]
+        for name, source, code, message, location, span in cases:
+            with self.subTest(name=name):
+                for entry_point in (lambda s: parse(lex(s)), compile):
+                    with self.assertRaises(SyntaxError) as cm:
+                        entry_point(source)
+                    err = cm.exception
+                    self.assertEqual(str(err), message)
+                    self.assertEqual(
+                        err.diagnostic,
+                        {
+                            "code": code,
+                            "stage": "parser",
+                            "severity": "error",
+                            "message": message,
+                            "location": location,
+                            "span": span,
+                        },
+                    )
 
     def test_valid_call_forms_retain_from_override_namespaces_and_mixed_automation_arguments(self):
         ast = parse(lex("search synth\nlet x = from(synth, probe())"))

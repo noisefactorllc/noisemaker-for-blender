@@ -614,6 +614,22 @@ def validate(ast):
                     continue
 
                 if ot == "Subchain":
+                    # Surface parser-attached subchain-argument reports (GAP-027)
+                    # once per subchain node, in source order.
+                    arg_diagnostics = getattr(original, "subchainArgumentDiagnostics", None) or (
+                        original.get("subchainArgumentDiagnostics") if isinstance(original, dict) else None
+                    )
+                    if isinstance(arg_diagnostics, list):
+                        for report in arg_diagnostics:
+                            entry = {
+                                "code": report["code"],
+                                "message": report["message"],
+                                "severity": report["severity"],
+                                "nodeId": original.get("id"),
+                            }
+                            if report.get("location"):
+                                entry["location"] = report["location"]
+                            diagnostics_list.append(entry)
                     if current is None:
                         push_diag("S005", original, "subchain() requires an input - cannot be first in chain")
                         continue

@@ -126,10 +126,17 @@ def _js_binary_number(left, right, operator):
     return _make_number(result)
 
 
-def parse(tokens):
+class AstNode(dict):
+    """AST node dict subclass carrying non-enumerable compiler metadata."""
+    position: dict | None = None
+    subchainArgumentDiagnostics: list | None = None
+
+
+def parse(tokens, options=None):
     """Parse a token stream into an AST.
 
     :param tokens: token list from :func:`noisemaker_blender.compiler.lexer.lex`
+    :param options: optional dict of parser options (e.g. {"subchainArguments": "strict"})
     :returns: the Program AST (a nested dict / list structure)
     :raises SyntaxError_: on malformed input (same cases as the reference parser)
     """
@@ -170,8 +177,16 @@ def parse(tokens):
         col_str = "undefined" if col is None else col
         return f"at line {line_str} col {col_str}"
 
-    def parser_error(code, msg_str, token):
+    def parser_error(code, msg_str, token, severity_override=None):
         error = SyntaxError_(msg_str)
+        token_pos = getattr(token, "position", None) or (token.get("position") if isinstance(token, dict) else None)
+        has_position = (
+            token_pos is not None
+            and isinstance(token_pos.get("line"), int) and not isinstance(token_pos.get("line"), bool) and token_pos["line"] > 0
+            and isinstance(token_pos.get("column"), int) and not isinstance(token_pos.get("column"), bool) and token_pos["column"] > 0
+            and isinstance(token_pos.get("start"), int) and not isinstance(token_pos.get("start"), bool) and token_pos["start"] >= 0
+            and isinstance(token_pos.get("end"), int) and not isinstance(token_pos.get("end"), bool) and token_pos["end"] >= token_pos["start"]
+        )
         token_line = token.get("line") if isinstance(token, dict) else None
         token_col = token.get("col") if isinstance(token, dict) else None
         if token_col is None and isinstance(token, dict):
@@ -184,13 +199,19 @@ def parse(tokens):
             and not isinstance(token_col, bool)
             and token_col > 0
         )
+        location = (
+            {"line": token_pos["line"], "column": token_pos["column"]}
+            if has_position
+            else ({"line": token_line, "column": token_col} if has_location else None)
+        )
+        span = {"start": token_pos["start"], "end": token_pos["end"]} if has_position else None
         error.diagnostic = {
             "code": code,
             "stage": DIAGNOSTICS[code]["stage"],
-            "severity": DIAGNOSTICS[code]["severity"],
+            "severity": severity_override or DIAGNOSTICS[code]["severity"],
             "message": msg_str,
-            "location": {"line": token_line, "column": token_col} if has_location else None,
-            "span": None,
+            "location": location,
+            "span": span,
         }
         return error
 
@@ -933,6 +954,15 @@ def parse(tokens):
         expect("LPAREN", "Expect '(' after subchain")
 
         kwargs = {}
+        subchain_keys = ("name", "id")
+        subchain_argument_diagnostics = []
+
+        def report_arg_issue(code, message, token):
+            if options and options.get("subchainArguments") == "strict":
+                raise parser_error(code, message, token, severity_override="error")
+            err = parser_error(code, message, token)
+            subchain_argument_diagnostics.append(err.diagnostic)
+
         if peek()["type"] != "RPAREN":
             if peek()["type"] == "STRING":
                 kwargs["name"] = {"type": "String", "value": advance()["lexeme"]}
@@ -944,7 +974,8 @@ def parse(tokens):
                     tok_at(state["current"] + 1) is not None
                     and tok_at(state["current"] + 1).get("type") == "COLON"
                 ):
-                    key = advance()["lexeme"]
+                    key_token = advance()
+                    key = key_token["lexeme"]
                     advance()  # consume ':'
                     if peek()["type"] != "STRING":
                         raise parser_error(
@@ -952,9 +983,31 @@ def parse(tokens):
                             f"Expected string value for subchain {key} {loc_suffix(peek())}",
                             peek(),
                         )
-                    kwargs[key] = {"type": "String", "value": advance()["lexeme"]}
+                    val = advance()["lexeme"]
+                    if key not in subchain_keys:
+                        report_arg_issue(
+                            "P008",
+                            f"Unknown subchain argument '{key}' {loc_suffix(key_token)}. Valid keys: name, id. The value is discarded.",
+                            key_token,
+                        )
+                    elif key in kwargs:
+                        report_arg_issue(
+                            "P009",
+                            f"Duplicate subchain argument '{key}' {loc_suffix(key_token)}. The last value wins.",
+                            key_token,
+                        )
+                    kwargs[key] = {"type": "String", "value": val}
                     if peek()["type"] == "COMMA":
                         advance()  # consume ','
+                    elif peek()["type"] == "IDENT" and (
+                        tok_at(state["current"] + 1) is not None
+                        and tok_at(state["current"] + 1).get("type") == "COLON"
+                    ):
+                        report_arg_issue(
+                            "P010",
+                            f"Missing ',' between subchain arguments {loc_suffix(peek())}",
+                            peek(),
+                        )
         expect("RPAREN", "Expect ')' after subchain arguments")
 
         expect("LBRACE", "Expect '{' to start subchain body")
@@ -989,13 +1042,18 @@ def parse(tokens):
 
         name_node = kwargs.get("name")
         id_node = kwargs.get("id")
-        return {
+        base_node = {
             "type": "Subchain",
             "name": (name_node["value"] if name_node else None),
             "id": (id_node["value"] if id_node else None),
             "body": body,
             "loc": tok_loc(tok),
         }
+        if len(subchain_argument_diagnostics) > 0:
+            node = AstNode(base_node)
+            node.subchainArgumentDiagnostics = subchain_argument_diagnostics
+            return node
+        return base_node
 
     def parse_call():
         name_token = expect("IDENT", "Expected identifier")
@@ -1196,6 +1254,7 @@ def parse(tokens):
             }
         if tt == "LBRACKET":
             loc = tok_loc(token)
+            bracket_pos = getattr(token, "position", None) or (token.get("position") if isinstance(token, dict) else None)
             advance()
             elements = []
             if peek()["type"] != "RBRACKET":
@@ -1211,11 +1270,16 @@ def parse(tokens):
                     t,
                 )
             advance()
-            return {
+            base_node = {
                 "type": "ArrayLiteral",
                 "elements": elements,
                 "loc": loc,
             }
+            if bracket_pos:
+                array_node = AstNode(base_node)
+                array_node.position = bracket_pos
+                return array_node
+            return base_node
         if tt == "FUNC":
             advance()
             return {"type": "Func", "src": token["lexeme"]}
@@ -1303,7 +1367,12 @@ def parse(tokens):
     def to_number(node):
         if not isinstance(node, dict) or node.get("type") != "Number":
             loc = node.get("loc") if isinstance(node, dict) and isinstance(node.get("loc"), dict) else {}
-            raise parser_error("P001", "Expected number", loc)
+            token_like = {
+                "position": getattr(node, "position", None) or (node.get("position") if isinstance(node, dict) else None),
+                "line": loc.get("line"),
+                "col": loc.get("col"),
+            }
+            raise parser_error("P001", "Expected number", token_like)
         return node["value"]
 
     def parse_kwarg(obj):
@@ -1321,6 +1390,6 @@ def parse(tokens):
     return parse_program()
 
 
-def parse_source(src):
+def parse_source(src, options=None):
     """Convenience: lex ``src`` with the stage-1 lexer, then parse. Returns the Program AST."""
-    return parse(lex(src))
+    return parse(lex(src), options=options)
