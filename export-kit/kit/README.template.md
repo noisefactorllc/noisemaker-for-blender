@@ -70,9 +70,11 @@ Anything marked with a warning glyph above is not supported by this port and wil
 even though the rest of the program still does. `scope` and `spectrum` are the two the Blender port
 excludes outright: they read live audio and MIDI, which the add-on has no host for.
 
-Two more render incorrectly rather than not at all. **bloom** and **lens** are known broken in this
-port, and a program using either will bake with those steps wrong while everything else comes out
-right. They are still in the supported set because the rest of the program is unaffected.
+Two more were previously suspected of rendering incorrectly. **bloom** and **lens** were re-verified
+on a Blender 5.1 host on 2026-09-25: both bake through the public bake path and match reference-derived
+graphs byte-exactly (see the add-on repository's compatibility record for that dated evidence). A small
+difference from what the app showed you can still appear on your GPU, as with any effect in this port.
+They are in the supported set, and a program using either bakes with the rest of the program unaffected.
 
 ## The engine
 
@@ -90,7 +92,7 @@ If you do not have the add-on:
 
 Noisedeck exported this program against Noisemaker `{{NM_ENGINE_VERSION}}`. The Blender port is a
 second implementation of that engine rather than the same code, so expect small differences from
-what the app showed you, on top of the two effects named above.
+what the app showed you.
 
 ## License
 

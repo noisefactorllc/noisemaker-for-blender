@@ -314,6 +314,28 @@ Fixture counts do not prove coverage of every current effect, parameter, or stat
 | `bloom` | failed | [FAIL] bloom: max-abs-diff=1.000 mean-abs-diff=0.1323 ssim=0.99999 (tol=0.0, ssim_min=0.98) | [Raw command](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-bloom-comparison-command.json) |
 | `noise` | verified | [PASS] noise: max-abs-diff=0.000 mean-abs-diff=0.0000 ssim=1.00000 (tol=0.0, ssim_min=0.98) | [Raw command](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-noise-comparison-command.json) |
 
+### Native observations, 2026-09-25
+
+Host: Linux x86_64 (software rasterizer), Blender 5.1.2 (`ec6e62d40fa9`) with `--factory-startup`, GUI mode under a virtual display, OpenGL backend via Mesa llvmpipe (EGL surfaceless). This is not Apple Silicon; the 2026-09-24 Metal-host observations above remain separate and unchanged.
+
+Scope: GAP-001's bloom and lens checks — the individual `bloom` and `lens` effects and a chain containing both (`parity/programs/north_star.dsl`, subchain `dpxp` with `bloom(taps: 15)` and `lens(displacement: -0.28)`). 256x256, NM_TIME 0.25, NM_FRAMES 1 (render_all defaults). The `lens` individual fixture has no tracked DSL file; its three-line program is quoted below so the result is reproducible.
+
+Per side: the GOLDEN renders a graph exported by the unchanged reference engine at the synced revision `2f47612c2904` (`NM_REFERENCE_ROOT=<ref> node tools/export-graph.mjs --file <dsl> <out>.graph.json`); the CANDIDATE compiles the same DSL in-Blender (`{"dsl": ...}` job in `NM_JOBS`). Both sides render through the same `GpuBackend` via `blender/harness/render_all.py`, so these comparisons prove the in-Blender compile + pipeline path is byte-exact against the reference engine's graph — they do not compare against the Noisedeck/WebGL rendered pixels.
+
+`lens.dsl` used (matching the chain's parameters): `search synth, filter` / `noise(seed: 1, scaleX: 50, scaleY: 50).lens(displacement: -0.28).write(o0)` / `render(o0)`.
+
+Public bake path: `blender --factory-startup --python blender/harness/test_integration.py` — INTEGRATION PASS. Registration round-trip, custom node instantiate, bake operator, Image readback and dump all succeeded; INVARIANT A (bake == direct pipeline) max-abs-diff=0; sweep cases bRUa1g, kQ_2mw (12 passes, 3 write surfaces), MQ2ojg (stateful reactionDiffusion, 8 frames) all max-diff=0; both error paths reported correctly. INVARIANT B (baked PNG vs `parity/out/adjust.golden.png`) skipped on this host: the derived golden is not present here; the same-side comparison below covers the direct pipeline.
+
+Existing tolerances unchanged: `parity/compare.py` gates at tol=2.0 / ssim_min=0.98 (batch default) and integration.sh grades the bake at tol=1. Both sides were also graded at the exact zero-byte tolerance. All three comparisons are byte-identical (max-abs-diff=0.000, mean-abs-diff=0.0000, ssim=1.00000, PASS at tol=0.0 and at tol=2.0):
+
+| Case | Side inputs | Exact result |
+|---|---|---|
+| `bloom` (individual, `parity/programs/bloom.dsl`) | golden `bloom.graph.json` vs candidate compiled in-Blender | verified: max-abs-diff=0.000 mean-abs-diff=0.0000 ssim=1.00000 (tol=0.0, ssim_min=0.98) |
+| `lens` (individual, quoted program above) | golden `lens.graph.json` vs candidate compiled in-Blender | verified: max-abs-diff=0.000 mean-abs-diff=0.0000 ssim=1.00000 (tol=0.0, ssim_min=0.98) |
+| `north_star` (chain with bloom+lens subchain `dpxp`) | golden `north_star.graph.json` (68 passes) vs candidate compiled in-Blender | verified: max-abs-diff=0.000 mean-abs-diff=0.0000 ssim=1.00000 (tol=0.0, ssim_min=0.98) |
+
+Authority images: no retained historical golden was available on this host, so no authority image was used or altered. Goldens were freshly derived from the reference engine export on the same host; their provenance stays bounded to this run. The 2026-09-24 retained-golden `bloom` exact-comparison difference (max-abs-diff=1.000, tol=0.0) remains recorded above as an open observation; this run neither reproduces nor explains it (different host, different golden provenance). Full-catalog parity and Noisedeck/WebGL pixel parity remain unverified.
+
 ## 4. Evidence
 
 Review CI boundary: Exact-source runs: Export kit. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement. [Exact-source responses and workflows](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/noisemaker-for-blender-remote-evidence.json).
