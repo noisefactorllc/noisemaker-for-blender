@@ -482,10 +482,12 @@ def parse(tokens):
                 and isinstance(name_token.get("line"), int)
                 and isinstance(name_token.get("col"), int)
             ):
-                raise SyntaxError_(
-                    "%s at line %d col %d" % (message, name_token["line"], name_token["col"])
+                raise parser_error(
+                    "P007",
+                    "%s at line %d col %d" % (message, name_token["line"], name_token["col"]),
+                    name_token,
                 )
-            raise SyntaxError_(message)
+            raise parser_error("P007", message, name_token)
 
         if call.get("kwargs") and len(call["kwargs"]):
             fail("'from' does not support named arguments")
@@ -582,8 +584,10 @@ def parse(tokens):
         def consume_render():
             if render["value"]:
                 t = peek()
-                raise SyntaxError_(
-                    "Duplicate render() directive at line %d col %d" % (t["line"], t["col"])
+                raise parser_error(
+                    "P005",
+                    f"Duplicate render() directive {loc_suffix(t)}",
+                    t,
                 )
             render["value"] = parse_render_directive()
             while peek()["type"] == "SEMICOLON":
@@ -736,8 +740,10 @@ def parse(tokens):
             expect("EQUAL", "Expect '='")
             if peek()["type"] not in expr_start_tokens:
                 t = peek()
-                raise SyntaxError_(
-                    "Expected expression after '=' at line %d col %d" % (t["line"], t["col"])
+                raise parser_error(
+                    "P001",
+                    f"Expected expression after '=' {loc_suffix(t)}",
+                    t,
                 )
             expr = parse_additive()
             return {"type": "VarAssign", "name": name, "expr": expr}
@@ -913,8 +919,11 @@ def parse(tokens):
                 "geo": geo,
                 "loc": {"line": token_line, "col": token_col},
             }
-        raise SyntaxError_(
-            "Expected write or write3d at line %d col %d" % (token_line, token_col)
+        loc_tok = {"line": token_line, "col": token_col}
+        raise parser_error(
+            "P005",
+            f"Expected write or write3d {loc_suffix(loc_tok)}",
+            loc_tok,
         )
 
     def parse_subchain_call():
@@ -996,14 +1005,12 @@ def parse(tokens):
             if nxt and nxt.get("type") == "IDENT":
                 after = tok_at(state["current"] + 2)
                 if after is not None and after.get("type") == "LPAREN":
-                    raise SyntaxError_(
-                        "Inline namespace syntax '%s.%s()' is not allowed. "
-                        "Use 'search %s' at the start of the program instead, "
-                        "at line %d col %d"
-                        % (
-                            name_token["lexeme"], nxt["lexeme"], name_token["lexeme"],
-                            name_token["line"], name_token["col"],
-                        )
+                    raise parser_error(
+                        "P007",
+                        f"Inline namespace syntax '{name_token.get('lexeme')}.{nxt.get('lexeme')}()' is not allowed. "
+                        f"Use 'search {name_token.get('lexeme')}' at the start of the program instead, "
+                        f"{loc_suffix(name_token)}",
+                        name_token,
                     )
         expect("LPAREN", "Expect '('")
         args = []
@@ -1017,18 +1024,20 @@ def parse(tokens):
                 if peek()["type"] == "IDENT" and nxt is not None and nxt.get("type") == "COLON":
                     if positional and not allow_mixed:
                         t = peek()
-                        raise SyntaxError_(
-                            "Cannot mix positional and keyword arguments "
-                            "at line %d col %d" % (t["line"], t["col"])
+                        raise parser_error(
+                            "P007",
+                            f"Cannot mix positional and keyword arguments {loc_suffix(t)}",
+                            t,
                         )
                     keyword = True
                     parse_kwarg(kwargs)
                 else:
                     if keyword and not allow_mixed:
                         t = peek()
-                        raise SyntaxError_(
-                            "Cannot mix positional and keyword arguments "
-                            "at line %d col %d" % (t["line"], t["col"])
+                        raise parser_error(
+                            "P007",
+                            f"Cannot mix positional and keyword arguments {loc_suffix(t)}",
+                            t,
                         )
                     positional = True
                     args.append(parse_arg())
@@ -1174,7 +1183,7 @@ def parse(tokens):
                 # Lexer only emits HEX for lengths 3/6/8, so this is unreachable; mirror JS
                 # (where r/g/b would be undefined) defensively by raising.
                 raise SyntaxError_(
-                    "Invalid hex color at line %d col %d" % (token["line"], token["col"])
+                    f"Invalid hex color {loc_suffix(token)}"
                 )
             return {
                 "type": "Color",
@@ -1186,8 +1195,7 @@ def parse(tokens):
                 ],
             }
         if tt == "LBRACKET":
-            start_line = token["line"]
-            start_col = token["col"]
+            loc = tok_loc(token)
             advance()
             elements = []
             if peek()["type"] != "RBRACKET":
@@ -1197,12 +1205,16 @@ def parse(tokens):
                     elements.append(parse_arg())
             if peek()["type"] != "RBRACKET":
                 t = peek()
-                raise SyntaxError_("Expected ']' at line %d col %d" % (t["line"], t["col"]))
+                raise parser_error(
+                    "P001",
+                    f"Expected ']' {loc_suffix(t)}",
+                    t,
+                )
             advance()
             return {
                 "type": "ArrayLiteral",
                 "elements": elements,
-                "loc": {"line": start_line, "col": start_col},
+                "loc": loc,
             }
         if tt == "FUNC":
             advance()
@@ -1242,9 +1254,10 @@ def parse(tokens):
                 if after is not None and after.get("type") == "LPAREN":
                     break
                 if nxt.get("type") not in member_token_types:
-                    raise SyntaxError_(
-                        "Expected identifier after '.' at line %d col %d"
-                        % (nxt["line"], nxt["col"])
+                    raise parser_error(
+                        "P001",
+                        f"Expected identifier after '.' {loc_suffix(nxt)}",
+                        nxt,
                     )
                 advance()  # consume '.'
                 advance()  # consume segment token (nxt)
@@ -1281,13 +1294,16 @@ def parse(tokens):
             expr = parse_additive()
             expect("RPAREN", "Expect ')'")
             return expr
-        raise SyntaxError_(
-            "Unexpected token %s at line %d col %d" % (tt, token["line"], token["col"])
+        raise parser_error(
+            "P001",
+            f"Unexpected token {tt} {loc_suffix(token)}",
+            token,
         )
 
     def to_number(node):
-        if node.get("type") != "Number":
-            raise SyntaxError_("Expected number")
+        if not isinstance(node, dict) or node.get("type") != "Number":
+            loc = node.get("loc") if isinstance(node, dict) and isinstance(node.get("loc"), dict) else {}
+            raise parser_error("P001", "Expected number", loc)
         return node["value"]
 
     def parse_kwarg(obj):
@@ -1295,8 +1311,10 @@ def parse(tokens):
         expect("COLON", "Expect ':'")
         if peek()["type"] not in expr_start_tokens:
             t = peek()
-            raise SyntaxError_(
-                "Expected expression after '=' at line %d col %d" % (t["line"], t["col"])
+            raise parser_error(
+                "P001",
+                f"Expected expression after '=' {loc_suffix(t)}",
+                t,
             )
         obj[key] = parse_arg()
 
