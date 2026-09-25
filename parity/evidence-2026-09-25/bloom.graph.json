@@ -1,0 +1,336 @@
+{
+  "id": "-1y0mxr",
+  "source": "search synth, filter\nnoise(seed: 1, scaleX: 50, scaleY: 50).bloom().write(o0)\nrender(o0)\n",
+  "renderSurface": "o0",
+  "passes": [
+    {
+      "id": "node_0_pass_0",
+      "passType": "effect",
+      "namespace": "synth",
+      "func": "noise",
+      "progName": "noise",
+      "program": "node_0_noise__LOOP_OFFSET_300__NOISE_TYPE_10",
+      "defines": {
+        "LOOP_OFFSET": 300,
+        "NOISE_TYPE": 10
+      },
+      "inputs": {},
+      "outputs": {
+        "fragColor": "node_0_out"
+      },
+      "uniforms": {
+        "octaves": 2,
+        "scaleX": 50,
+        "scaleY": 50,
+        "seed": 1,
+        "wrap": true,
+        "ridges": false,
+        "loopScale": 75,
+        "speed": 25,
+        "colorMode": 1
+      },
+      "uniformSpecs": {
+        "octaves": {
+          "min": 1,
+          "max": 8
+        },
+        "scaleX": {
+          "min": 1,
+          "max": 100
+        },
+        "scaleY": {
+          "min": 1,
+          "max": 100
+        },
+        "seed": {
+          "min": 1,
+          "max": 100
+        },
+        "loopScale": {
+          "min": 1,
+          "max": 100
+        },
+        "speed": {
+          "min": -100,
+          "max": 100
+        }
+      },
+      "effectKey": "synth.noise",
+      "nodeId": "node_0",
+      "stepIndex": 0,
+      "scopedParams": null
+    },
+    {
+      "id": "node_1_pass_0",
+      "passType": "effect",
+      "namespace": "filter",
+      "func": "bloom",
+      "progName": "brightPass",
+      "program": "node_1_brightPass",
+      "defines": {},
+      "inputs": {
+        "inputTex": "node_0_out"
+      },
+      "outputs": {
+        "fragColor": "node_1__brightTex"
+      },
+      "uniforms": {
+        "octaves": 2,
+        "scaleX": 50,
+        "scaleY": 50,
+        "seed": 1,
+        "wrap": true,
+        "ridges": false,
+        "loopScale": 75,
+        "speed": 25,
+        "colorMode": 1,
+        "type": 10,
+        "loopOffset": 300,
+        "threshold": 0.8,
+        "softKnee": 0.2,
+        "intensity": 1,
+        "radius": 32,
+        "taps": 8,
+        "tint": [
+          1,
+          1,
+          1
+        ]
+      },
+      "uniformSpecs": {
+        "threshold": {
+          "min": 0,
+          "max": 2
+        },
+        "softKnee": {
+          "min": 0,
+          "max": 0.5
+        },
+        "intensity": {
+          "min": 0,
+          "max": 3
+        },
+        "radius": {
+          "min": 1,
+          "max": 128
+        },
+        "taps": {
+          "min": 8,
+          "max": 64
+        }
+      },
+      "effectKey": "filter.bloom",
+      "nodeId": "node_1",
+      "stepIndex": 1,
+      "scopedParams": null
+    },
+    {
+      "id": "node_1_pass_1",
+      "passType": "effect",
+      "namespace": "filter",
+      "func": "bloom",
+      "progName": "ntapGather",
+      "program": "node_1_ntapGather",
+      "defines": {},
+      "inputs": {
+        "inputTex": "node_1__brightTex"
+      },
+      "outputs": {
+        "fragColor": "node_1__bloomTex"
+      },
+      "uniforms": {
+        "octaves": 2,
+        "scaleX": 50,
+        "scaleY": 50,
+        "seed": 1,
+        "wrap": true,
+        "ridges": false,
+        "loopScale": 75,
+        "speed": 25,
+        "colorMode": 1,
+        "type": 10,
+        "loopOffset": 300,
+        "threshold": 0.8,
+        "softKnee": 0.2,
+        "intensity": 1,
+        "radius": 32,
+        "taps": 8,
+        "tint": [
+          1,
+          1,
+          1
+        ]
+      },
+      "uniformSpecs": {
+        "threshold": {
+          "min": 0,
+          "max": 2
+        },
+        "softKnee": {
+          "min": 0,
+          "max": 0.5
+        },
+        "intensity": {
+          "min": 0,
+          "max": 3
+        },
+        "radius": {
+          "min": 1,
+          "max": 128
+        },
+        "taps": {
+          "min": 8,
+          "max": 64
+        }
+      },
+      "effectKey": "filter.bloom",
+      "nodeId": "node_1",
+      "stepIndex": 1,
+      "scopedParams": null
+    },
+    {
+      "id": "node_1_pass_2",
+      "passType": "effect",
+      "namespace": "filter",
+      "func": "bloom",
+      "progName": "composite",
+      "program": "node_1_composite",
+      "defines": {},
+      "inputs": {
+        "inputTex": "node_0_out",
+        "bloomTex": "node_1__bloomTex"
+      },
+      "outputs": {
+        "fragColor": "node_1_out"
+      },
+      "uniforms": {
+        "octaves": 2,
+        "scaleX": 50,
+        "scaleY": 50,
+        "seed": 1,
+        "wrap": true,
+        "ridges": false,
+        "loopScale": 75,
+        "speed": 25,
+        "colorMode": 1,
+        "type": 10,
+        "loopOffset": 300,
+        "threshold": 0.8,
+        "softKnee": 0.2,
+        "intensity": 1,
+        "radius": 32,
+        "taps": 8,
+        "tint": [
+          1,
+          1,
+          1
+        ]
+      },
+      "uniformSpecs": {
+        "threshold": {
+          "min": 0,
+          "max": 2
+        },
+        "softKnee": {
+          "min": 0,
+          "max": 0.5
+        },
+        "intensity": {
+          "min": 0,
+          "max": 3
+        },
+        "radius": {
+          "min": 1,
+          "max": 128
+        },
+        "taps": {
+          "min": 8,
+          "max": 64
+        }
+      },
+      "effectKey": "filter.bloom",
+      "nodeId": "node_1",
+      "stepIndex": 1,
+      "scopedParams": null
+    },
+    {
+      "id": "node_2_write_blit",
+      "passType": "blit",
+      "namespace": null,
+      "func": "blit",
+      "progName": "blit",
+      "program": "blit",
+      "defines": {},
+      "inputs": {
+        "src": "node_1_out"
+      },
+      "outputs": {
+        "color": "global_o0"
+      },
+      "uniforms": {},
+      "uniformSpecs": {},
+      "effectKey": null,
+      "nodeId": "node_2",
+      "stepIndex": 2,
+      "scopedParams": null
+    }
+  ],
+  "allocations": {
+    "node_0_out": "phys_0",
+    "node_1__brightTex": "phys_1",
+    "node_1__bloomTex": "phys_2",
+    "node_1_out": "phys_1"
+  },
+  "textures": {
+    "node_1__brightTex": {
+      "width": "input",
+      "height": "input",
+      "format": "rgba16float",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_1__bloomTex": {
+      "width": "input",
+      "height": "input",
+      "format": "rgba16float",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_0_out": {
+      "width": "screen",
+      "height": "screen",
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_1_out": {
+      "width": "screen",
+      "height": "screen",
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    }
+  },
+  "programs": {
+    "blit": {
+      "uniformLayout": {},
+      "defines": {}
+    }
+  }
+}

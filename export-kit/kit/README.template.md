@@ -71,15 +71,14 @@ even though the rest of the program still does. `scope` and `spectrum` are the t
 excludes outright: they read live audio and MIDI, which the add-on has no host for.
 
 Two more were previously described as rendering incorrectly. On 2026-09-25 **bloom** and **lens** were
-measured on a Blender 5.1 host through the direct render pipeline (`render_all.py`): each effect's own
-compiled program rendered exactly as the same runtime renders the matching graph exported by the
-reference engine. The public bake operator itself was separately exercised on other programs (adjust
-plus three sweep cases, bake == pipeline exactly) and has not yet been run on bloom or lens. Both
-effects remain in the supported set. One open defect is still on record: an exact comparison against
-the retained authority golden showed a small bloom difference (at most 1 in 255) that is not yet
-explained or reproduced; see the add-on repository's compatibility record for that dated evidence.
-Expect small differences from what the app showed you, on top of any effect still carrying an open
-defect.
+exercised on a Blender 5.1 host through this port's render pipeline and completed without error; the
+port's own compile path produced graphs consistent with the reference engine's exported graphs for the
+same programs on that host. No comparison against the reference engine's own rendered pixels has been
+made for these two effects. Both remain in the supported set. One open defect is still on record: an
+exact comparison against the retained authority golden showed a small bloom difference (at most 1 in
+255) that is not yet explained or reproduced; see the add-on repository's compatibility record for
+that dated evidence. Expect small differences from what the app showed you, on top of any effect
+still carrying an open defect.
 
 ## The engine
 

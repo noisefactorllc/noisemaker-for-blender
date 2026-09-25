@@ -1,0 +1,17 @@
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+NMR OK bloom.golden.png mean=[116.7, 122.9, 117.9, 255.0] px00=[63, 84, 32, 255] pxCtr=[209, 255, 251, 255]
+NMR OK bloom.png mean=[116.7, 122.9, 117.9, 255.0] px00=[63, 84, 32, 255] pxCtr=[209, 255, 251, 255]
+NMR OK lens.golden.png mean=[106.6, 114.5, 109.8, 255.0] px00=[46, 57, 15, 255] pxCtr=[146, 244, 181, 255]
+NMR OK lens.png mean=[106.6, 114.5, 109.8, 255.0] px00=[46, 57, 15, 255] pxCtr=[146, 244, 181, 255]
+NMR OK north_star.golden.png mean=[240.1, 228.4, 206.6, 255.0] px00=[48, 20, 19, 255] pxCtr=[255, 255, 255, 255]
+NMR OK north_star.png mean=[240.1, 228.4, 206.6, 255.0] px00=[48, 20, 19, 255] pxCtr=[255, 255, 255, 255]
+00:15.513  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+
+Blender quit
+exit=0
