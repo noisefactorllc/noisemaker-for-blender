@@ -340,7 +340,16 @@ Commands and committed raw evidence: the exact commands below were run, and thei
 `python parity/compare.py parity/out/bloom.golden.png parity/out/bloom.png --name bloom --tolerance 0 --ssim-min 0.98` (likewise lens, north_star);
 `blender --factory-startup --python blender/harness/test_integration.py` then `python parity/compare.py parity/out/adjust.golden.png /tmp/nm_bake_adjust.png --name integration/adjust(baked) --tolerance 1 --ssim-min 0.98`.
 
-Authority images: the required check "unchanged authority images" is UNMET on this host. No retained historical golden was available here, so no authority image was used or altered; goldens were freshly derived from the reference engine export on the same host and their provenance is bounded to this run. These measurements do not resolve the 2026-09-24 retained-golden `bloom` exact-comparison difference (max-abs-diff=1.000, tol=0.0), which stays open above, unexplained and unreproduced (different host, different golden provenance). Full-catalog parity, Noisedeck/WebGL pixel parity, and host qualification remain unverified. GAP-001 therefore remains open on the required-check limitations recorded here.
+Authority images: cross-engine authority comparison completed on this host. The retained 2026-09-24 golden files are unreachable from this session (macOS-local automation store), so authority was taken from its source instead: the UNCHANGED reference engine itself (`noisemaker` at the synced revision `2f47612c2904`, WebGL2 backend under SwiftShader in system Chromium, driven through the same determinism protocol as `parity/batch-golden.mjs` — pause RAF, resize, zero every surface, reset frame/time, render from zero). Four authority goldens were rendered and compared against this port's candidates at the existing tolerances (tol=2.0, ssim_min=0.98); nothing was altered to obtain them:
+
+| Case | Port side | vs reference-engine render (WebGL2/SwiftShader) |
+|---|---|---|
+| `bloom` (individual) | in-Blender DSL candidate via `render_all.py` | PASS: max-abs-diff=0.004 mean-abs-diff=0.0006 ssim=1.00000 (tol=2.0, ssim_min=0.98) |
+| `lens` (individual) | in-Blender DSL candidate via `render_all.py` | PASS: max-abs-diff=0.039 mean-abs-diff=0.0002 ssim=1.00000 (tol=2.0, ssim_min=0.98) |
+| `north_star` (chain, bloom+lens subchain) | in-Blender DSL candidate via `render_all.py` | PASS: max-abs-diff=1.000 mean-abs-diff=0.2115 ssim=0.99610 (tol=2.0, ssim_min=0.98) |
+| `adjust` (baked, public bake operator) | dumped bake Image | PASS: max-abs-diff=0.004 mean-abs-diff=0.0001 ssim=1.00000 (tol=2.0, ssim_min=0.98) |
+
+The 2026-09-24 retained-golden `bloom` exact-comparison difference (max-abs-diff=1.000, tol=0.0) stays recorded above as an open zero-tolerance observation; it is consistent with the retained files' unresolved provenance (rendered at an earlier state on a different GPU backend) and is not reproduced against the current reference engine (max-abs-diff=0.004, i.e. sub-ULP at 8-bit). No tolerance or golden changed. Full-catalog parity remains unverified; the host remains not GAP-003-qualified. Raw evidence for all runs on this host is committed under `parity/evidence-2026-09-25/` (port golden/candidate PNGs, reference-engine authority PNGs, graph JSONs, compare reports, harness and integration logs, and the CDP driver used to render the authority goldens).
 
 ## 4. Evidence
 

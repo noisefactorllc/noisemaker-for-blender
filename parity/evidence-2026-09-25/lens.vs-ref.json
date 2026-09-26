@@ -1,0 +1,16 @@
+{
+  "name": "lens(vs-reference-webgl)",
+  "golden": "/state/cache/scratch/refgoldens/lens.golden.png",
+  "candidate": "evidence-2026-09-25/lens.png",
+  "shape": [
+    256,
+    256,
+    4
+  ],
+  "max_abs_diff": 0.03921569179510698,
+  "mean_abs_diff": 0.00019537234720701235,
+  "ssim": 0.9999999820055201,
+  "tolerance": 2.0,
+  "ssim_min": 0.98,
+  "passed": true
+}

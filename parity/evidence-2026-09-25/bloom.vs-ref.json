@@ -1,0 +1,16 @@
+{
+  "name": "bloom(vs-reference-webgl)",
+  "golden": "/state/cache/scratch/refgoldens/bloom.golden.png",
+  "candidate": "evidence-2026-09-25/bloom.png",
+  "shape": [
+    256,
+    256,
+    4
+  ],
+  "max_abs_diff": 0.003921627067029476,
+  "mean_abs_diff": 0.0005725636276565638,
+  "ssim": 0.9999999658890238,
+  "tolerance": 2.0,
+  "ssim_min": 0.98,
+  "passed": true
+}

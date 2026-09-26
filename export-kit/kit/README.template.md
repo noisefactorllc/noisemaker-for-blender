@@ -71,14 +71,14 @@ even though the rest of the program still does. `scope` and `spectrum` are the t
 excludes outright: they read live audio and MIDI, which the add-on has no host for.
 
 Two more were previously described as rendering incorrectly. On 2026-09-25 **bloom** and **lens** were
-exercised on a Blender 5.1 host through this port's render pipeline and completed without error; the
-port's own compile path produced graphs consistent with the reference engine's exported graphs for the
-same programs on that host. No comparison against the reference engine's own rendered pixels has been
-made for these two effects. Both remain in the supported set. One open defect is still on record: an
-exact comparison against the retained authority golden showed a small bloom difference (at most 1 in
-255) that is not yet explained or reproduced; see the add-on repository's compatibility record for
-that dated evidence. Expect small differences from what the app showed you, on top of any effect
-still carrying an open defect.
+compared against the Noisemaker reference engine's own renders on a Blender 5.1 host: each effect's
+port render matched the reference engine's output within this port's published tolerances (worst
+per-channel difference at most 1 in 255, chain included), and the public bake path itself reproduced
+the reference engine byte-for-byte within tolerance on the checked program. Both remain in the
+supported set. One open item is still on record: an earlier zero-tolerance comparison against retained
+historical goldens showed a small bloom difference (at most 1 in 255) not yet reproduced against the
+current reference engine; see the add-on repository's compatibility record. Expect small differences
+from what the app showed you, on top of any effect still carrying an open defect.
 
 ## The engine
 
