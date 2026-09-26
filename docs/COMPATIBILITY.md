@@ -103,8 +103,8 @@ Current served declaration: 208 effect IDs. This inventory is not evidence of ex
 | `classicNoisedeck/shapes` | yes | unverified |
 | `classicNoisedeck/shapes3d` | yes | unverified |
 | `classicNoisedeck/splat` | yes | unverified |
-| `filter/adjust` | yes | unverified |
-| `filter/bloom` | yes | unverified |
+| `filter/adjust` | yes | measured 2026-09-25 (bake path vs reference engine; full parity unverified) |
+| `filter/bloom` | yes | measured 2026-09-25 (individual vs reference engine; zero-tolerance retained-golden defect open; full parity unverified) |
 | `filter/blur` | yes | unverified |
 | `filter/bulge` | yes | unverified |
 | `filter/celShading` | yes | unverified |
@@ -139,7 +139,7 @@ Current served declaration: 208 effect IDs. This inventory is not evidence of ex
 | `filter/highPass` | yes | unverified |
 | `filter/historicPalette` | yes | unverified |
 | `filter/invert` | yes | unverified |
-| `filter/lens` | yes | unverified |
+| `filter/lens` | yes | measured 2026-09-25 (individual vs reference engine; full parity unverified) |
 | `filter/lensFlare` | yes | unverified |
 | `filter/lensWarp` | yes | unverified |
 | `filter/lightLeak` | yes | unverified |
@@ -349,7 +349,7 @@ Authority images: cross-engine authority comparison completed on this host. The 
 | `north_star` (chain, bloom+lens subchain) | in-Blender DSL candidate via `render_all.py` | PASS: max-abs-diff=1.000 mean-abs-diff=0.2115 ssim=0.99610 (tol=2.0, ssim_min=0.98) |
 | `adjust` (baked, public bake operator) | dumped bake Image | PASS: max-abs-diff=0.004 mean-abs-diff=0.0001 ssim=1.00000 (tol=2.0, ssim_min=0.98) |
 
-The 2026-09-24 retained-golden `bloom` exact-comparison difference (max-abs-diff=1.000, tol=0.0) stays recorded above as an open zero-tolerance observation; it is consistent with the retained files' unresolved provenance (rendered at an earlier state on a different GPU backend) and is not reproduced against the current reference engine (max-abs-diff=0.004, i.e. sub-ULP at 8-bit). No tolerance or golden changed. Full-catalog parity remains unverified; the host remains not GAP-003-qualified. Raw evidence for all runs on this host is committed under `parity/evidence-2026-09-25/` (port golden/candidate PNGs, reference-engine authority PNGs, graph JSONs, compare reports, harness and integration logs, and the CDP driver used to render the authority goldens).
+The 2026-09-24 retained-golden `bloom` exact-comparison difference (max-abs-diff=1.000, tol=0.0) stays recorded above as an open zero-tolerance defect with the following explicit disposition: it is a defect against the retained goldens' unresolved provenance only — graded at zero-byte tolerance, which no golden-refresh or tolerance change authorizes — and it is superseded for tolerance-based acceptance by the 2026-09-25 measured results below (max-abs-diff=0.004 against the unchanged reference engine's own render, within the existing tol=2.0/ssim_min=0.98 gate). The two comparisons use different golden sources and different tolerances; both records stand, and the zero-tolerance defect remains open until the retained goldens' provenance is resolved against a qualified host. No tolerance or golden changed. Full-catalog parity remains unverified; the host remains not GAP-003-qualified. Raw evidence for all runs on this host is committed under `parity/evidence-2026-09-25/` (port golden/candidate PNGs, reference-engine authority PNGs, graph JSONs, compare reports, harness and integration logs, and the CDP driver used to render the authority goldens).
 
 Re-verification after integration: remote advanced to the GAP-005 sync commit `8245369` (gpu_backend pass-field propagation, viewport resolution, 3D effect definitions); this record's candidate was rebased onto it and the whole evidence set re-executed on the new sources — bloom, lens, `north_star` chain, and adjust candidates re-rendered via `blender/harness/render_all.py` and re-graded against the same reference-engine authority goldens: identical PASS results (bloom 0.004, lens 0.039, north_star 1.000/ssim 0.99610, adjust 0.004); `test_integration.py` INTEGRATION PASS again (INVARIANT A max-abs-diff=0); `parity/test_compiler.py` 41/41 OK at the integrated revision (log committed as `parity/evidence-2026-09-25/test_compiler.reverify.log`).
 
