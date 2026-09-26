@@ -1,0 +1,17 @@
+# candidate a5f8986 + review-fix commit — generated 2026-09-26T17:51:50Z
+# environment: Linux container, python 3.11.2 venv (numpy 2.5.3, pillow) — no Blender binary on host; pure-python3 suites only
+test_3d_fixture_coverage.py: Ran 5 tests in 0.036s OK 
+test_artistic_matrix.py: Ran 11 tests in 0.372s OK 
+test_audio_nested_automation.py: Ran 6 tests in 0.033s OK 
+test_automation_runtime.py: Ran 9 tests in 0.142s OK 
+test_batch_compare.py: Ran 16 tests in 12.215s OK 
+test_compiler.py: Ran 41 tests in 0.092s OK 
+test_frame_export.py: Ran 8 tests in 0.001s OK 
+test_midi_device_selection.py: Ran 9 tests in 0.037s OK 
+test_midi_expression.py: Ran 8 tests in 0.046s OK 
+test_pipeline_limits.py: Ran 2 tests in 0.000s OK 
+test_pipeline_sink.py: Ran 4 tests in 0.001s OK 
+test_runtime_sink.py: Ran 14 tests in 0.001s OK 
+test_text_style.py: Ran 1 test in 0.027s OK 
+test_texture_pooling.py: Ran 14 tests in 0.001s OK 
+test_transform.py: Ran 9 tests in 0.034s OK 

@@ -1,0 +1,14 @@
+# candidate a5f8986 + review-fix commit — generated 2026-09-26T17:52:18Z
+# environment: Linux container — bpy 5.2.2 extension module (uv pip wheel) as the Blender host; no Metal GPU context is created by this contract (pure-API + mock probes)
+# NOTE: the committed log parity/evidence-2026-09-26/test_backend_contract.log from the earlier 2026-09-26 run recorded an AssertionError at line 84 (truncation warning key mismatch) while exiting 0 under blender; _warn_uniform_once now leads the truncation detail with the 'truncated' key segment, so this assertion holds and this log is the corrected evidence.
+BACKEND CONTRACT PASS — asynchronous frame export is explicitly unsupported
+NMR WARN uniform color1 (VEC3) truncated — over-length value cut to the declared 3-component width — value=[0.0, 0.43, 0.58, 1.0]
+NMR WARN uniform color2 (VEC4) truncated — over-length value cut to the declared 4-component width — value=[1.0, 2.0, 3.0, 4.0, 5.0]
+NMR WARN uniform color3 (VEC3) truncated — over-length value cut to the declared 3-component width — value=[np.float64(0.1), np.float64(0.2), np.float64(0.3), np.float64(0.4)]
+NMR WARN uniform short3 (VEC3) not set — value kept its shader default — value=[0.1, 0.2]
+NMR WARN uniform absent2 (VEC2) not set — value kept its shader default — value=[1.0, 2.0]
+NMR WARN uniform wide3 (VEC3) truncated — over-length value cut to the declared 3-component width — value=[0.1, 0.2, 0.3, 0.4]
+BACKEND CONTRACT PASS — vecN uniform values are normalized to the declared width; failed assignments warn once instead of staying silent
+BACKEND CONTRACT PASS — no shader info-log/bind-group diagnostic surface on gpu.types (structured backend diagnostics inapplicable)
+BACKEND CONTRACT PASS — global surface refreshed when format or dimensions change
+CONTRACT-EXIT 0

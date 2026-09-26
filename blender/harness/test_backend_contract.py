@@ -86,6 +86,18 @@ assert ("wide3", "VEC3", "truncated") in _gb._WARNED_UNIFORMS
 print("BACKEND CONTRACT PASS — vecN uniform values are normalized to the declared width;"
       " failed assignments warn once instead of staying silent")
 
+# Upstream f83a427e audit (STATUS 2026-09-26 sync): the reference's structured
+# ShaderDiagnostic union (GLSL info logs, WebGPU compilation info, bind-group
+# layout retries) has no Blender analogue on this gpu surface — none of those
+# APIs exist on gpu.types, so the port has no ERR_SHADER_* throw sites to
+# normalize and browser-backend diagnostics remain out of scope here.
+import gpu.types as _gt  # noqa: E402
+for _probe in ("getShaderInfoLog", "getProgramInfoLog", "getCompilationInfo",
+               "createBindGroup", "getBindGroupLayout", "createRenderPipeline"):
+    assert not hasattr(_gt, _probe), "unexpected diagnostic surface: " + _probe
+print("BACKEND CONTRACT PASS — no shader info-log/bind-group diagnostic surface"
+      " on gpu.types (structured backend diagnostics inapplicable)")
+
 
 class MockOffscreen:
     def __init__(self, w, h, fmt):
@@ -102,6 +114,7 @@ class MockGraph:
     def __init__(self, textures):
         self.textures = textures
         self.passes = []
+        self.allocations = {}
 
     def phys(self, tid):
         return 0

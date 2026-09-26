@@ -287,7 +287,7 @@ class GpuBackend:
                         # the normal shape — but a genuine width mismatch would
                         # also land here, so the truncation is visible once.
                         _warn_uniform_once(name, ctype, value,
-                                           "truncated to the declared %d-component width" % n)
+                                           "truncated — over-length value cut to the declared %d-component width" % n)
                         value = value[:n]
                 shader.uniform_float(name, value)
             elif ctype == "INT":
