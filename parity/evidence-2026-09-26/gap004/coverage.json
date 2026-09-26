@@ -51,13 +51,13 @@
   }
  ],
  "compiler_gate_results_fresh_2026-09-26": {
-  "authority": "goldens regenerated from reference engine at declared authority 8eeb7b5ac14e (noisemaker-ref clone HEAD verified)",
+  "authority": "goldens regenerated from reference engine at declared authority 8eeb7b5ac14e; the 98/98 byte-identity of the working set against existing-golden-hashes.json is attested by the committed same-session read-only run gap004/hash-verify.log (header-stamped, executed before the gate runs, no regeneration) \u2014 a self-report within this evidence bundle, reproducible by any session via the recorded procedure; runs executed on base 61f74bc (published origin/main at run time) with only evidence/docs in the candidate delta, so results apply unchanged to the candidate tip",
   "lex": "20/20 exit 0",
   "parse": "20/20 exit 0",
   "compile": "20/20 exit 0",
   "expanded": "19/19 exit 0 (B5oBsA excluded)",
   "graph": "19/19 exit 0 (B5oBsA excluded)",
-  "unit_tests": "157/157 exit 0 (gap004/unit.log, refreshed at integrated tip a5f8986)",
+  "unit_tests": "157/157 exit 0 (gap004/unit.log; the 157-test suite count was first established at integrated tip a5f8986 \u2014 see b5obsa-classification.log \u2014 and re-confirmed on this base)",
   "logs": [
    "check_lex.log",
    "check_parse.log",
@@ -98,7 +98,7 @@
     "bitwise"
    ],
    "result": "golden and candidate byte-identical per case",
-   "evidence": "verification receipt; reports source/parity/out/{adjust,alphaMask,bitwise}.report.json"
+   "evidence": "verification receipt; reports source/parity/out/{adjust,alphaMask,bitwise}.report.json at SHA 74bd4ca5 (not materialized in this repository and not independently inspectable from the public tree; supplementary to the committed gap003-native llvmpipe evidence, which is the inspectable authority for these cases)"
   },
   "2026-09-26_landscape_and_uniform_fix": {
    "cases": [

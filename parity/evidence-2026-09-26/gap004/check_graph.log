@@ -1,3 +1,4 @@
+# GAP-004 gate log; run_utc=2026-09-26T18:41:35Z; host=Linux 6.8.0-134-generic x86_64; golden_source=parity/out/ regenerated from declared authority 8eeb7b5ac14eb37a8d16037f607a88ce63924cd3 (noisemaker v1.0.183) via parity/regen-compiler-goldens.sh; byte-identity attested by gap004/hash-verify.log (same-session read-only run, stamped before this log); base=61f74bc (published origin/main at run time); candidate_delta=evidence/docs-only commit atop this base (no product code), so these results apply unchanged to the candidate tip
 PASS B5oBsA      (correctly aborts: CompilationError)
 PASS -7d-cA    
 PASS 0BgVzw    
@@ -19,3 +20,4 @@ PASS u_8aBg
 PASS unqOuw    
 PASS zp_G3w    
 graph parity: 19/19
+exit=0

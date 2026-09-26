@@ -8,7 +8,9 @@
 #
 #   NM_REFERENCE_ROOT=../noisemaker bash parity/regen-compiler-goldens.sh
 #
-# B5oBsA has compile-time errors, so its compile/expanded/graph dumps fail and leave no golden
+# B5oBsA has compile-time errors; since the checkpoint-era diagnostic change its compile()
+# returns diagnostics rather than raising, so dump-compile.mjs also writes B5oBsA.compile.json
+# (check_compile passes 20/20 including it); expanded/graph still fail and leave no golden
 # (the gates EXCLUDE/skip it); its tokens/ast goldens are still written (it lexes + parses fine).
 set -u
 cd "$(dirname "$0")/.." || exit 1                       # repo root
@@ -25,10 +27,12 @@ for f in parity/corpus/*.dsl; do
   # tokens + ast: every program (incl. B5oBsA) lexes + parses.
   node tools/dump-tokens.mjs "$f"   > "parity/out/$name.tokens.json"   2>/dev/null || rm -f "parity/out/$name.tokens.json"
   node tools/dump-ast.mjs    "$f"   > "parity/out/$name.ast.json"      2>/dev/null || rm -f "parity/out/$name.ast.json"
-  # compile/expanded/graph: B5oBsA fails here on purpose -> no golden, gate excludes it.
+  # compile/expanded/graph: B5oBsA's compile() returns diagnostics since the checkpoint-era
+  # diagnostic change, so dump-compile.mjs writes B5oBsA.compile.json (check_compile includes
+  # it, 20/20); expanded/graph still fail -> no golden, gates exclude it.
   node tools/dump-compile.mjs  "$f" > "parity/out/$name.compile.json"  2>/dev/null || rm -f "parity/out/$name.compile.json"
   node tools/dump-expanded.mjs "$f" > "parity/out/$name.expanded.json" 2>/dev/null || rm -f "parity/out/$name.expanded.json"
   node tools/export-graph.mjs --file "$f" "parity/out/$name.graph.json" >/dev/null 2>&1 || rm -f "parity/out/$name.graph.json"
   echo "  $name"
 done
-echo "regenerated compiler goldens for $n corpus programs -> parity/out/ (B5oBsA compile/expanded/graph intentionally absent)"
+echo "regenerated compiler goldens for $n corpus programs -> parity/out/ (B5oBsA compile golden is written since the checkpoint-era diagnostic change; B5oBsA expanded/graph intentionally absent)"
