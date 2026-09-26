@@ -133,9 +133,19 @@ def run():
                 fails.append("bake != direct pipeline (max-abs-diff=%d)" % dA)
 
         # INVARIANT B: bake matches the adjust golden
+        # The golden is read with PIL when available, else with the stdlib
+        # decoder in pngread.py (same bytes; exact decode for 8-bit RGB/RGBA/
+        # gray PNGs) so B executes instead of being skipped on PIL-less hosts.
         try:
-            from PIL import Image as PILImage
-            g = np.asarray(PILImage.open(GOLDEN).convert("RGBA"), dtype=np.uint8)
+            g = None
+            try:
+                from PIL import Image as PILImage
+                g = np.asarray(PILImage.open(GOLDEN).convert("RGBA"), dtype=np.uint8)
+            except ImportError:
+                sys.path.insert(0, HARNESS)
+                import pngread
+                raw, w, h = pngread.read_png_rgba(GOLDEN)
+                g = np.frombuffer(raw, dtype=np.uint8).reshape(h, w, 4)
             if g.shape == arr_op.shape:
                 dB = int(np.abs(arr_op.astype(int) - g.astype(int)).max())
                 print("  INVARIANT B (bake == golden):          max-abs-diff=%d" % dB)
@@ -143,8 +153,8 @@ def run():
                     fails.append("bake vs golden max-abs-diff=%d (>1)" % dB)
             else:
                 print("  INVARIANT B skipped: golden shape %s != %s" % (g.shape, arr_op.shape))
-        except ImportError:
-            print("  INVARIANT B skipped: PIL not available (A already proves the wrapper)")
+        except FileNotFoundError:
+            print("  INVARIANT B skipped: golden not present: %s" % GOLDEN)
 
     # --- 4b. breadth: the operator across program shapes -------------------------------
     # adjust above is a trivial single-pass program. The operator's real risk surface is
