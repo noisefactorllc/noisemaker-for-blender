@@ -36,6 +36,24 @@ _FORMAT = {"rgba8": "RGBA8", "rgba16f": "RGBA16F", "rgba32f": "RGBA32F"}
 # Precision rank: a pooled slot shared by mixed formats must hold the most demanding one.
 _FMT_RANK = {"RGBA8": 1, "RGBA16F": 2, "RGBA32F": 3}
 
+_WARNED_UNIFORMS = set()
+
+
+def _warn_uniform_once(name, ctype, value):
+    """Print the first failed uniform assignment per name, then stay quiet.
+
+    A swallowed ValueError here means the uniform kept its default (usually zero).
+    Most cases are benign — the shader compiler optimized the uniform out (e.g.
+    gradient's `resolution`) — but the same swallow previously masked the all-black
+    vec3-color defect, so the first occurrence is made visible in the log.
+    """
+    key = (name, ctype)
+    if key in _WARNED_UNIFORMS:
+        return
+    _WARNED_UNIFORMS.add(key)
+    print("NMR WARN uniform %s (%s) not set — value=%r kept its shader default"
+          % (name, ctype, value))
+
 
 _STATE_NODE_RE = re.compile(r"^(xyz|vel|rgba|points_trail)_node_\d+$")
 
@@ -243,13 +261,16 @@ class GpuBackend:
             if ctype == "FLOAT":
                 shader.uniform_float(name, float(value))
             elif ctype in ("VEC2", "VEC3", "VEC4", "MAT3", "MAT4"):
-                # A vecN uniform rejects an over-length sequence (e.g. a 4-component
-                # color value for the declared `vec3 color1`): Blender raises ValueError
-                # and the effect silently renders with default (zero) colors — gradient
-                # came out all-black. Slice to the declared component count.
+                # A vecN uniform rejects a sequence of the wrong length (e.g. a
+                # 4-component color value for the declared `vec3 color1`): Blender
+                # raises ValueError and the effect silently renders with default
+                # (zero) colors — gradient came out all-black. Normalize any
+                # sequence to exactly the declared component count.
                 n = {"VEC2": 2, "VEC3": 3, "VEC4": 4}.get(ctype)
-                if n is not None and isinstance(value, (list, tuple)) and len(value) > n:
-                    value = list(value[:n])
+                if n is not None and not isinstance(value, (str, bytes)) and hasattr(value, "__len__"):
+                    value = list(value)
+                    if len(value) > n:
+                        value = value[:n]
                 shader.uniform_float(name, value)
             elif ctype == "INT":
                 shader.uniform_int(name, int(value))
@@ -258,7 +279,10 @@ class GpuBackend:
             elif ctype == "BOOL":
                 shader.uniform_bool(name, [bool(value)])
         except ValueError:
-            pass
+            # Benign when the shader compiler optimized the uniform out (e.g.
+            # gradient's `resolution`); visible once otherwise so a silently
+            # dropped uniform can't masquerade as a correct render.
+            _warn_uniform_once(name, ctype, value)
 
     def _bind_inputs(self, shader, desc, rev, merged, inputs, graph):
         fields = desc.get("pushConstants", [])

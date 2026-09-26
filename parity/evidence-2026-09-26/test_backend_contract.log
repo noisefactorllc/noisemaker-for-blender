@@ -1,5 +1,9 @@
 Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
 BACKEND CONTRACT PASS — asynchronous frame export is explicitly unsupported
-BACKEND CONTRACT PASS — vecN uniform values are sliced to the declared width
+NMR WARN uniform short3 (VEC3) not set — value=[0.1, 0.2] kept its shader default
+NMR WARN uniform absent2 (VEC2) not set — value=[1.0, 2.0] kept its shader default
+BACKEND CONTRACT PASS — vecN uniform values are normalized to the declared width; failed assignments warn once instead of staying silent
 BACKEND CONTRACT PASS — global surface refreshed when format or dimensions change
-contract exit=124
+00:06.871  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+
+Blender quit

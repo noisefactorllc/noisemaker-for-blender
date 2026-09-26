@@ -8,6 +8,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(REPO, "blender"))
 
 from noisemaker_blender.backend.gpu_backend import GpuBackend
+import noisemaker_blender.backend.gpu_backend as _gb
 
 
 backend = GpuBackend.__new__(GpuBackend)
@@ -25,19 +26,58 @@ class MockShader:
         self.floats[name] = tuple(value)
 
 
+class StrictShader(MockShader):
+    """Mimics Blender: a vecN uniform rejects a sequence of the wrong length."""
+
+    WIDTHS = {"res2": 2, "col3": 3, "col4": 4, "short3": 3}
+
+    def uniform_float(self, name, value):
+        if name not in self.WIDTHS:
+            raise ValueError("GPUShader.uniform_float: uniform %s not found" % name)
+        if len(value) != self.WIDTHS[name]:
+            raise ValueError("GPUShader.uniform_float: expected %d values for %s"
+                             % (self.WIDTHS[name], name))
+        self.floats[name] = tuple(value)
+
+
+_gb._WARNED_UNIFORMS.clear()
+
 # vecN uniforms must receive exactly N components: an over-length sequence (e.g. a
 # 4-component color value for the declared `vec3 color1`) raises ValueError inside
 # Blender's uniform_float, which _set_uniform swallows — the uniform stays at its
 # default zero and the effect silently renders black (observed: gradient, and the
-# landscape modes that consume it).
+# landscape modes that consume it). _set_uniform normalizes any sequence to the
+# declared width; an under-length value cannot be padded, so it is skipped with a
+# visible one-time warning instead of silently rendering with default colors.
 shader = MockShader()
 backend._set_uniform(shader, "VEC3", "color1", [0.0, 0.43, 0.58, 1.0])
 assert shader.floats["color1"] == (0.0, 0.43, 0.58), shader.floats
-backend._set_uniform(shader, "VEC4", "color2", [1.0, 2.0, 3.0, 4.0, 5.0])
+backend._set_uniform(shader, "VEC4", "color2", (1.0, 2.0, 3.0, 4.0, 5.0))
 assert shader.floats["color2"] == (1.0, 2.0, 3.0, 4.0), shader.floats
 backend._set_uniform(shader, "VEC2", "resolution", [256.0, 256.0])
 assert shader.floats["resolution"] == (256.0, 256.0), shader.floats
-print("BACKEND CONTRACT PASS — vecN uniform values are sliced to the declared width")
+# Non-list sequence (numpy row) with an over-length vec3: same normalization.
+import numpy as np  # noqa: E402  (Blender ships numpy)
+backend._set_uniform(shader, "VEC3", "color3", np.array([0.1, 0.2, 0.3, 0.4]))
+assert shader.floats["color3"] == (0.1, 0.2, 0.3), shader.floats
+
+# Under-length: Blender rejects it; the setter must skip it with a warning, not pass it.
+strict = StrictShader()
+_gb._WARNED_UNIFORMS.clear()
+backend._set_uniform(strict, "VEC3", "short3", [0.1, 0.2])
+assert "short3" not in strict.floats, strict.floats
+assert ("short3", "VEC3") in _gb._WARNED_UNIFORMS
+
+# Optimized-out uniform (never declared): skipped with a one-time warning, no raise.
+_gb._WARNED_UNIFORMS.clear()
+backend._set_uniform(strict, "VEC2", "absent2", [1.0, 2.0])
+assert "absent2" not in strict.floats
+assert ("absent2", "VEC2") in _gb._WARNED_UNIFORMS
+backend._set_uniform(strict, "VEC2", "absent2", [1.0, 2.0])  # second failure: quiet
+assert _gb._WARNED_UNIFORMS == {("absent2", "VEC2")}
+
+print("BACKEND CONTRACT PASS — vecN uniform values are normalized to the declared width;"
+      " failed assignments warn once instead of staying silent")
 
 
 class MockOffscreen:
