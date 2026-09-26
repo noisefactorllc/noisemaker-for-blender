@@ -1,0 +1,12 @@
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+00:00.559  blend            | Read blend: "/state/cache/scratch/nm_hostworkflows.blend"
+  persist OK  addon still enabled after restart
+  reopen OK  image='NM_quickstart' render written for external pixel comparison: /state/cache/scratch/nm_hostworkflows.blend.reopen.png
+  cleanup OK  addon disabled and removed
+HOSTWORKFLOWS SESSION2 PASS
+00:06.772  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+00:06.774  blend            | Writing user preferences: "/state/cache/scratch/gap003prefs/config/userpref.blend" 
+00:06.775  reports          | Preferences saved
+
+Blender quit
+session2 exit=0

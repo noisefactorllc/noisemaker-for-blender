@@ -1,0 +1,30 @@
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+00:06.708  blend            | Writing user preferences: "/state/cache/scratch/gap003prefs/config/userpref.blend" 
+/workspace/repos/noisemaker-for-blender/blender/harness/test_host_workflows.py:103: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat.use_nodes = True
+/workspace/repos/noisemaker-for-blender/blender/harness/test_host_workflows.py:116: DeprecationWarning: 'Scene.use_nodes' is expected to be removed in Blender 6.0
+  scene.use_nodes = True
+  host  OK   blender='5.1.2'
+  host  OK   gpu_vendor='Mesa/X.org' renderer='llvmpipe (LLVM 15.0.6, 256 bits)'
+  host  OK   gpu_version='4.5 (Core Profile) Mesa 22.3.6' backend='OPENGL'
+addon_utils.disable: noisemaker_blender not loaded
+Modules Installed (noisemaker_blender) from '/workspace/repos/noisemaker-for-blender/parity/evidence-2026-09-26/archive-from-fixed-source.zip' into '/state/cache/scratch/gap003prefs/scripts/addons'
+Info: Modules Installed (noisemaker_blender) from '/workspace/repos/noisemaker-for-blender/parity/evidence-2026-09-26/archive-from-fixed-source.zip' into '/state/cache/scratch/gap003prefs/scripts/addons'
+Info: Preferences saved
+  install OK  archive-from-fixed-source.zip enabled (preferences saved)
+NMR WARN uniform resolution (VEC2) not set — value=[256.0, 256.0] kept its shader default
+Info: Baked 'NM_quickstart' (256x256, 1 frame)
+  quickstart OK  image='NM_quickstart' std=0.1845
+  material OK  tex->bsdf->output wired
+  compositor OK  image->GROUP_OUTPUT wired
+  keyboard OK  no custom keymap registration (panel/button UI; standard navigation unchanged; interactive typing not scriptable)
+Info: Saved as "nm_hostworkflows.blend"
+  save OK  /state/cache/scratch/nm_hostworkflows.blend render=/state/cache/scratch/nm_hostworkflows.blend.png
+HOSTWORKFLOWS SESSION1 PASS
+00:08.717  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+
+Blender quit
+session1 exit=0
