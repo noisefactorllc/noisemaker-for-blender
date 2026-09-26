@@ -111,13 +111,47 @@
  "ci_boundary": {
   "observation": "the green source workflow (export-kit.yml) dispatches scaffold's export-kit-release; it builds and publishes the kit but does not qualify Blender rendering",
   "evidence": {
-   "exact-source_dispatcher_run_5773f540": "36216741151 completed success 2026-09-26T04:04:34Z (metadata: ci-dispatch-5773f540.json)",
-   "audit_recorded_pairs": [
-    "35752180457 + 35752203907",
-    "35807778200 + 35807785546 (97 builder tests)"
-   ],
-   "downstream_metadata": "scaffold is private to unauthenticated API access; fresh downstream verification post-publication is the supervisor's verify step"
+   "exact-source_dispatcher_run_5773f540": "36216741151 completed success 2026-09-26T04:04:34Z (metadata materialized: ci-dispatch-5773f540.json)",
+   "audit_dispatcher_35752180457": "success at 0efbdc47 2026-09-22T16:09:06Z (metadata materialized: ci-dispatch-35752180457.json)",
+   "audit_dispatcher_35807778200": "success at e9299fd8 2026-09-23T01:48:01Z (metadata materialized: ci-dispatch-35807778200.json)",
+   "audit_downstream_35752203907_35807785546": "success per the audit record; private to unauthenticated API access (404 on fetch) \u2014 recorded with the fetch evidence in ci-downstream-scaffold-private.json; run IDs exist only as recorded strings in this session",
+   "fresh_downstream": "the supervisor's post-publication verify step"
   },
   "separation": "CI publication success remains separate from behavioral qualification"
+ },
+ "coverage_dimensions": {
+  "note": "GAP-004's required checks name modes, inputs, seeds, time, sizes, and state. This file gives denominators and the executed cases; a per-dimension breakdown over the full fixture inventory is not yet measured and stays covered by the gap's open next action (extend rendered coverage on GAP-003-qualified hosts).",
+  "executed_modes": [
+   "bloom",
+   "lens",
+   "north_star chain",
+   "adjust",
+   "bitwise",
+   "alphaMask",
+   "heightmap3d_landscape default",
+   "heightmap3d_landscape voxel",
+   "heightmap3d_landscape_isosurface"
+  ],
+  "executed_inputs": [
+   "prebaked static render sources (the documented image input contract); audio input (synth/scope, synth/spectrum) excluded per contract"
+  ],
+  "executed_seeds": [
+   "the corpus programs' embedded seeds as rendered by the cases above; no seed sweep executed"
+  ],
+  "executed_time": [
+   "bake/ffmpeg timing probes in the 2026-09-25 long-bake evidence"
+  ],
+  "executed_sizes": [
+   "the render sizes baked into the executed cases; no size sweep executed"
+  ],
+  "executed_state": [
+   "fresh-session renders per executed case; no multi-session state sweep executed"
+  ],
+  "not_measured": [
+   "seed sweep",
+   "size sweep",
+   "state sweep",
+   "full fixture inventory"
+  ]
  }
 }

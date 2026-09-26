@@ -1,0 +1,48 @@
+{
+ "generated_at_utc": "2026-09-26T16:40:00Z",
+ "purpose": "GAP-004: record the exact-source CI evidence boundary for the audit-recorded workflow pairs, and name what could not be fetched from this session.",
+ "attempted_fetches": [
+  {
+   "run_id": 35752180457,
+   "repository": "noisefactorllc/noisemaker-for-blender",
+   "endpoint": "https://api.github.com/repos/noisefactorllc/noisemaker-for-blender/actions/runs/35752180457",
+   "http_result": "200",
+   "materialized_as": "ci-dispatch-35752180457.json",
+   "summary": {"head_sha": "0efbdc47dcf3050575af1e0c9b22e5425fd1fb84", "conclusion": "success", "created_at": "2026-09-22T16:09:06Z", "name": "Export kit"}
+  },
+  {
+   "run_id": 35752203907,
+   "repository": "noisefactorllc/scaffold",
+   "endpoint": "https://api.github.com/repos/noisefactorllc/scaffold/actions/runs/35752203907",
+   "http_result": "404 Not Found (repository private to unauthenticated API access)",
+   "materialized_as": null,
+   "summary": {"recorded_in": "docs/COMPLETION_GAPS.md remote evidence and coverage.json", "description": "downstream kit build and publication for the 2026-09-22 pair; success per the audit record, not re-fetchable here"}
+  },
+  {
+   "run_id": 35807778200,
+   "repository": "noisefactorllc/noisemaker-for-blender",
+   "endpoint": "https://api.github.com/repos/noisefactorllc/noisemaker-for-blender/actions/runs/35807778200",
+   "http_result": "200",
+   "materialized_as": "ci-dispatch-35807778200.json",
+   "summary": {"head_sha": "e9299fd8af7d546d27491959677211e8e89b1dc1", "conclusion": "success", "created_at": "2026-09-23T01:48:01Z", "name": "Export kit"}
+  },
+  {
+   "run_id": 35807785546,
+   "repository": "noisefactorllc/scaffold",
+   "endpoint": "https://api.github.com/repos/noisefactorllc/scaffold/actions/runs/35807785546",
+   "http_result": "404 Not Found (repository private to unauthenticated API access)",
+   "materialized_as": null,
+   "summary": {"recorded_in": "docs/COMPLETION_GAPS.md daily review 2026-09-23 and coverage.json", "description": "downstream builder run that passed 97 builder tests without a skip per the audit record; not re-fetchable here"}
+  },
+  {
+   "run_id": 36216741151,
+   "repository": "noisefactorllc/noisemaker-for-blender",
+   "endpoint": "https://api.github.com/repos/noisefactorllc/noisemaker-for-blender/actions/runs/36216741151",
+   "http_result": "200",
+   "materialized_as": "ci-dispatch-5773f540.json",
+   "summary": {"head_sha": "5773f540f873bfe03f15c780aebf47e0c4844247", "conclusion": "success", "created_at": "2026-09-26T04:04:34Z", "name": "Export kit"}
+  }
+],
+"fetch_method": "unauthenticated GitHub REST API (read-only); gh CLI is unauthenticated in this session",
+"boundary": "CI publication success remains separate from behavioral qualification; fresh downstream scaffold verification post-publication is the supervisor's verify step"
+}
