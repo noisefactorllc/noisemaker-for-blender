@@ -98,7 +98,13 @@ Noisedeck exported this program against Noisemaker `{{NM_ENGINE_VERSION}}`. The 
 second implementation of that engine rather than the same code, so expect small differences from
 what the app showed you.
 
+The archive itself carries its MIT notice as `noisemaker_blender/LICENSE.txt`. The add-on's own
+version lives in `engine/noisemaker_blender.zip` (`bl_info` version — visible in Preferences ▸
+Add-ons after installing). The kit version (`0.1.N` in this export's file listing) is a kit
+publication counter, not the add-on version; the source revision of a published kit is recorded
+in its `kit.json` (`source.sha`), which names exactly which add-on the kit contains.
+
 ## License
 
-The Noisemaker engine and the Blender port are MIT licensed. See `LICENSES/`. Your program and the
-imagery it renders are yours.
+The Noisemaker engine and the Blender port are MIT licensed. See `LICENSES/` (and, inside the
+add-on archive, its bundled `LICENSE.txt`). Your program and the imagery it renders are yours.

@@ -17,10 +17,19 @@ the compositor's node set is C-defined and closed to Python, so we render via th
 module, bake into an Image datablock, and let the stock compositor Image node consume it.
 """
 
+# Add-on release version. Mapping to the published kit (README "Versions"): the kit
+# version 0.1.N is the release builder's publication counter and is NOT the add-on's
+# version; the binding is each published kit.json's source SHA, which names the exact
+# source revision — and therefore the exact add-on version — the kit was built from.
+# Bump the patch component in the same change that alters the distributed add-on.
+# NOTE: bl_info must stay a LITERAL dict (Blender ast.literal_evals it at install
+# time); keep it in lockstep with VERSION below.
+VERSION = (0, 1, 1)
+
 bl_info = {
     "name": "Noisemaker for Blender",
     "author": "Noise Factory LLC",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (5, 1, 0),
     "location": "Compositor / Image Editor > Sidebar > Noisemaker; Noisemaker node editor",
     "description": "Noisemaker for Blender: Polymorphic-DSL procedural texture engine that bakes to an Image",

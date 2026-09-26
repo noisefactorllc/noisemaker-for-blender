@@ -75,6 +75,15 @@ Then in Blender:
 (Prefer a live checkout? Symlink `blender/noisemaker_blender` into your Blender `scripts/addons/`
 instead.)
 
+### Versions and notices
+
+The zip (and the add-on folder) carries its MIT notice as `noisemaker_blender/LICENSE.txt`. The
+add-on's own version is `bl_info`'s `version` tuple, visible in **Preferences ▸ Add-ons**. The
+published Noisedeck kit's version (`0.1.N`) is a separate kit-publication counter — not the add-on
+version. Each published kit's `kit.json` records the exact source revision it was built from
+(`source.sha`), which binds a kit version to the add-on version it contains. Bump the add-on's
+patch version in the same change that alters the distributed add-on; never reuse a version.
+
 ## Your first render
 
 1. **Write a program** in Blender's **Text Editor**:
