@@ -1,0 +1,43 @@
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+00:16.258  operator         | Baked 'NM_modal_scene' (256x256, 40 frames)
+00:16.266  operator         | Baked 'NM_modal' (256x256, 40 frames)
+00:16.574  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+NMR WARN uniform resolution (VEC2) not set — value kept its shader default — value=[256.0, 256.0]
+NMR WARN uniform wrap (BOOL) not set — value kept its shader default — value=True
+NMR WARN uniform tileOffset (VEC2) not set — value kept its shader default — value=[0.0, 0.0]
+NMR WARN uniform fullResolution (VEC2) not set — value kept its shader default — value=[256.0, 256.0]
+Warning: Image 'NM_user_a' exists and was not created by Noisemaker — baked to 'NM_user_a.001' instead (the existing image is untouched)
+Info: Baked 'NM_user_a.001' (256x256, 1 frame)
+  OK     ownership-foreign-diff-size new='NM_user_a.001'
+  OK     ownership-foreign-unmarked 
+Warning: Image 'NM_user_b' exists and was not created by Noisemaker — baked to 'NM_user_b.001' instead (the existing image is untouched)
+Info: Baked 'NM_user_b.001' (256x256, 1 frame)
+  OK     ownership-foreign-same-size new='NM_user_b.001'
+Warning: Image 'NM_user_packed' exists and was not created by Noisemaker — baked to 'NM_user_packed.001' instead (the existing image is untouched)
+Info: Baked 'NM_user_packed.001' (256x256, 1 frame)
+  OK     ownership-foreign-packed 
+Info: Baked 'NM_own' (256x256, 1 frame)
+Info: Baked 'NM_own' (256x256, 1 frame)
+  OK     rebake-own-reused same datablock=True
+Error: DSL error: Unexpected character '@' at line 1 col 1
+    reported: Error: DSL error: Unexpected character '@' at line 1 col 1
+
+  OK     recovery-compile-error 
+Error: Render failed: injected mid-render failure
+    reported: Error: Render failed: injected mid-render failure
+
+  OK     recovery-render-failure free calls=1
+Info: Baked 'NM_after_fail' (256x256, 1 frame)
+  OK     recovery-gpu-healthy-after-failure 
+Info: Baked 'NM_long' (256x256, 60 frames)
+  OK     long-bake-60f wall=0.72s ms/frame=12.1
+  OK     cancel-mid-bake free calls=2
+  OK     modal-cleanup-timer-status removed=['TIMER1'] cleared=[None]
+Info: Baked 'NM_after_cancel' (256x256, 1 frame)
+  OK     cancel-gpu-healthy-after-cancel 
+
+  OK     modal-invoke-running return={'RUNNING_MODAL'}
+  OK     modal-scene-settings-running return={'RUNNING_MODAL'}
+  OK     modal-completes 
+
+Blender quit

@@ -800,6 +800,98 @@ def resolve_repeat_count(p, lookup):
     return 1
 
 
+class FrameStepper:
+    """One-frame-at-a-time driver for the render loop in ``render``.
+
+    Holds the per-render state ``render`` used to keep on the stack so a long bake can be
+    stepped from a modal operator timer: the UI stays responsive between frames and the
+    operator can abort (cancel) between frames. The frame body is byte-for-byte the loop
+    body of ``render`` — the two paths must stay behaviorally identical.
+    """
+
+    def __init__(self, backend, graph, time=0.25, frames=1, timestep=0.0, samples=None,
+                 sink_manager=None, external_state=None):
+        max_texture_size = getattr(backend, "max_texture_size", None)
+        if callable(max_texture_size):
+            _clamp_graph_volume_sizes(graph, max_texture_size())
+        self.backend = backend
+        self.graph = graph
+        self.time = time
+        self.frames = frames
+        self.timestep = timestep
+        self.samples = samples
+        self.sink_manager = sink_manager
+        self.external_state = external_state
+        self.sampled = {}
+        self.frame = -1                     # last completed frame index
+        self.prev_tt = None
+        self.defaults = collect_default_uniforms(graph)
+        backend.setup(graph, self.defaults)
+        self.out_name = graph.render_surface  # surface name, e.g. "o1"
+        if sink_manager is not None:
+            sink_manager.configure({
+                "width": backend.size,
+                "height": backend.size,
+                "format": "rgba8unorm",
+                "colorSpace": "srgb",
+                "alphaMode": "premultiplied",
+                "fps": 60,
+            })
+
+    def step(self):
+        """Render exactly one frame. True while another frame remains."""
+        f = self.frame + 1
+        if f >= self.frames:
+            return False
+        tt = (self.time + f * self.timestep) % 1.0 if self.timestep else self.time
+        dt = 0.0 if (self.prev_tt is None) else (tt - self.prev_tt)
+        self.prev_tt = tt
+        backend = self.backend
+        defaults = self.defaults
+        out_name = self.out_name
+        external_state = self.external_state
+        if self.sink_manager is not None and callable(getattr(self.sink_manager, "should_defer_render", None)) and self.sink_manager.should_defer_render():
+            self.frame = f
+            return f + 1 < self.frames
+        engine = default_engine(backend.size, tt, f, dt)
+        lookup = dict(engine)
+        lookup.update(defaults)
+        backend.frame_begin()
+        for p in self.graph.passes:
+            if should_skip(p, lookup):
+                continue
+            effective_pass = _resolve_pass_uniforms(p, tt, external_state or {})
+            resolve_pass_viewport(effective_pass, backend.size, backend.size, cache_holder=p)
+            effective_lookup = dict(engine)
+            effective_lookup.update(effective_pass.get("uniforms") or {})
+            count = resolve_repeat_count(effective_pass, effective_lookup)
+            for _ in range(count):
+                backend.execute(effective_pass, self.graph, engine)
+                for tid in effective_pass.get("outputs", {}).values():
+                    backend.swap_after_write(tid)
+        if self.sink_manager is not None:
+            timestamp = clock.perf_counter() * 1000.0
+            self.sink_manager.submit(backend.frame_read[out_name], timestamp)
+        backend.frame_persist()
+        # Force GPU submission periodically so long unsynced loops don't overflow Blender's
+        # batched command stream (-> NaN / saturation). Read back the RENDER SURFACE (not an
+        # arbitrary state surface): that forces the WHOLE frame's passes — including the
+        # post-process chain — to complete, which a 1px read of an off-path surface does not
+        # (the integration target's 32 passes/frame overflow otherwise). Every 30 frames.
+        if self.timestep and (f % 30 == 29) and not (self.samples is not None and f in self.samples):
+            backend.read_surface(out_name)
+        if self.samples is not None and f in self.samples:
+            self.sampled[f] = backend.read_surface(out_name)
+        self.frame = f
+        return f + 1 < self.frames
+
+    def result(self):
+        """The render() return value once every frame has been stepped."""
+        if self.samples is not None:
+            return self.sampled
+        return self.backend.read_surface(self.out_name)
+
+
 def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None,
            sink_manager=None, external_state=None):
     """Run `frames` frames, matching the reference golden harness stepping EXACTLY
@@ -815,59 +907,13 @@ def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None,
     If `samples` (set of frame indices) given, return {frame: array}; else the final
     render-surface array. An optional externally owned `sink_manager` receives the configured
     output descriptor and each completed render-surface binding with a monotonic timestamp in ms.
+
+    Equivalent to driving a :class:`FrameStepper` to completion; the stepper exists so the
+    bake operator can run the same loop from a modal timer (cancellable long bakes).
     """
-    max_texture_size = getattr(backend, "max_texture_size", None)
-    if callable(max_texture_size):
-        _clamp_graph_volume_sizes(graph, max_texture_size())
-    defaults = collect_default_uniforms(graph)
-    backend.setup(graph, defaults)
-    out_name = graph.render_surface  # surface name, e.g. "o1"
-    if sink_manager is not None:
-        sink_manager.configure({
-            "width": backend.size,
-            "height": backend.size,
-            "format": "rgba8unorm",
-            "colorSpace": "srgb",
-            "alphaMode": "premultiplied",
-            "fps": 60,
-        })
-    sampled = {}
-    prev_tt = None
-    for f in range(frames):
-        tt = (time + f * timestep) % 1.0 if timestep else time
-        dt = 0.0 if (prev_tt is None) else (tt - prev_tt)
-        prev_tt = tt
-        if sink_manager is not None and callable(getattr(sink_manager, "should_defer_render", None)) and sink_manager.should_defer_render():
-            continue
-        engine = default_engine(backend.size, tt, f, dt)
-        lookup = dict(engine)
-        lookup.update(defaults)
-        backend.frame_begin()
-        for p in graph.passes:
-            if should_skip(p, lookup):
-                continue
-            effective_pass = _resolve_pass_uniforms(p, tt, external_state or {})
-            resolve_pass_viewport(effective_pass, backend.size, backend.size, cache_holder=p)
-            effective_lookup = dict(engine)
-            effective_lookup.update(effective_pass.get("uniforms") or {})
-            count = resolve_repeat_count(effective_pass, effective_lookup)
-            for _ in range(count):
-                backend.execute(effective_pass, graph, engine)
-                for tid in effective_pass.get("outputs", {}).values():
-                    backend.swap_after_write(tid)
-        if sink_manager is not None:
-            timestamp = clock.perf_counter() * 1000.0
-            sink_manager.submit(backend.frame_read[out_name], timestamp)
-        backend.frame_persist()
-        # Force GPU submission periodically so long unsynced loops don't overflow Blender's
-        # batched command stream (-> NaN / saturation). Read back the RENDER SURFACE (not an
-        # arbitrary state surface): that forces the WHOLE frame's passes — including the
-        # post-process chain — to complete, which a 1px read of an off-path surface does not
-        # (the integration target's 32 passes/frame overflow otherwise). Every 30 frames.
-        if timestep and (f % 30 == 29) and not (samples is not None and f in samples):
-            backend.read_surface(out_name)
-        if samples is not None and f in samples:
-            sampled[f] = backend.read_surface(out_name)
-    if samples is not None:
-        return sampled
-    return backend.read_surface(out_name)
+    stepper = FrameStepper(backend, graph, time=time, frames=frames, timestep=timestep,
+                           samples=samples, sink_manager=sink_manager,
+                           external_state=external_state)
+    while stepper.step():
+        pass
+    return stepper.result()
