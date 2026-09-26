@@ -28,19 +28,26 @@ from PIL import Image
 
 
 def load_rgba(path: Path) -> np.ndarray:
-    """Load a PNG as a float32 HxWx4 array in [0,1]."""
+    """Load a PNG as a uint8 HxWx4 array.
+
+    The diff gates are integer-exact in 8-bit units: with float round-trips
+    (x/255 then *255) an exact integer difference of 1 could report as
+    1.0000000000000249 and spill a hairline case over an integer tolerance.
+    global_ssim converts to float internally. No tolerance value changes; the
+    arithmetic becomes exact.
+    """
     img = Image.open(path).convert("RGBA")
-    return np.asarray(img, dtype=np.float32) / 255.0
+    return np.asarray(img, dtype=np.uint8)
 
 
 def max_abs_diff(a: np.ndarray, b: np.ndarray) -> float:
-    """Max absolute per-channel difference in 8-bit units (0..255)."""
-    return float(np.max(np.abs(a - b)) * 255.0)
+    """Max absolute per-channel difference in 8-bit units (0..255), exact."""
+    return float(np.max(np.abs(a.astype(np.int32) - b.astype(np.int32))))
 
 
 def mean_abs_diff(a: np.ndarray, b: np.ndarray) -> float:
-    """Mean absolute per-channel difference in 8-bit units (0..255)."""
-    return float(np.mean(np.abs(a - b)) * 255.0)
+    """Mean absolute per-channel difference in 8-bit units (0..255), exact."""
+    return float(np.mean(np.abs(a.astype(np.float64) - b.astype(np.float64))))
 
 
 def global_ssim(a: np.ndarray, b: np.ndarray) -> float:
@@ -52,6 +59,7 @@ def global_ssim(a: np.ndarray, b: np.ndarray) -> float:
     """
     # Rec. 601 luma, matching the harness's luma weighting.
     def luma(x):
+        x = x.astype(np.float64) / 255.0
         return 0.299 * x[..., 0] + 0.587 * x[..., 1] + 0.114 * x[..., 2]
 
     la, lb = luma(a).ravel(), luma(b).ravel()

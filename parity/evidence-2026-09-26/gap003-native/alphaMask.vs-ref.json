@@ -1,0 +1,16 @@
+{
+  "name": "native/alphaMask",
+  "golden": "/state/cache/scratch/refgoldens/alphaMask.golden.png",
+  "candidate": "/state/cache/scratch/nm-native/alphaMask.candidate.png",
+  "shape": [
+    256,
+    256,
+    4
+  ],
+  "max_abs_diff": 1.0,
+  "mean_abs_diff": 0.029651641845703125,
+  "ssim": 0.999995906346652,
+  "tolerance": 1.0,
+  "ssim_min": 0.98,
+  "passed": true
+}

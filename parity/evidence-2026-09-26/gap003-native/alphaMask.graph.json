@@ -1,0 +1,276 @@
+{
+  "id": "hnhi9x",
+  "source": "search synth, mixer\nnoise(seed: 1, scaleX: 50, scaleY: 50).write(o0)\ngradient(seed: 1).alphaMask(tex: o0).write(o1)\nrender(o1)\n",
+  "renderSurface": "o1",
+  "passes": [
+    {
+      "id": "node_0_pass_0",
+      "passType": "effect",
+      "namespace": "synth",
+      "func": "noise",
+      "progName": "noise",
+      "program": "node_0_noise__LOOP_OFFSET_300__NOISE_TYPE_10",
+      "defines": {
+        "LOOP_OFFSET": 300,
+        "NOISE_TYPE": 10
+      },
+      "inputs": {},
+      "outputs": {
+        "fragColor": "node_0_out"
+      },
+      "uniforms": {
+        "octaves": 2,
+        "scaleX": 50,
+        "scaleY": 50,
+        "seed": 1,
+        "wrap": true,
+        "ridges": false,
+        "loopScale": 75,
+        "speed": 25,
+        "colorMode": 1
+      },
+      "uniformSpecs": {
+        "octaves": {
+          "min": 1,
+          "max": 8
+        },
+        "scaleX": {
+          "min": 1,
+          "max": 100
+        },
+        "scaleY": {
+          "min": 1,
+          "max": 100
+        },
+        "seed": {
+          "min": 1,
+          "max": 100
+        },
+        "loopScale": {
+          "min": 1,
+          "max": 100
+        },
+        "speed": {
+          "min": -100,
+          "max": 100
+        }
+      },
+      "effectKey": "synth.noise",
+      "nodeId": "node_0",
+      "stepIndex": 0,
+      "scopedParams": null
+    },
+    {
+      "id": "node_1_write_blit",
+      "passType": "blit",
+      "namespace": null,
+      "func": "blit",
+      "progName": "blit",
+      "program": "blit",
+      "defines": {},
+      "inputs": {
+        "src": "node_0_out"
+      },
+      "outputs": {
+        "color": "global_o0"
+      },
+      "uniforms": {},
+      "uniformSpecs": {},
+      "effectKey": null,
+      "nodeId": "node_1",
+      "stepIndex": 1,
+      "scopedParams": null
+    },
+    {
+      "id": "node_2_pass_0",
+      "passType": "effect",
+      "namespace": "synth",
+      "func": "gradient",
+      "progName": "gradient",
+      "program": "node_2_gradient",
+      "defines": {},
+      "inputs": {},
+      "outputs": {
+        "color": "node_2_out"
+      },
+      "uniforms": {
+        "gradientType": 0,
+        "rotation": 0,
+        "repeat": 1,
+        "speed": 0,
+        "seed": 1,
+        "color1": [
+          1,
+          0,
+          0
+        ],
+        "color2": [
+          1,
+          1,
+          0
+        ],
+        "color3": [
+          0,
+          1,
+          0
+        ],
+        "color4": [
+          0,
+          0,
+          1
+        ],
+        "colorCount": 4
+      },
+      "uniformSpecs": {
+        "rotation": {
+          "min": -180,
+          "max": 180
+        },
+        "repeat": {
+          "min": 1,
+          "max": 4
+        },
+        "speed": {
+          "min": -5,
+          "max": 5
+        },
+        "seed": {
+          "min": 0,
+          "max": 100
+        },
+        "colorCount": {
+          "min": 2,
+          "max": 4
+        }
+      },
+      "effectKey": "synth.gradient",
+      "nodeId": "node_2",
+      "stepIndex": 2,
+      "scopedParams": null
+    },
+    {
+      "id": "node_3_pass_0",
+      "passType": "effect",
+      "namespace": "mixer",
+      "func": "alphaMask",
+      "progName": "alphaMask",
+      "program": "node_3_alphaMask",
+      "defines": {},
+      "inputs": {
+        "inputTex": "node_2_out",
+        "tex": "global_o0",
+        "baseTex": "none"
+      },
+      "outputs": {
+        "fragColor": "node_3_out"
+      },
+      "uniforms": {
+        "gradientType": 0,
+        "rotation": 0,
+        "repeat": 1,
+        "speed": 0,
+        "seed": 1,
+        "color1": [
+          1,
+          0,
+          0
+        ],
+        "color2": [
+          1,
+          1,
+          0
+        ],
+        "color3": [
+          0,
+          1,
+          0
+        ],
+        "color4": [
+          0,
+          0,
+          1
+        ],
+        "colorCount": 4,
+        "mixAmt": 0,
+        "maskMode": false
+      },
+      "uniformSpecs": {
+        "mixAmt": {
+          "min": -100,
+          "max": 100
+        }
+      },
+      "effectKey": "mixer.alphaMask",
+      "nodeId": "node_3",
+      "stepIndex": 3,
+      "scopedParams": null
+    },
+    {
+      "id": "node_4_write_blit",
+      "passType": "blit",
+      "namespace": null,
+      "func": "blit",
+      "progName": "blit",
+      "program": "blit",
+      "defines": {},
+      "inputs": {
+        "src": "node_3_out"
+      },
+      "outputs": {
+        "color": "global_o1"
+      },
+      "uniforms": {},
+      "uniformSpecs": {},
+      "effectKey": null,
+      "nodeId": "node_4",
+      "stepIndex": 4,
+      "scopedParams": null
+    }
+  ],
+  "allocations": {
+    "node_0_out": "phys_0",
+    "node_2_out": "phys_0",
+    "node_3_out": "phys_1"
+  },
+  "textures": {
+    "node_0_out": {
+      "width": "screen",
+      "height": "screen",
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_2_out": {
+      "width": "screen",
+      "height": "screen",
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_3_out": {
+      "width": "screen",
+      "height": "screen",
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    }
+  },
+  "programs": {
+    "blit": {
+      "uniformLayout": {},
+      "defines": {}
+    }
+  }
+}

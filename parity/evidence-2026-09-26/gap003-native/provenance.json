@@ -1,0 +1,50 @@
+{
+  "date": "2026-09-26",
+  "purpose": "native-parity required cases adjust/alphaMask/bitwise executed on a recorded host",
+  "candidate_source": "git 6a4a8cfacde5403c2ad43ecfb379c37c223addda (blender/ sources identical to c817fab83643a942c6af4e2af1ce8456eaa0ca1a; only docs and parity/compare.py differ)",
+  "candidate_renderer": {
+    "engine": "Blender 5.1.2 linux-x64 (official tarball)",
+    "tarball_sha256": "aaccb355f50183979b698bcce7467103a76261b5fa59f4972295842662a285fb",
+    "context": "GPU under Xvfb :99 (640x480x24), Mesa llvmpipe software rasterizer",
+    "harness": "blender/harness/render_all.py via NM_JOBS (dsl programs from parity/programs/)",
+    "size": 256,
+    "time": 0.25,
+    "frames": 1
+  },
+  "reference_renderer": {
+    "engine": "Noisemaker reference engine (WebGL2, SwiftShader/ANGLE)",
+    "source_root": "github.com/noisefactorllc/noisemaker @ 8eeb7b5ac14eb37a8d16037f607a88ce63924cd3 (declared authority revision)",
+    "browser": "Chromium 154.0.8037.57 headless, remote debugging 9222",
+    "driver": "parity/evidence-2026-09-25/cdp-golden.cjs (unchanged)"
+  },
+  "gate": {
+    "tool": "parity/compare.py",
+    "tolerance": 1.0,
+    "ssim_min": 0.98,
+    "note": "compare.py diff arithmetic made integer-exact in this run (uint8 inputs; float round-trip x/255*255 could report 1.0000000000000249 for an exact 1). Thresholds unchanged."
+  },
+  "results": {
+    "adjust": {
+      "max_abs_diff": 0.0,
+      "ssim": 1.0,
+      "verdict": "PASS",
+      "report": "adjust.vs-ref.json"
+    },
+    "alphaMask": {
+      "max_abs_diff": 1.0,
+      "ssim": 1.0,
+      "verdict": "PASS",
+      "report": "alphaMask.vs-ref.json"
+    },
+    "bitwise": {
+      "max_abs_diff": 0.0,
+      "ssim": 1.0,
+      "verdict": "PASS",
+      "report": "bitwise.vs-ref.json"
+    }
+  },
+  "host": {
+    "os": "Linux x86_64 (container)",
+    "gpu": "none (Mesa llvmpipe software rasterizer; no /dev/dri)"
+  }
+}

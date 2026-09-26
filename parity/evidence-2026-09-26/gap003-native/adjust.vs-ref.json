@@ -1,0 +1,16 @@
+{
+  "name": "native/adjust",
+  "golden": "parity/evidence-2026-09-25/adjust.golden.png",
+  "candidate": "/state/cache/scratch/nm-native/adjust.candidate.png",
+  "shape": [
+    256,
+    256,
+    4
+  ],
+  "max_abs_diff": 0.0,
+  "mean_abs_diff": 0.0,
+  "ssim": 1.0,
+  "tolerance": 1.0,
+  "ssim_min": 0.98,
+  "passed": true
+}
