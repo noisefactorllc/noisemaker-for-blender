@@ -22,7 +22,7 @@ from gpu.types import (GPUOffScreen, GPUFrameBuffer, GPUVertFormat, GPUVertBuf, 
 from gpu_extras.batch import batch_for_shader
 
 from . import shader_build, std140
-from ..runtime.pipeline import resolve_dimension
+from ..runtime.pipeline import resolve_dimension, build_texture_pooling_plan
 
 _FS_TRI = {"pos": [(-1.0, -1.0), (3.0, -1.0), (-1.0, 3.0)]}
 _BLIT_FRAG = ("#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))),"
@@ -159,12 +159,25 @@ class GpuBackend:
         # flow3d's 64x4096 volume aliased with a 256x256 screen buffer inflated to 256x4096, so the
         # blend's `gl_FragCoord/textureSize` sampling stretched 4x in X and read unwritten columns
         # (vertical bars through the volume). Same-(phys,size) textures still share (real pooling).
+        # Physical slot sharing mirrors reference `Pipeline.buildTexturePoolingPlan`
+        # (GAP-006 + upstream 95743621): only textures the plan marks poolable
+        # (identical plain 2D specs, first touch a full-overwrite write, no
+        # drawMode/blend/viewport-without-clear partial writes) share one
+        # backend texture under the group's primary id; every excluded texture
+        # gets its own standalone slot.
+        self.texture_aliases = build_texture_pooling_plan(graph)
         self.pool_key = {}
         for tid, spec in texspecs.items():
             if tid.startswith("global_"):
                 continue
             w, h = self.tex_dims[tid]
-            key = (graph.phys(tid), w, h, self._fmt(spec))
+            # Pooled members share the storage texture created under the
+            # group's primary id; every excluded texture keys by its own id,
+            # so it owns a standalone slot even inside a shared phys group.
+            if tid in self.texture_aliases:
+                key = (graph.phys(self.texture_aliases[tid]), w, h, self._fmt(spec))
+            else:
+                key = (tid, w, h, self._fmt(spec))
             self.pool_key[tid] = key
             if key not in self.pool:
                 self.pool[key] = self._new_off(w, h, key[3])

@@ -643,6 +643,148 @@ def resolve_pass_viewport(pass_obj, width, height, cache_holder=None):
     return box
 
 
+def build_texture_pooling_plan(graph):
+    """Mirror reference ``Pipeline.buildTexturePoolingPlan`` (GAP-006) plus its
+    viewport follow-up (upstream `95743621`).
+
+    Consumes the analyzer's physical allocation map (``graph.allocations``,
+    produced by ``compiler.resources.allocate_resources``) and returns a
+    ``{virtualId: storageId}`` dict for every poolable texture; members of a
+    physical group share one backend texture created under the group's primary
+    (first) member id.
+
+    A group is poolable only when every member carries an identical plain 2D
+    spec: persistent textures must keep their cross-frame contents, and
+    mipmapped/3D textures carry policy state a shared record must not absorb.
+    Groups with mismatched dimensions or formats fall back to standalone
+    textures.
+
+    First-read safety: a member whose first touch in the pass list is an input
+    read (or that is sampled by its own producing pass) expects the
+    zero-initialized/previous-frame contents a standalone texture would hold,
+    so it is never pooled into a slot a group-mate writes earlier in the same
+    frame. The same protection excludes textures written by partial/non-clearing
+    passes — any explicit ``drawMode`` (points, billboards, triangles) scatters
+    geometry without covering the surface, ``blend`` makes the result depend on
+    the destination's previous contents, and a ``viewport`` pass without
+    ``clear: true`` renders into a sub-region — because pooled storage would
+    hand them a group-mate's content instead of their own accumulated state.
+
+    Returns
+    -------
+    dict
+        ``{virtualId: storageId}`` including each storage id mapping to itself
+        (upstream sets the storage under its own key too); empty when the graph
+        carries no allocation plan.
+    """
+    allocations = graph.allocations or {}
+    textures = graph.textures or {}
+    aliases = {}
+    if not allocations or not textures:
+        return aliases
+
+    # First-touch classification from the pass list.
+    first_touch_is_write = {}
+    self_sampled = set()
+    partially_written = set()
+    for pass_ in graph.passes:
+        inputs = set((pass_.get("inputs") or {}).values())
+        outputs = list((pass_.get("outputs") or {}).values())
+        # A pass that does not fully overwrite its target (scatter draw modes,
+        # blending against the destination, a viewport sub-region without a
+        # full clear) leaves the texture's previous contents observable, so
+        # pooled storage is unsafe.
+        if pass_.get("drawMode") or pass_.get("blend"):
+            partially_written.update(outputs)
+        elif pass_.get("viewport") is not None and not pass_.get("clear"):
+            partially_written.update(outputs)
+        for tex_id in outputs:
+            if tex_id not in first_touch_is_write:
+                first_touch_is_write[tex_id] = True
+            if tex_id in inputs:
+                self_sampled.add(tex_id)
+        for tex_id in inputs:
+            if tex_id not in first_touch_is_write:
+                first_touch_is_write[tex_id] = False
+
+    groups = {}  # physicalId -> [virtualIds]
+    for tex_id, physical_id in allocations.items():
+        if not physical_id or tex_id not in textures:
+            continue
+        # Global surfaces are double-buffered and never pooled
+        if tex_id.startswith("global"):
+            continue
+        if first_touch_is_write.get(tex_id) is False:
+            continue
+        if tex_id in self_sampled:
+            continue
+        if tex_id in partially_written:
+            continue
+        groups.setdefault(physical_id, []).append(tex_id)
+
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        specs = [textures.get(m) for m in members]
+        if any(spec is None or
+               spec.get("persistent") is True or
+               spec.get("mipmaps") is True or
+               spec.get("is3D") is True for spec in specs):
+            continue
+        signature = {(repr(spec.get("width")), repr(spec.get("height")),
+                      spec.get("format")) for spec in specs}
+        if len(signature) > 1:
+            continue
+        storage_id = members[0]
+        for member in members:
+            aliases[member] = storage_id
+    return aliases
+
+
+def resource_plan(backend, graph):
+    """Mirror reference ``Pipeline.getResourcePlan`` (GAP-006).
+
+    Query the actual runtime texture allocation/reuse plan: the analyzer's
+    physical allocation map (``graph.allocations``) and the sharing the
+    renderer actually materialized — non-global graph textures grouped by
+    identical backend texture record. Members of a ``sharedTextures`` group
+    are served by one physical texture.
+    """
+    textures = graph.textures or {}
+    by_key = {}
+    for tex_id in textures:
+        if tex_id.startswith("global"):
+            continue
+        key = (backend.pool_key or {}).get(tex_id)
+        record = (backend.pool or {}).get(key) if key is not None else None
+        if record is None:
+            continue
+        by_key.setdefault(key, {"id": tex_id, "members": []})
+        by_key[key]["members"].append(tex_id)
+
+    texture_records = []
+    shared_textures = []
+    for key, entry in by_key.items():
+        spec = (backend.tex_dims or {}).get(entry["id"], (None, None))
+        format_name = key[3] if key is not None else None
+        texture_records.append({
+            "id": entry["id"],
+            "width": spec[0],
+            "height": spec[1],
+            "format": format_name,
+            "virtualTextures": entry["members"],
+        })
+        if len(entry["members"]) > 1:
+            shared_textures.append(entry["members"])
+
+    return {
+        "pooling": True,  # the Blender backend always consumes the allocation plan
+        "allocations": dict(graph.allocations or {}),
+        "sharedTextures": shared_textures,
+        "textures": texture_records,
+    }
+
+
 def resolve_repeat_count(p, lookup):
     rep = p.get("repeat")
     if rep is None:
