@@ -1,0 +1,36 @@
+GHOST/Wayland: error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x10b31ed]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x10b3353]
+/lib/x86_64-linux-gnu/libwayland-client.so.0(+0xb94a) [0x73d7d101694a]
+/lib/x86_64-linux-gnu/libwayland-client.so.0(wl_display_connect+0x2d2) [0x73d7d1012b02]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x186412c]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x1844b5d]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x14fd901]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x14d4fc5]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x757f8c]
+/lib/x86_64-linux-gnu/libc.so.6(+0x2724a) [0x73d7d522b24a]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85) [0x73d7d522b305]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x78000e]
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+Traceback (most recent call last):
+  File "/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/5.1/scripts/startup/bl_operators/userpref.py", line 899, in execute
+    context.area.tag_redraw()
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'tag_redraw'
+00:00.990  bpy.rna          | ERROR Python script error in PREFERENCES_OT_addon_remove.execute
+Add-on not loaded: "noisemaker_blender", cause: No module named 'noisemaker_blender'
+ENABLED False
+addon_utils.disable: noisemaker_blender not loaded
+Error: Python: Traceback (most recent call last):
+  File "/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/5.1/scripts/startup/bl_operators/userpref.py", line 899, in execute
+    context.area.tag_redraw()
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'tag_redraw'
+Location: /state/cache/scratch/nm-native/rmtest.py:12
+REMOVE-FAIL RuntimeError Error: Python: Traceback (most recent call last):
+  File "/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/5.1/scripts/startup/bl_operators/userpref.py", line 899, in execute
+    context.area.tag_redraw()
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'tag_redraw'
+Location: /state/cache/scratch/nm-native/rmtest.py:12
+

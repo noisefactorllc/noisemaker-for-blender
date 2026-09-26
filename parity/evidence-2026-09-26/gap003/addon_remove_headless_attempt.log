@@ -1,0 +1,19 @@
+GHOST/Wayland: error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x10b31ed]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x10b3353]
+/lib/x86_64-linux-gnu/libwayland-client.so.0(+0xb94a) [0x7468be01294a]
+/lib/x86_64-linux-gnu/libwayland-client.so.0(wl_display_connect+0x2d2) [0x7468be00eb02]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x186412c]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x1844b5d]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x14fd901]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x14d4fc5]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x757f8c]
+/lib/x86_64-linux-gnu/libc.so.6(+0x2724a) [0x7468c222b24a]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85) [0x7468c222b305]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x78000e]
+00:00.042  ghost.system     | Failed to initialize display for back-end(s): ['WAYLAND', 'X11']
+                            |   'WAYLAND': unable to connect to display!
+                            |   'X11': unable to open a display!
+                            | 
+00:00.042  ghost.system     | ERROR Unable to initialize GHOST, exiting!
+Error: Not freed memory blocks: 4645, total unfreed memory 1.212322 MB
