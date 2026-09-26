@@ -27,8 +27,10 @@
   },
   {
    "metric": "parity unit tests",
-   "value": 143,
-   "authority": "python -m unittest discover -s parity -p 'test_*.py' (fresh run in this directory: unit.log, 143/143 OK)"
+   "authority": "gap004/unit.log (fresh run at integrated tip a5f8986: Ran 157 tests, OK); the earlier gap004/unit.log and evidence-2026-09-26/unit.log showing 143/143 were taken before a5f8986 landed",
+   "value_at_candidate_HEAD": 157,
+   "value_at_audited_revision_9631bf6f": 143,
+   "delta": "14 texture-pooling tests added in a5f8986 (parity/test_texture_pooling.py, GAP-006 sync)"
   }
  ],
  "exclusions": [
@@ -55,7 +57,7 @@
   "compile": "20/20 exit 0",
   "expanded": "19/19 exit 0 (B5oBsA excluded)",
   "graph": "19/19 exit 0 (B5oBsA excluded)",
-  "unit_tests": "143/143 exit 0",
+  "unit_tests": "157/157 exit 0 (gap004/unit.log, refreshed at integrated tip a5f8986)",
   "logs": [
    "check_lex.log",
    "check_parse.log",
@@ -63,7 +65,8 @@
    "check_expanded.log",
    "check_graph.log",
    "unit.log"
-  ]
+  ],
+  "limitation": "the gate goldens were regenerated from the declared authority after confirming the port matches it, so the 20/20 compile row is partially self-referential as independent parity evidence; the independent classification of the audited 19/20 failure is the four-revision port-vs-reference comparison in b5obsa-classification.log"
  },
  "runtime_render_coverage": {
   "authority": "committed raw evidence; each pass count names its engine, host, and evidence directory",

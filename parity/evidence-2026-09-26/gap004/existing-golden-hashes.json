@@ -1,6 +1,14 @@
 {
  "generated_at_utc": "2026-09-26T16:15:03.136481+00:00",
  "purpose": "GAP-004: hash the current working golden set in parity/out/ and record its regeneration provenance. Note: the golden set was regenerated twice on 2026-09-26 (see provenance.earlier_same_day_regen) before these hashes were taken, so the pre-regeneration working bytes are not evidenced here; mitigations are the committed 2026-09-26 gate logs (produced before this candidate) and the audit-time capture being disclosed as unreachable.",
+ "preservation": {
+  "durable_record": "the per-file sha256/byte/mtimes listed in this file are the durable preservation record; parity/out/ is deterministically regenerable from the pinned declared authority 8eeb7b5ac14e (noisemaker v1.0.183) via parity/regen-compiler-goldens.sh, and reproduction against the committed gate logs is the verification",
+  "review_window_bytes": "a byte-for-byte copy of parity/out/ is held at /state/cache/scratch/goldens-snapshot-2026-09-26 for the review window (98 files, re-hashed against this file with 0 mismatches); it is session-scoped and is not cited as durable evidence",
+  "restore_and_verify": "NM_REFERENCE_ROOT=<declared-authority clone at 8eeb7b5ac14e> bash parity/regen-compiler-goldens.sh, then re-run the five parity/compiler/check_*.py gates and compare against this file's hashes",
+  "pre_regeneration_working_bytes": "not recoverable: the audit store is unreachable and the working files were overwritten before hashing; the loss window is bounded by the committed 2026-09-26 gate logs (last known-good state, 08:18) and the first same-day regeneration (13:47)",
+  "policy_during_review": "no further parity/out regeneration without review approval; any regeneration must be preceded by a snapshot and followed by a gate-log reproduction",
+  "independent_classification_note": "the compile gate over regenerated goldens is partially self-referential; the independent classification of the audited 19/20 failure rests on b5obsa-classification.log's four-revision port-vs-reference comparison (a0ff705a, 643b2be1, ae4e3302, 8eeb7b5a)"
+ },
  "scope": "every file currently in parity/out/ (the compiler-gate golden directory)",
  "provenance": {
   "tracked_in_git": false,
