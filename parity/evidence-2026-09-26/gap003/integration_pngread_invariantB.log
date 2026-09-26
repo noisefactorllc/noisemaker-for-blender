@@ -1,0 +1,66 @@
+GHOST/Wayland: error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x10b31ed]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x10b3353]
+/lib/x86_64-linux-gnu/libwayland-client.so.0(+0xb94a) [0x753811ac394a]
+/lib/x86_64-linux-gnu/libwayland-client.so.0(wl_display_connect+0x2d2) [0x753811abfb02]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x186412c]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x1844b5d]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x14fd901]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x14d4fc5]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x757f8c]
+/lib/x86_64-linux-gnu/libc.so.6(+0x2724a) [0x753812e2b24a]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85) [0x753812e2b305]
+/state/cache/scratch/nm-blender/blender-5.1.2-linux-x64/blender() [0x78000e]
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+  reg OK    operator
+  reg OK    Scene.noisemaker (NoisemakerSettings)
+  reg OK    NOISEMAKER_PT_compositor
+  reg OK    NOISEMAKER_PT_image_editor
+  node OK   tree='NM Test' node='Noisemaker Program' size=256
+NMR WARN uniform resolution (VEC2) not set — value kept its shader default — value=[256.0, 256.0]
+NMR WARN uniform wrap (BOOL) not set — value kept its shader default — value=True
+NMR WARN uniform tileOffset (VEC2) not set — value kept its shader default — value=[0.0, 0.0]
+NMR WARN uniform fullResolution (VEC2) not set — value kept its shader default — value=[256.0, 256.0]
+Info: Baked 'NM_e2e' (256x256, 1 frame)
+  img OK    'NM_e2e' size=(256, 256) float=True colorspace=Non-Color
+  dump OK   /tmp/nm_bake_adjust.png
+  diag      direct mean=[108.6, 113.7, 111.2, 255.0] px[0,0]=[63, 84, 32, 255] ctr=[144, 244, 185, 255]
+  diag      bake   mean=[108.6, 113.7, 111.2, 255.0] px[0,0]=[63, 84, 32, 255] ctr=[144, 244, 185, 255]
+  INVARIANT A (bake == direct pipeline): max-abs-diff=0
+  INVARIANT B (bake == golden):          max-abs-diff=0
+Info: Baked 'NM_sweep_bRUa1g' (256x256, 1 frame)
+  sweep OK   A(bake==pipeline) max-diff=0  [bRUa1g]  multi-pass static (perlin->tetraCosine->lighting)
+NMR WARN uniform fgColor (VEC3) truncated to the declared 3-component width — value=[0.8313725490196079, 0.6549019607843137, 0.047058823529411764, 1]
+NMR WARN uniform bgColor (VEC3) truncated to the declared 3-component width — value=[0.9725490196078431, 0.39215686274509803, 0.16862745098039217, 1]
+NMR WARN uniform edgeColor (VEC3) truncated to the declared 3-component width — value=[0.20392156862745098, 0, 0.00392156862745098, 1]
+Info: Baked 'NM_sweep_kQ_2mw' (256x256, 1 frame)
+  sweep OK   A(bake==pipeline) max-diff=0  [kQ_2mw]  12 passes, 3 write surfaces o0/o1/o2
+NMR WARN uniform time (FLOAT) not set — value kept its shader default — value=0.25
+NMR WARN uniform zoom (FLOAT) not set — value kept its shader default — value=8
+NMR WARN uniform seed (INT) not set — value kept its shader default — value=1
+Info: Baked 'NM_sweep_MQ2ojg' (256x256, 8 frames)
+  sweep OK   A(bake==pipeline) max-diff=0  [MQ2ojg]  stateful reactionDiffusion (exercises frames+timestep)
+Error: DSL error: Unexpected character '@' at line 1 col 1
+  errpath OK invalid-dsl    -> reported: Error: DSL error: Unexpected character '@' at line 1 c
+Error: No DSL source set (pick a Text block or a .dsl file)
+  errpath OK no-source      -> reported: Error: No DSL source set (pick a Text block or a .dsl 
+  unreg OK
+
+INTEGRATION PASS — DSL -> operator -> Image is byte-exact end-to-end
+00:12.681  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+
+Blender quit
