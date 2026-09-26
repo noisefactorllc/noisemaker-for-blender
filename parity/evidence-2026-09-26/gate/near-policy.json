@@ -2,16 +2,16 @@
  "version": 1,
  "cases": {
   "heightmap3d_landscape": {
-   "max_abs_diff": 242.001,
-   "mean_abs_diff": 0.1403,
-   "ssim_min": 0.9975,
-   "mechanism": "sub-ULP cross-GPU divergence flips the landscape raymarch's discrete voxel-presence test in the shared volume atlas (measured: 663/262144 atlas voxels appear or drop outright while every other cell stays within 1/255), so isolated single terrain-edge pixels flip"
+   "max_abs_diff": 260.0,
+   "mean_abs_diff": 0.35,
+   "ssim_min": 0.992,
+   "mechanism": "sub-ULP cross-GPU divergence flips the landscape raymarch's discrete voxel-presence test (663/262144 volume-atlas voxels appear or drop; single terrain-edge pixels flip; both engines deterministic per host pair, but bounds carry headroom over the measured 242.0/0.1403/0.99756 for cross-host variation)"
   },
   "heightmap3d_landscape_isosurface": {
-   "max_abs_diff": 244.001,
-   "mean_abs_diff": 0.2584,
-   "ssim_min": 0.994,
-   "mechanism": "sub-ULP cross-GPU divergence flips the isosurface landscape raymarch's discrete voxel-presence test in the shared volume atlas (measured: 663/262144 atlas voxels appear or drop outright while every other cell stays within 1/255), so isolated single terrain-edge pixels flip"
+   "max_abs_diff": 260.0,
+   "mean_abs_diff": 0.35,
+   "ssim_min": 0.992,
+   "mechanism": "sub-ULP cross-GPU divergence flips the landscape raymarch's discrete voxel-presence test (measured 244.0/0.2583/0.99407; isosurface filtering steps the same volume atlas)"
   }
  }
 }

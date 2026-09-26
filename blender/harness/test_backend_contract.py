@@ -66,15 +66,22 @@ strict = StrictShader()
 _gb._WARNED_UNIFORMS.clear()
 backend._set_uniform(strict, "VEC3", "short3", [0.1, 0.2])
 assert "short3" not in strict.floats, strict.floats
-assert ("short3", "VEC3") in _gb._WARNED_UNIFORMS
+assert ("short3", "VEC3", "not set") in _gb._WARNED_UNIFORMS
 
 # Optimized-out uniform (never declared): skipped with a one-time warning, no raise.
 _gb._WARNED_UNIFORMS.clear()
 backend._set_uniform(strict, "VEC2", "absent2", [1.0, 2.0])
 assert "absent2" not in strict.floats
-assert ("absent2", "VEC2") in _gb._WARNED_UNIFORMS
+assert ("absent2", "VEC2", "not set") in _gb._WARNED_UNIFORMS
 backend._set_uniform(strict, "VEC2", "absent2", [1.0, 2.0])  # second failure: quiet
-assert _gb._WARNED_UNIFORMS == {("absent2", "VEC2")}
+assert _gb._WARNED_UNIFORMS == {("absent2", "VEC2", "not set")}
+
+# Over-length truncation is also visible once (a genuine width mismatch must not
+# be silently masked by the RGBA-for-vec3 normalization).
+_gb._WARNED_UNIFORMS.clear()
+backend._set_uniform(shader, "VEC3", "wide3", [0.1, 0.2, 0.3, 0.4])
+assert shader.floats["wide3"] == (0.1, 0.2, 0.3), shader.floats
+assert ("wide3", "VEC3", "truncated") in _gb._WARNED_UNIFORMS
 
 print("BACKEND CONTRACT PASS — vecN uniform values are normalized to the declared width;"
       " failed assignments warn once instead of staying silent")

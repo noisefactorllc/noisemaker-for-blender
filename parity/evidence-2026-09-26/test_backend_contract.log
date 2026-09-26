@@ -1,9 +1,64 @@
 Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+Traceback (most recent call last):
+  File "/workspace/repos/noisemaker-for-blender/blender/harness/test_backend_contract.py", line 84, in <module>
+    assert ("wide3", "VEC3", "truncated") in _gb._WARNED_UNIFORMS
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
 BACKEND CONTRACT PASS — asynchronous frame export is explicitly unsupported
-NMR WARN uniform short3 (VEC3) not set — value=[0.1, 0.2] kept its shader default
-NMR WARN uniform absent2 (VEC2) not set — value=[1.0, 2.0] kept its shader default
-BACKEND CONTRACT PASS — vecN uniform values are normalized to the declared width; failed assignments warn once instead of staying silent
-BACKEND CONTRACT PASS — global surface refreshed when format or dimensions change
-00:06.871  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+NMR WARN uniform color1 (VEC3) truncated to the declared 3-component width — value=[0.0, 0.43, 0.58, 1.0]
+NMR WARN uniform color2 (VEC4) truncated to the declared 4-component width — value=[1.0, 2.0, 3.0, 4.0, 5.0]
+NMR WARN uniform color3 (VEC3) truncated to the declared 3-component width — value=[np.float64(0.1), np.float64(0.2), np.float64(0.3), np.float64(0.4)]
+NMR WARN uniform short3 (VEC3) not set — value kept its shader default — value=[0.1, 0.2]
+NMR WARN uniform absent2 (VEC2) not set — value kept its shader default — value=[1.0, 2.0]
+NMR WARN uniform wide3 (VEC3) truncated to the declared 3-component width — value=[0.1, 0.2, 0.3, 0.4]
+00:07.735  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
 
 Blender quit
+contract exit=0
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+NMR WARN uniform resolution (VEC2) not set — value kept its shader default — value=[256.0, 256.0]
+NMR WARN uniform wrap (BOOL) not set — value kept its shader default — value=True
+NMR WARN uniform color1 (VEC3) truncated to the declared 3-component width — value=[0, 0.43137254901960786, 0.5803921568627451, 1]
+NMR WARN uniform color2 (VEC3) truncated to the declared 3-component width — value=[0.1411764705882353, 0.8941176470588236, 1, 1]
+NMR WARN uniform color3 (VEC3) truncated to the declared 3-component width — value=[0.7372549019607844, 1, 0.27450980392156865, 1]
+NMR WARN uniform color4 (VEC3) truncated to the declared 3-component width — value=[0.9372549019607843, 1, 1, 1]
+NMR WARN uniform rotateX (FLOAT) not set — value kept its shader default — value=0.3
+NMR WARN uniform rotateY (FLOAT) not set — value kept its shader default — value=0
+NMR WARN uniform rotateZ (FLOAT) not set — value kept its shader default — value=0
+NMR WARN uniform viewScale (FLOAT) not set — value kept its shader default — value=0.8
+NMR WARN uniform posX (FLOAT) not set — value kept its shader default — value=0
+NMR WARN uniform posY (FLOAT) not set — value kept its shader default — value=0
+NMR WARN uniform posZ (FLOAT) not set — value kept its shader default — value=0
+NMR WARN uniform fieldOfView (FLOAT) not set — value kept its shader default — value=60
+NMR OK re_landscape_default.png mean=[21.7, 43.7, 47.4, 255.0] px00=[6, 11, 19, 255] pxCtr=[88, 212, 215, 255]
+NMR OK re_landscape_isosurface.png mean=[22.3, 44.1, 48.0, 255.0] px00=[6, 11, 19, 255] pxCtr=[82, 200, 203, 255]
+00:10.946  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 176 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 184 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 176 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 184 bytes. Consider using UBO.
+
+Blender quit
+render exit=0

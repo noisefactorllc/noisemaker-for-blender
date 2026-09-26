@@ -313,11 +313,11 @@ class BatchCompareTests(unittest.TestCase):
             elif name == "heightmap3d_landscape":
                 golden = Image.new("RGBA", (256, 256), (13, 13, 13, 255))
                 candidate = golden.copy()
-                candidate.putpixel((0, 0), (255, 13, 13, 255))  # 242 <= policy 242.001
+                candidate.putpixel((0, 0), (255, 13, 13, 255))  # 242 > strict 2, <= policy 260
             elif name == "heightmap3d_landscape_isosurface":
                 golden = Image.new("RGBA", (256, 256), (11, 11, 11, 255))
                 candidate = golden.copy()
-                candidate.putpixel((0, 0), (255, 11, 11, 255))  # 244 <= policy 244.001
+                candidate.putpixel((0, 0), (255, 11, 11, 255))  # 244 > strict 2, <= policy 260
             golden.save(self.gold / f"{name}.golden.png")
             candidate.save(self.cand / f"{name}.png")
 

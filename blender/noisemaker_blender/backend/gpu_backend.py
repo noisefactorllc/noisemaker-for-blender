@@ -39,20 +39,20 @@ _FMT_RANK = {"RGBA8": 1, "RGBA16F": 2, "RGBA32F": 3}
 _WARNED_UNIFORMS = set()
 
 
-def _warn_uniform_once(name, ctype, value):
-    """Print the first failed uniform assignment per name, then stay quiet.
+def _warn_uniform_once(name, ctype, value, detail="not set — value kept its shader default"):
+    """Print the first failed/normalized uniform assignment per name, then stay quiet.
 
     A swallowed ValueError here means the uniform kept its default (usually zero).
     Most cases are benign — the shader compiler optimized the uniform out (e.g.
     gradient's `resolution`) — but the same swallow previously masked the all-black
     vec3-color defect, so the first occurrence is made visible in the log.
     """
-    key = (name, ctype)
+    key = (name, ctype, detail.split(" —")[0])
     if key in _WARNED_UNIFORMS:
         return
     _WARNED_UNIFORMS.add(key)
-    print("NMR WARN uniform %s (%s) not set — value=%r kept its shader default"
-          % (name, ctype, value))
+    print("NMR WARN uniform %s (%s) %s — value=%r"
+          % (name, ctype, detail, value))
 
 
 _STATE_NODE_RE = re.compile(r"^(xyz|vel|rgba|points_trail)_node_\d+$")
@@ -270,6 +270,11 @@ class GpuBackend:
                 if n is not None and not isinstance(value, (str, bytes)) and hasattr(value, "__len__"):
                     value = list(value)
                     if len(value) > n:
+                        # Colors arrive as 4-component RGBA for a declared vec3 —
+                        # the normal shape — but a genuine width mismatch would
+                        # also land here, so the truncation is visible once.
+                        _warn_uniform_once(name, ctype, value,
+                                           "truncated to the declared %d-component width" % n)
                         value = value[:n]
                 shader.uniform_float(name, value)
             elif ctype == "INT":
