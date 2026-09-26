@@ -1,0 +1,29 @@
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+00:06.741  gpu.shader       | ERROR pyGPU_Shader FragShader: 
+                            |       | 
+                            |   384 |     if (INVERT) {
+                            |       |       ^
+                            |       | python_shader.glsl:81:7: Error: if-statement condition must be scalar boolean
+                            |       | 
+                            |   392 |     if (INVERT) {
+                            |       |       ^
+                            |       | python_shader.glsl:89:7: Error: if-statement condition must be scalar boolean
+                            | 
+Traceback (most recent call last):
+  File "/state/cache/scratch/basetree/harness/render_all.py", line 58, in run
+    arr = pipeline.render(be, graph, time=time, frames=frames, timestep=timestep)
+  File "/state/cache/scratch/basetree/noisemaker_blender/runtime/pipeline.py", line 713, in render
+    backend.execute(effective_pass, graph, engine)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/state/cache/scratch/basetree/noisemaker_blender/backend/gpu_backend.py", line 291, in execute
+    compiled = self.compile(p.get("namespace"), p["func"], p["progName"], p.get("defines"))
+  File "/state/cache/scratch/basetree/noisemaker_blender/backend/gpu_backend.py", line 210, in compile
+    shader = shader_build.build_shader(frag, desc, defines)
+  File "/state/cache/scratch/basetree/noisemaker_blender/backend/shader_build.py", line 92, in build_shader
+    return gpu.shader.create_from_info(build_create_info(frag_src, descriptor, defines))
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Exception: Shader Compile Error, see console for more details
+NMR FAIL None :: Exception('Shader Compile Error, see console for more details')
+00:07.211  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+
+Blender quit

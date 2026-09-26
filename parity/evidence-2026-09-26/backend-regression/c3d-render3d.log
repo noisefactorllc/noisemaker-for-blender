@@ -1,0 +1,25 @@
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+00:06.956  gpu.shader       | ERROR pyGPU_Shader FragShader: 
+                            |       | 
+                            |   427 |         if (RIDGES) {
+                            |       |       ^
+                            |       | python_shader.glsl:129:7: Error: if-statement condition must be scalar boolean
+                            | 
+Traceback (most recent call last):
+  File "/workspace/repos/noisemaker-for-blender/blender/harness/render_all.py", line 58, in run
+    arr = pipeline.render(be, graph, time=time, frames=frames, timestep=timestep)
+  File "/workspace/repos/noisemaker-for-blender/blender/noisemaker_blender/runtime/pipeline.py", line 713, in render
+    backend.execute(effective_pass, graph, engine)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/repos/noisemaker-for-blender/blender/noisemaker_blender/backend/gpu_backend.py", line 327, in execute
+    compiled = self.compile(p.get("namespace"), p["func"], p["progName"], p.get("defines"))
+  File "/workspace/repos/noisemaker-for-blender/blender/noisemaker_blender/backend/gpu_backend.py", line 228, in compile
+    shader = shader_build.build_shader(frag, desc, defines)
+  File "/workspace/repos/noisemaker-for-blender/blender/noisemaker_blender/backend/shader_build.py", line 92, in build_shader
+    return gpu.shader.create_from_info(build_create_info(frag_src, descriptor, defines))
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Exception: Shader Compile Error, see console for more details
+NMR FAIL None :: Exception('Shader Compile Error, see console for more details')
+00:07.421  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+
+Blender quit
