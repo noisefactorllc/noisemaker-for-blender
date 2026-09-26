@@ -1,0 +1,20 @@
+# B5oBsA retained-compile-golden diagnostic difference — classification evidence (2026-09-26)
+
+Port compiler output (blender/noisemaker_blender.compiler.compile) vs reference-engine
+dump-compile.mjs output for parity/corpus/B5oBsA.dsl, structural equality:
+
+reference a0ff705a0ec92c5f88888d5196da7ac0a804eafd (2026-09-22 02:26, pre-checkpoint): identical
+reference 643b2be1e28b62e3282a4009c2ea65c583ed6ccc (STATUS checkpoint 2026-09-22):  identical
+reference ae4e3302e2d379450ad56745da5be506b329f84d (audit authority 2026-09-22):    identical
+reference 8eeb7b5ac14e (declared authority, goldens in parity/out regenerated from it): identical (check_compile.log 20/20)
+
+All four reference revisions emit on the S005 diagnostic:
+  "location": { "line": 20, "column": 4 }
+and so does the port. No available reference revision reproduces a golden lacking
+"column", so the audited 19/20 failure ("the candidate adds column") is classified as
+stale retained golden evidence, not a port compiler regression.
+
+Fresh gates 2026-09-26 (see sibling check_*.log, unit.log):
+  lex 20/20 | parse 20/20 | compile 20/20 (B5oBsA included) | expanded 19/19 | graph 19/19 | unit 143/143
+
+Checkpoint: unchanged (STATUS pin 643b2be1e28b; parity/out/ untracked by design).

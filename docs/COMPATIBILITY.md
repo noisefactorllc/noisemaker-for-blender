@@ -68,7 +68,7 @@ Earlier served compatibility inventory declares 208 effect IDs. Declaration does
 IDs absent from the served declaration: `synth/scope`, `synth/spectrum`.
 Missing effects remain visible toward the full-parity goal. Contract exclusions do not become successful tests.
 
-These probes use current candidate sources and retained golden files. Their historical authority provenance remains unresolved in this pass.
+These probes use current candidate sources and retained golden files. Their historical authority provenance is now recorded under GAP-004: the audit-time golden bytes remain in the unreachable automation store, and the current working goldens are regenerated from the declared authority `8eeb7b5ac14e` with per-file hashes in `parity/evidence-2026-09-26/gap004/existing-golden-hashes.json`.
 They do not qualify the current upstream revision or full catalog. Exact comparison uses zero byte tolerance.
 
 | Probe | Evidence | Exact comparison |
@@ -297,7 +297,7 @@ Current served declaration: 208 effect IDs. This inventory is not evidence of ex
 ### Native observations, 2026-09-24
 
 Blender 5.1.2 with factory startup and a copied addon. 3 selected fixtures rendered. Exact comparison: 2 passes and 1 differences.
-The graphs and goldens are retained historical inputs. Their full authority provenance remains unresolved in this pass.
+The graphs and goldens are retained historical inputs. Their authority provenance is recorded under GAP-004 (`parity/evidence-2026-09-26/gap004/existing-golden-hashes.json`): the 2026-09-24 golden files themselves remain in the unreachable audit store, while the current working goldens are regenerated from the declared authority `8eeb7b5ac14e` and hashed; the 2026-09-24 measurements keep their original dates and are not re-labeled.
 These results do not qualify current upstream parity. Exact comparison uses zero byte tolerance.
 Existing tolerance-based acceptance remains separate. No tolerance or golden changed.
 
