@@ -243,6 +243,13 @@ class GpuBackend:
             if ctype == "FLOAT":
                 shader.uniform_float(name, float(value))
             elif ctype in ("VEC2", "VEC3", "VEC4", "MAT3", "MAT4"):
+                # A vecN uniform rejects an over-length sequence (e.g. a 4-component
+                # color value for the declared `vec3 color1`): Blender raises ValueError
+                # and the effect silently renders with default (zero) colors — gradient
+                # came out all-black. Slice to the declared component count.
+                n = {"VEC2": 2, "VEC3": 3, "VEC4": 4}.get(ctype)
+                if n is not None and isinstance(value, (list, tuple)) and len(value) > n:
+                    value = list(value[:n])
                 shader.uniform_float(name, value)
             elif ctype == "INT":
                 shader.uniform_int(name, int(value))

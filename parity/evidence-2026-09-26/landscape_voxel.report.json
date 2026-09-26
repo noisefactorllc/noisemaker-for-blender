@@ -1,0 +1,16 @@
+{
+  "name": "renderLandscape3d/voxel",
+  "golden": "landscape_voxel.reference-webgl.golden.png",
+  "candidate": "landscape_voxel.candidate.png",
+  "shape": [
+    256,
+    256,
+    4
+  ],
+  "max_abs_diff": 242.0,
+  "mean_abs_diff": 0.14022064208984375,
+  "ssim": 0.9975631237030029,
+  "tolerance": 2.0,
+  "ssim_min": 0.98,
+  "passed": false
+}

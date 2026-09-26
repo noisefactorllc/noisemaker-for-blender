@@ -1,0 +1,47 @@
+{
+ "default": [
+  {
+   "LOOP_OFFSET": 300,
+   "NOISE_TYPE": 10
+  },
+  {},
+  {},
+  {},
+  {},
+  {
+   "FILTERING": 1,
+   "VIEW_MODE": 1
+  },
+  {}
+ ],
+ "voxel": [
+  {
+   "LOOP_OFFSET": 300,
+   "NOISE_TYPE": 10
+  },
+  {},
+  {},
+  {},
+  {},
+  {
+   "FILTERING": 1,
+   "VIEW_MODE": 1
+  },
+  {}
+ ],
+ "iso": [
+  {
+   "LOOP_OFFSET": 300,
+   "NOISE_TYPE": 10
+  },
+  {},
+  {},
+  {},
+  {},
+  {
+   "FILTERING": 0,
+   "VIEW_MODE": 1
+  },
+  {}
+ ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "synth/gradient",
+  "golden": "/state/cache/scratch/refgoldens/gradient_only.golden.png",
+  "candidate": "/state/cache/scratch/gradient_sliced.png",
+  "shape": [
+    256,
+    256,
+    4
+  ],
+  "max_abs_diff": 1.0000075101852417,
+  "mean_abs_diff": 0.040393829345703125,
+  "ssim": 0.9999905824661255,
+  "tolerance": 2.0,
+  "ssim_min": 0.98,
+  "passed": true
+}

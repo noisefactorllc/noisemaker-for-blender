@@ -15,6 +15,31 @@ assert backend.create_frame_export_queue(slots=3) is None
 print("BACKEND CONTRACT PASS — asynchronous frame export is explicitly unsupported")
 
 
+class MockShader:
+    """Records uniform_float values without a GPU context."""
+
+    def __init__(self):
+        self.floats = {}
+
+    def uniform_float(self, name, value):
+        self.floats[name] = tuple(value)
+
+
+# vecN uniforms must receive exactly N components: an over-length sequence (e.g. a
+# 4-component color value for the declared `vec3 color1`) raises ValueError inside
+# Blender's uniform_float, which _set_uniform swallows — the uniform stays at its
+# default zero and the effect silently renders black (observed: gradient, and the
+# landscape modes that consume it).
+shader = MockShader()
+backend._set_uniform(shader, "VEC3", "color1", [0.0, 0.43, 0.58, 1.0])
+assert shader.floats["color1"] == (0.0, 0.43, 0.58), shader.floats
+backend._set_uniform(shader, "VEC4", "color2", [1.0, 2.0, 3.0, 4.0, 5.0])
+assert shader.floats["color2"] == (1.0, 2.0, 3.0, 4.0), shader.floats
+backend._set_uniform(shader, "VEC2", "resolution", [256.0, 256.0])
+assert shader.floats["resolution"] == (256.0, 256.0), shader.floats
+print("BACKEND CONTRACT PASS — vecN uniform values are sliced to the declared width")
+
+
 class MockOffscreen:
     def __init__(self, w, h, fmt):
         self.width = w

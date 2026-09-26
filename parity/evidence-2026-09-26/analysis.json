@@ -1,0 +1,29 @@
+{
+ "default": {
+  "max_abs_diff": 242.0,
+  "mean_abs_diff": 0.1402,
+  "pixels_differing_gt2": 175,
+  "total_pixels": 65536
+ },
+ "voxel": {
+  "max_abs_diff": 242.0,
+  "mean_abs_diff": 0.1402,
+  "pixels_differing_gt2": 175,
+  "total_pixels": 65536
+ },
+ "isosurface": {
+  "max_abs_diff": 244.0,
+  "mean_abs_diff": 0.2583,
+  "pixels_differing_gt2": 343,
+  "total_pixels": 65536
+ },
+ "o1_height_tex": {
+  "flipud_max_abs_diff": 1.0,
+  "unflipped_max_abs_diff": 192.0
+ },
+ "gradient_probe": {
+  "pre_fix_max_abs_diff": 255.0,
+  "pre_fix_mean": 191.18873596191406,
+  "sliced_mean": 191.14834594726562
+ }
+}

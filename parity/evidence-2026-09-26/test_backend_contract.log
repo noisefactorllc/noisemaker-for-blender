@@ -1,0 +1,5 @@
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+BACKEND CONTRACT PASS — asynchronous frame export is explicitly unsupported
+BACKEND CONTRACT PASS — vecN uniform values are sliced to the declared width
+BACKEND CONTRACT PASS — global surface refreshed when format or dimensions change
+contract exit=124

@@ -1,0 +1,3821 @@
+{
+  "platform": "blender",
+  "kitVersion": 1,
+  "version": "0.1.18",
+  "source": {
+    "repo": "noisefactorllc/noisemaker-for-blender",
+    "sha": "e9299fd8af7d546d27491959677211e8e89b1dc1"
+  },
+  "shaderSource": "kit",
+  "engineSource": "kit",
+  "hostLib": null,
+  "shaderLayout": {
+    "root": "shaders",
+    "effectsPrefix": "",
+    "includeDir": null
+  },
+  "inject": {
+    "type": "dsl-file",
+    "target": "program.dsl"
+  },
+  "files": [
+    {
+      "path": "LICENSES/noisemaker-MIT.txt",
+      "bytes": 1078,
+      "sha256": "91c83bf22e48749181dc44701878124f556559700472218cd05cdeda4f719ca4",
+      "when": "always"
+    },
+    {
+      "path": "LICENSES/noisemaker-for-blender-LICENSE.txt",
+      "bytes": 1073,
+      "sha256": "e502d1baf14c5fde7a7476f8a860665352d31d26f75b7a6977943606c8b51259",
+      "when": "always"
+    },
+    {
+      "path": "README.template.md",
+      "bytes": 4895,
+      "sha256": "5ca14d1383c2455467cd9a35bace30b4de0b77d9a5ef87cfdf944a342740dfe5",
+      "when": "always"
+    },
+    {
+      "path": "bake.template.py",
+      "bytes": 3174,
+      "sha256": "9f6c5a304f186ad0033dc28e8f7dce6cba9a397852fc5f4281fc986a143d2a28",
+      "when": "always"
+    },
+    {
+      "path": "compat.json",
+      "bytes": 5035,
+      "sha256": "2c611dfdb08cf5695cfd795a3d81c6f8dbbf162a9858bd3a4943fa92a8a69fb9",
+      "when": "always"
+    },
+    {
+      "path": "engine/noisemaker_blender.zip",
+      "bytes": 917966,
+      "sha256": "9437b9a4198d392b3ce12de404c131885e482acdb1a82894433023218cfa1c8f",
+      "when": "engine"
+    },
+    {
+      "path": "shaders/classicNoisedeck/bitEffects/bitEffects.createinfo.json",
+      "bytes": 819,
+      "sha256": "4433f2e3d439661b02d5b21b6f302fa87da389aec5df8db79673de342bd94f0c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/bitEffects/bitEffects.frag",
+      "bytes": 12353,
+      "sha256": "d9fbceb3db02fac75dd23434c5b8a99f7b34aac44b7cfeb352eb3b04a8b729d3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/caustic/caustic.createinfo.json",
+      "bytes": 689,
+      "sha256": "fb1d29afede74f39e258b1c4208ebc54639f051d460c040a3b6bbec706f9ee7f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/caustic/caustic.frag",
+      "bytes": 15324,
+      "sha256": "f4967bc46bd8dc6da487930009a3cb13f600d45aed0ed89404c4a45efd1e38cd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/cellNoise/cellNoise.createinfo.json",
+      "bytes": 1361,
+      "sha256": "1be69a45ac65cd385fa2ffad6919fa1a06644991bc965f29c86339bfbbcc4bd0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/cellNoise/cellNoise.frag",
+      "bytes": 9092,
+      "sha256": "3e263e193430e12295e58f6bc34d4565d3b7566fdbd81a308cd440cb0e5bcc81",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/cellRefract/cellRefract.createinfo.json",
+      "bytes": 883,
+      "sha256": "457f3a5090e7c6114f7c05683e13adaaf3e893514bbecebe8030f88195acca91",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/cellRefract/cellRefract.frag",
+      "bytes": 13444,
+      "sha256": "a5573a78fa52dec557000d7b96efa33291a91d3367a35d41144469a09a2f4942",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/coalesce/coalesce.createinfo.json",
+      "bytes": 772,
+      "sha256": "ef2feed3a16e4aad46697c7c1e01207e2d4beb0c1a1252408eb360ca092f0e3f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/coalesce/coalesce.frag",
+      "bytes": 9731,
+      "sha256": "540041e5e66aff3663c40a3cdd6a980875899d6d1f1f183d11b482cfb514054a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/colorLab/colorLab.createinfo.json",
+      "bytes": 1326,
+      "sha256": "92c267afeb68e463ed7f0a1ad30afcc32b3abef1dffba77254d034d9afaeb79d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/colorLab/colorLab.frag",
+      "bytes": 8762,
+      "sha256": "7da5f57e9fa2ccac3dc194abead85756506df7818bbe5774a4ab05a4d6f98e16",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/composite/composite.createinfo.json",
+      "bytes": 668,
+      "sha256": "fc0b9cabcfcf350f748982048b2fc51d5ca5fa3b8ae21e969910e4a2e80491a5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/composite/composite.frag",
+      "bytes": 5923,
+      "sha256": "529662f41c98befcb54fbdc9410897d2a24da181d6abee7e9acbfa272fe6f474",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/effects/effects.createinfo.json",
+      "bytes": 806,
+      "sha256": "a3da1e269988b9bf2b8c6d18f377dafc44700341adeeaa98bb87b7ba2032a033",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/effects/effects.frag",
+      "bytes": 20855,
+      "sha256": "a077ddfe46bead60f19d832b6c4dd38a8937dc55cf7e5a3ab0c9a029bce67170",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/fractal/fractal.createinfo.json",
+      "bytes": 1552,
+      "sha256": "70c115d1f3477055f09fc07827f1e53f4c8d3c02df07531dd95ee26ff277f3e1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/fractal/fractal.frag",
+      "bytes": 9278,
+      "sha256": "08f2ce37c7f24afcafac4fcb18c89f454e41c73bb3379f47ae379c37cbadb476",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/glitch/glitch.createinfo.json",
+      "bytes": 895,
+      "sha256": "cbce3fc2e0ea75e6f3658b5104689e2ee2421b0ab188e3deccb1050667412ced",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/glitch/glitch.frag",
+      "bytes": 7566,
+      "sha256": "418f55900bbd1104a1eae6fd25627db889ff9f2041c7291b85c1e9e3e10c1786",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/kaleido/kaleido.createinfo.json",
+      "bytes": 700,
+      "sha256": "09436baefc02676151187073fc864e93d9e3082f62860c53a780c26903a2dde4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/kaleido/kaleido.frag",
+      "bytes": 27565,
+      "sha256": "07c13a890bedc88d302809e5cae38685f891291e4c091a519e5ab89a4c9ee6ce",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/lensDistortion/lensDistortion.createinfo.json",
+      "bytes": 1152,
+      "sha256": "1090806b51ebda7063284b3a6880cda4519d2e518eb673eb34fdbec7dde93dcd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/lensDistortion/lensDistortion.frag",
+      "bytes": 7820,
+      "sha256": "78a317c13483849ee4a2ae145675eb8c3a1481fd2557779ec21a29fe030531f5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/moodscape/moodscape.createinfo.json",
+      "bytes": 778,
+      "sha256": "ac640df0bfc1b33ea73c73b645f7273c303611195234b75b047ad223ba31f19f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/moodscape/moodscape.frag",
+      "bytes": 19191,
+      "sha256": "384c8f139ffcb982f89a80aa740ac28d1e6792554ea2431f7b8ee4c7639d8b88",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/noise/noise.createinfo.json",
+      "bytes": 1338,
+      "sha256": "1165e90ca9af69b047d4eaa28f443675983b6b11984927dd76c6bad62ac5ba87",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/noise/noise.frag",
+      "bytes": 30602,
+      "sha256": "8a7a14deb65b3062ed086255fc823892b42c5cff58513acefe9f5fff329f5dc6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/noise3d/noise3d.createinfo.json",
+      "bytes": 772,
+      "sha256": "cb44bb284d66dc26c11a054f851964e845d0bf2dea0800df93a879cc1e7acabb",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/noise3d/noise3d.frag",
+      "bytes": 19262,
+      "sha256": "f8c53d8dfb58705506722280d3cf497bbec2bddc7214f2b37f69212948b8b83e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/refract/refract.createinfo.json",
+      "bytes": 695,
+      "sha256": "d51ef3a304bc416288e26990bb149ef1ef38f24466699613579607519cd1ba9c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/refract/refract.frag",
+      "bytes": 7823,
+      "sha256": "6a2214f0bb7174a4c657bb7269dd60b9bed8db2ff45e79fad0ee5808974ec5fd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/shapeMixer/shapeMixer.createinfo.json",
+      "bytes": 1182,
+      "sha256": "76457764fdc122ce249b30fd60762e9ee202155025c0c10711664771f9c64d15",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/shapeMixer/shapeMixer.frag",
+      "bytes": 21315,
+      "sha256": "ccd065f22d7096ab6764ecf68bc11301183bef40b10c81dddc7f596faffa1b2e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/shapes/shapes.createinfo.json",
+      "bytes": 1076,
+      "sha256": "67a17d5b772a9a2d912e6c5449b7c4fecc3d67d720bda33084b8ee55e178e6a6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/shapes/shapes.frag",
+      "bytes": 20932,
+      "sha256": "f14c3d89249cf32f1a917e98d577691992466095e47696c1e29f43a3f5739480",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/shapes3d/shapes3d.createinfo.json",
+      "bytes": 1704,
+      "sha256": "0d7e8b84abe01a4f346fdfe888bcf3b6d00307531181618da809e24f1d46b1bf",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/shapes3d/shapes3d.frag",
+      "bytes": 15398,
+      "sha256": "28b04fb8b8a97eaa44b54cab5d9698b355b74299298828bcd7b94e1ff6df649f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/splat/splat.createinfo.json",
+      "bytes": 1107,
+      "sha256": "5cfeca11dcc0eb8104db0e761fa5b36b20e8a45c329dbedc7ebddbcdd04002d8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/classicNoisedeck/splat/splat.frag",
+      "bytes": 4634,
+      "sha256": "60465080d1b435fd7c379c873905c55efed4df608323eb97e8eea35b1fa82790",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/_shared/overlayBlend.createinfo.json",
+      "bytes": 359,
+      "sha256": "0592a463b1985f2b682b054ea8db25210befc80d63d0ac1e1a3170b7b9dd8592",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/_shared/overlayBlend.frag",
+      "bytes": 491,
+      "sha256": "61e983296ea31c34ec8c48bc7924b55cac223fa6331491a81aa0e157e6e08b20",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/adjust/adjust.createinfo.json",
+      "bytes": 622,
+      "sha256": "26b0486305b850503a21fff671a2a93d39a7b00ac788ee8f803e2561d03cb808",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/adjust/adjust.frag",
+      "bytes": 3751,
+      "sha256": "7a45ed22d8d87aa8d721bc60320c1b0e51ad483d9b35b88d83258afcc743a458",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/bloom/brightPass.createinfo.json",
+      "bytes": 445,
+      "sha256": "ddbe3093300609aa70256cf4d3fd71c7acaa00c764ff255e697b11daddf394d5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/bloom/brightPass.frag",
+      "bytes": 1296,
+      "sha256": "48906e0bab76c26777ea80012aa0502427aaeb4a8418d386f2a384f1b3ccaeae",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/bloom/composite.createinfo.json",
+      "bytes": 497,
+      "sha256": "876fa0a2499cc66661059ab61fdc7d6e36b6bd8bba5e20e4b4b18f9e9ba01ad4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/bloom/composite.frag",
+      "bytes": 756,
+      "sha256": "681f682837c2e67118980046bc3af4e2b125545ad6bf7914457236fe445665af",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/bloom/ntapGather.createinfo.json",
+      "bytes": 484,
+      "sha256": "2dddc7b3b341428f7b8fd3277ac65f62b673377fc5bacd8570a6a99041b72d79",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/bloom/ntapGather.frag",
+      "bytes": 2113,
+      "sha256": "4dff57e4520968ff0bdcb4ad5ca146d84e00614a71c9a9268a27e9c3379450b2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/blur/blurH.createinfo.json",
+      "bytes": 446,
+      "sha256": "b74fc0bc3d798ffbd529f0fcc5c3e4285d60980568ca304d2b7ef012cbec22bc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/blur/blurH.frag",
+      "bytes": 1051,
+      "sha256": "05e9131c46890002abc8a4c25c2495caac59756ec9c765932b3acaebdb4b3f16",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/blur/blurV.createinfo.json",
+      "bytes": 446,
+      "sha256": "cce2dde1288dfc5dd79d6ce20db8dfda38495e84e31f5eb0bdf1ae01e94319c4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/blur/blurV.frag",
+      "bytes": 1049,
+      "sha256": "ec552c5cebdc66a58a21bce88ce8ec064f1177cb38f4d2fe55d417c20ab2949e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/bulge/bulge.createinfo.json",
+      "bytes": 620,
+      "sha256": "1aeb3b8ecb26bf75582dddb51f6efc32bd84dff7f7fa10437633577e8176ebcc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/bulge/bulge.frag",
+      "bytes": 2188,
+      "sha256": "9173945deb347f7392905314ef58eff063e9e58a63890cd8de1998b63a4f0908",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/celShading/celShadingBlend.createinfo.json",
+      "bytes": 558,
+      "sha256": "01f03130a85ac15f45cb21d2bbb1b3806a39226295508d8d6958b04074bcffe4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/celShading/celShadingBlend.frag",
+      "bytes": 780,
+      "sha256": "91ea8b7c5801235a351d7527680c0c77e622a455691ad180edfb22c248023e86",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/celShading/celShadingColor.createinfo.json",
+      "bytes": 577,
+      "sha256": "e6dc82b33770a1895a60f7a661ca50296569d6ec010a336eda497b215ea1785c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/celShading/celShadingColor.frag",
+      "bytes": 2645,
+      "sha256": "f2f7cac2e41aaa0d07a68037ea40e9b2386d43e34b92e71da6c31202a2e4c46f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/celShading/celShadingEdges.createinfo.json",
+      "bytes": 498,
+      "sha256": "1301e33aae0eb0891f48f1c23190131f225518ee2aa2cd6229caaa1c5fb56a36",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/celShading/celShadingEdges.frag",
+      "bytes": 1920,
+      "sha256": "7e06f77a0dee4317b7eee208ad361b670991ecaecc33da752b13e29222474a18",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/channel/channel.createinfo.json",
+      "bytes": 481,
+      "sha256": "a4a709de3c9e41a638f9118cd7bde3a0157533b2c8105f1f546b7b43822919f6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/channel/channel.frag",
+      "bytes": 599,
+      "sha256": "af1e6e968a5a010cb8ddfcbece0ab9b9d98faa1c3c4b45faf01098a5cd9bca9f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chroma/chroma.createinfo.json",
+      "bytes": 486,
+      "sha256": "b67a67f193c5cb04dd66cc1430217252c91f59d7df6cd743d2c325d954b81b87",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chroma/chroma.frag",
+      "bytes": 1367,
+      "sha256": "b9a09fab2c73a190e81e917e916580652cb4faf0841516f3ad738437f3201e2a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chromaticAberration/chromaticAberration.createinfo.json",
+      "bytes": 495,
+      "sha256": "8c95850b0ce017a5e832d69a22fc377edd1cd7691f09359b1ee809e1ccbca93d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chromaticAberration/chromaticAberration.frag",
+      "bytes": 1769,
+      "sha256": "a5d3a0e6b01000033760c2e890c00d77789961b2faf4add1c4825720a2b722ea",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chrome/chBlurH.createinfo.json",
+      "bytes": 351,
+      "sha256": "bf4d8a8d4306437823f0bf7c1ad060b39cc5f2de78c717142e0b70602c2ececd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chrome/chBlurH.frag",
+      "bytes": 1160,
+      "sha256": "8dd1d9c6ead38021b3be2fbb53d20299a12e4533f6c4a7a5147b1078f176cfbb",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chrome/chBlurV.createinfo.json",
+      "bytes": 351,
+      "sha256": "bf4d8a8d4306437823f0bf7c1ad060b39cc5f2de78c717142e0b70602c2ececd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chrome/chBlurV.frag",
+      "bytes": 966,
+      "sha256": "502547d8c7cf36fef925484fec682519a95b4d0f6c10b3ef5765a74ef8fe5b06",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chrome/chMap.createinfo.json",
+      "bytes": 450,
+      "sha256": "3c722b58387fda379f6fcb4437b812a9ccf1c88431eaef4fb59ee0b9afcb52f1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/chrome/chMap.frag",
+      "bytes": 4948,
+      "sha256": "12115e98b5acf2792494b49f90293582c2b161655adc6eeaf45cc35b1a4e1d85",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/clouds/clouds.createinfo.json",
+      "bytes": 518,
+      "sha256": "33f087c2b348ff14c946224ff011edbdfcc6b1195abf673cb588b06463b1e2bf",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/clouds/clouds.frag",
+      "bytes": 4470,
+      "sha256": "d6eb68eabdb883ce3f7b2660516d66f140d074af7930b73cd7d2d284305993cf",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/colorReplace/colorReplace.createinfo.json",
+      "bytes": 683,
+      "sha256": "8bafbdf1048ff64893fe3763c63b9b3fa423b313ee153b4bec9cab01f8a5a30c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/colorReplace/colorReplace.frag",
+      "bytes": 1026,
+      "sha256": "9bbf0fdc05964d9002f2bcc122f769713c17a6aca92b5b50e992ab02fdb3af40",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/convolutionFeedback/cfBlend.createinfo.json",
+      "bytes": 410,
+      "sha256": "1b7add05f9d19165892e15d5290a3493a20680eb1458ead8f4602c034c06b131",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/convolutionFeedback/cfBlend.frag",
+      "bytes": 755,
+      "sha256": "d6bab593a6b5ff5d094ead97bc4c6d4d17c4db0b70639d79862461a1d018f192",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/convolutionFeedback/cfBlur.createinfo.json",
+      "bytes": 398,
+      "sha256": "e0e5a55770fcef68f6a9928f97f34083c4131aeb5273b0745b089896965fe816",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/convolutionFeedback/cfBlur.frag",
+      "bytes": 1514,
+      "sha256": "5dad11ffd8fd9f07a51892f859b6b83671d05898f5734c2262ebfbdb6c071b54",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/convolutionFeedback/cfSharpen.createinfo.json",
+      "bytes": 404,
+      "sha256": "c3778f25dc0e5d1bddfd7b3629506c23397798e60bd7a7596253ec7003a97096",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/convolutionFeedback/cfSharpen.frag",
+      "bytes": 1577,
+      "sha256": "8e42b0d4ca3db644a5a473ebebb8d66b36ad2cbe4f39f75e06dc74e84b6bb814",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/corrupt/corrupt.createinfo.json",
+      "bytes": 877,
+      "sha256": "abbecb81eb347ef774b9dd71d83a752129f0b45f7510972a61c46987cec2f2f4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/corrupt/corrupt.frag",
+      "bytes": 7108,
+      "sha256": "02ea010b473afa4d54a3e9acf1b4a7d4848d54084b06bbc3917ac86f9569f1a3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/craquelure/craquelure.createinfo.json",
+      "bytes": 522,
+      "sha256": "9829c76c8f9dfdc0e2a82cc6ea7bd7b123dbbae7708e78cbacceb3d14d3a22bd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/craquelure/craquelure.frag",
+      "bytes": 9424,
+      "sha256": "5039e500d5409cd3407f51a4649b81a8f76318cb62c59b7255b40edd435487e0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/crt/crt.createinfo.json",
+      "bytes": 612,
+      "sha256": "7330cf51a537596f75d984c9bebe0e8d1614228566be461646eeccda168dd343",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/crt/crt.frag",
+      "bytes": 19400,
+      "sha256": "054b69fb3606a700ce91c3a8921e4643014bd0e9f5a697bec0c18c453a4b35e6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/degauss/degauss.createinfo.json",
+      "bytes": 617,
+      "sha256": "2190472d21ca910bf0453310381dc85f35e0ee9153701b90b371d21cdd73c8b6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/degauss/degauss.frag",
+      "bytes": 10634,
+      "sha256": "bd8863ddb9e6ea9eae7640250c22672aa0bd6c6456a47576bd09206b93f81830",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/deriv/deriv.createinfo.json",
+      "bytes": 445,
+      "sha256": "aba74de99e89c7b967781530812f5d971fadbf2d720f286643b8baeee2b44dca",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/deriv/deriv.frag",
+      "bytes": 1068,
+      "sha256": "57acbdc33f3ec2cfe321d1d961e6193b8c28e2e7948944093fcba183651f830e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/directionalBlur/directionalBlur.createinfo.json",
+      "bytes": 395,
+      "sha256": "de694b2724c6f84d85aa7a7bdf129dc065b297febdd7d352b6749ce00412ebd6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/directionalBlur/directionalBlur.frag",
+      "bytes": 1111,
+      "sha256": "a5beec4213974749b5f83ae329a4daf4e92a148337e8a0a9ce9ed40b77ead44c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/dither/dither.createinfo.json",
+      "bytes": 711,
+      "sha256": "875bb014d4c0767e6e87de7a0a911a5836694a2eadd3312dff27d55d45014869",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/dither/dither.frag",
+      "bytes": 19087,
+      "sha256": "9538edf86fc40104e07d7db3c51dbbc29c0748a5b64e9bcc4c1eb1ca4bc5119e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/edge/edge.createinfo.json",
+      "bytes": 797,
+      "sha256": "150fd9653184d884278816364204fa9638eb5d7420221cc4a0db7d395575ffcf",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/edge/edge.frag",
+      "bytes": 6311,
+      "sha256": "daa444cdfb62a33dda2843329c903b3227e3a801d2b9cdaafbd3b9a4e7bbe4c2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/emboss/emboss.createinfo.json",
+      "bytes": 578,
+      "sha256": "17a575b3ad031300448446244e41f3b3201c6f9efb707bbaa6f410fcb8b77552",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/emboss/emboss.frag",
+      "bytes": 5093,
+      "sha256": "cc93e623997440ce41c9635c2cfd50a63ab535209ab6ead9ab24b79f4dac688e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/extrude/extrude.createinfo.json",
+      "bytes": 529,
+      "sha256": "fd347b034fb3b854dac98ae6daf9aa85fdcedf0aa1a1cffcc518fe4df594fe8a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/extrude/extrude.frag",
+      "bytes": 16854,
+      "sha256": "8b88ee247e40e6575a48b67fda3fd1fcd53876cab3697334653944178971f383",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/feedback/copy.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/feedback/copy.frag",
+      "bytes": 388,
+      "sha256": "f42eee83cf0d11f3214793632fb8cc2ca65460de6d2d5af2f5cee827b56679ef",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/feedback/feedback.createinfo.json",
+      "bytes": 1043,
+      "sha256": "d161d879ebc619d8d7b469085fa89f63420abd97801d1d1ece228a2ab61495a5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/feedback/feedback.frag",
+      "bytes": 10467,
+      "sha256": "772c6f795b4269ca39c1634af3e6156647907a527a068ff220c83cebe32c4e97",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/fibers/fibersBlend.createinfo.json",
+      "bytes": 359,
+      "sha256": "0592a463b1985f2b682b054ea8db25210befc80d63d0ac1e1a3170b7b9dd8592",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/fibers/fibersBlend.frag",
+      "bytes": 422,
+      "sha256": "035b746287ac975b2cb71c0903cfee33699393146e2de9a8cb2ab5499c4e3cae",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/flipMirror/flipMirror.createinfo.json",
+      "bytes": 397,
+      "sha256": "44526509930b691708bc0c41dff44630693600445d5508dac69a026ba06de82c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/flipMirror/flipMirror.frag",
+      "bytes": 2459,
+      "sha256": "8a08bd1f84bed7a9e42128263a15f0856e5880a7da45a2869091801ef755bd1b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/fxaa/fxaa.createinfo.json",
+      "bytes": 537,
+      "sha256": "9c57ae6e0077d19b28bd1aed46e0cc3cc18e8f69984db4ef120fef19f0c5e439",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/fxaa/fxaa.frag",
+      "bytes": 4804,
+      "sha256": "818202ea54a99c0afb6d9ef96f9b721e7962fecfb76b6d8a26f856ceff09afc2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/glowingEdge/glowingEdge.createinfo.json",
+      "bytes": 532,
+      "sha256": "b5855053c6b875d0aff79c56706d0156c0526ca62992b88f554337904a8db553",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/glowingEdge/glowingEdge.frag",
+      "bytes": 2820,
+      "sha256": "26c26cb8d3d90b80cabce2a3fb9f47ff480f8ac3546612035992d4b0a5044a42",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/glyphMap/glyphMap.createinfo.json",
+      "bytes": 528,
+      "sha256": "b2162c286c848dbcd5c672db4054bdb451503871ef2af66c8b325a83ec98c870",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/glyphMap/glyphMap.frag",
+      "bytes": 7726,
+      "sha256": "903eff1538d204d8866bba15048817b667e62441c6896fdfb6aaa0dbfce300f2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/creative.createinfo.json",
+      "bytes": 593,
+      "sha256": "9303bbc7e97a9df986dfee248d0130eaf2c11b35b40790c62ed082931a42f2da",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/creative.frag",
+      "bytes": 4081,
+      "sha256": "178d8ef08dae76edbdd0d57342cdab3a12e790ca65ba6a045ee022444f5a7dba",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/hslSecondary.createinfo.json",
+      "bytes": 872,
+      "sha256": "73120c6c8914678f2d251dcec73f18d64c6c522c4906b6520242bf91ecbdb83a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/hslSecondary.frag",
+      "bytes": 4673,
+      "sha256": "7d4a25d13c747f2f59e1d64b116a640e80416a702e678a7aaf91fe7d8729b6d9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/lut.createinfo.json",
+      "bytes": 437,
+      "sha256": "7da83d96dd202089da67ae6941d58118f88ab1bb7ed51067fd8e27f7ba8dafcf",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/lut.frag",
+      "bytes": 13574,
+      "sha256": "01a3e5833066ffd0417c6ebc9f8d8b3245eaff02a1362f0a768d45b0c11f3e90",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/primary.createinfo.json",
+      "bytes": 908,
+      "sha256": "8e796e2e5ad655042abc6df9b269481576ce14608aa4c7b784025908d2e7b1bc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/primary.frag",
+      "bytes": 5696,
+      "sha256": "2f711a871ea533ebdda57bf6189cb59eb187c565abb036436f0093a5a80368a2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/vignette.createinfo.json",
+      "bytes": 613,
+      "sha256": "3a7b45b7f9e35df31d6dec830c9244db202a9686872cf99b152cff7a7656cbf3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/vignette.frag",
+      "bytes": 4003,
+      "sha256": "4bdbc7afaa49b9f3fdc5758bdd072ed25605c1cda2ecf4251fd070270a62cbfe",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/wheels.createinfo.json",
+      "bytes": 551,
+      "sha256": "aa2fd751710342a2f1d2ed84e76cd3ce950e76ddbbf20ec09c5fb83f86bd6fe8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grade/wheels.frag",
+      "bytes": 3401,
+      "sha256": "ea72a355f5db05966e38afd4e09305e1a92dbca27aebbf4c17c990ac0092a9df",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grain/grain.createinfo.json",
+      "bytes": 573,
+      "sha256": "7b9dba294622e0bcd5000d60b6338c7c3f079f6263f27f17c393ccf57b6dcaec",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grain/grain.frag",
+      "bytes": 8649,
+      "sha256": "cdff9454a63170ccbba3f4cc9ffe6b6bd1227a8be380326a25210135fb410a1b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grime/grime.createinfo.json",
+      "bytes": 486,
+      "sha256": "aadf2a0b0170e8014a3f85448760bf5a4c6fecffeb26eaeeb474241cd2b958f9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/grime/grime.frag",
+      "bytes": 5751,
+      "sha256": "67932bb3c07e432df504e1dfe0fbda0846a90b6d5fc8c12fdb4ee7736b8e33ee",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/halftone/halftone.createinfo.json",
+      "bytes": 818,
+      "sha256": "9192ef55ecb87f0da276e44e16745a2dbc9f1e0cd7f71b55b040e2c3128e88cc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/halftone/halftone.frag",
+      "bytes": 8188,
+      "sha256": "2d7f6652264a458ba35594f421e018eb1fc08d5ed5463d82642e13f4e19e35cb",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/hatch/hatch.createinfo.json",
+      "bytes": 622,
+      "sha256": "d178f23b083cffae79df9a3e44f15b69aa7c9ff3cb03a834399130d0f2f0b278",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/hatch/hatch.frag",
+      "bytes": 9408,
+      "sha256": "d87bc5778e3bc07c2f1140311b8fbfcf8729b2396a8a02a4ab44ed6fa17179b2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/highPass/hpBlurH.createinfo.json",
+      "bytes": 347,
+      "sha256": "b75c9f9dce57eb58edff64f19e550dd39abdd07865aaa22e27ce5614d683988f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/highPass/hpBlurH.frag",
+      "bytes": 949,
+      "sha256": "2e362f9af9c0ec0d241f11345621a4f6ce2601ed6518f8c96888489392afa5bb",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/highPass/hpBlurV.createinfo.json",
+      "bytes": 347,
+      "sha256": "b75c9f9dce57eb58edff64f19e550dd39abdd07865aaa22e27ce5614d683988f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/highPass/hpBlurV.frag",
+      "bytes": 947,
+      "sha256": "1a8b6d612d485907d71c0dc0398f410f0a72c7348ec6fb272422252b0b7ab326",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/highPass/hpCombine.createinfo.json",
+      "bytes": 400,
+      "sha256": "82d0e2e063bb70051e99dd2ad15978e7ee8301e204ef36668c6b311bdc6fb386",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/highPass/hpCombine.frag",
+      "bytes": 567,
+      "sha256": "6271fddd6d321a3ebb7f2cb761fe623fbf22dbff3c3c0f3033b87857b80caa88",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/historicPalette/historicPalette.createinfo.json",
+      "bytes": 660,
+      "sha256": "e722005ab230626a30ebffccebe9ea570f156a2980debfbf038a108b12844bfd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/historicPalette/historicPalette.frag",
+      "bytes": 12253,
+      "sha256": "9f7972bb45fce5b04ee5ecdcb6b5ace9ed0a29b84ce6fa74fdf5d9a1ddf41c31",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/invert/inv.createinfo.json",
+      "bytes": 297,
+      "sha256": "3fd7d290f9231bb8c939997a43c90787ad8407e78c9f672ec30a8c852395cd99",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/invert/inv.frag",
+      "bytes": 755,
+      "sha256": "aaffd345f8022868ac4cb88e1af3b4b05b4f35e89ca25f4a107f99c0a6615e07",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lens/lens.createinfo.json",
+      "bytes": 498,
+      "sha256": "0d75770268efc02dd4a53fa97e72675ef73379b3f9840d7725bc21112e6ae2a5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lens/lens.frag",
+      "bytes": 2810,
+      "sha256": "629d69f53b483ebf923e047899f6dc32b368c40cd786003cfc751ae283e17513",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lensFlare/lensFlare.createinfo.json",
+      "bytes": 575,
+      "sha256": "45a6225acc070576bf2687c66161afabf900d1e8e2e24a87263047f638694808",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lensFlare/lensFlare.frag",
+      "bytes": 9877,
+      "sha256": "794ba783b2d7280930c4b5736c92600ca6b096115c3fdb74c2a20148b8d15ee3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lensWarp/lensWarp.createinfo.json",
+      "bytes": 577,
+      "sha256": "47f3f23fa41e5e72fa8c495e1b46c1528e29c43ec138919071ed13fd2a243b5e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lensWarp/lensWarp.frag",
+      "bytes": 3870,
+      "sha256": "90a39ffde35d0ea6a24371d06126439d0d3a07f153b44064ed54dbeb5fd3779c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lightLeak/lightLeak.createinfo.json",
+      "bytes": 605,
+      "sha256": "ff6b8a034f0c1149657e38cf364ca22a4f718cce00aea3e8f56c80ede3bd7cf1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lightLeak/lightLeak.frag",
+      "bytes": 4902,
+      "sha256": "74196950d2ac9b08f4c5f63b725f2da8440c95a58afff1f89acd6c600a572905",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lighting/lighting.createinfo.json",
+      "bytes": 994,
+      "sha256": "07ad26600c0d2bfff4c21172c50283a4a318184b36825fa05f2087e83e1e9062",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lighting/lighting.frag",
+      "bytes": 5668,
+      "sha256": "3ee88b295b0b0e235b7f3ea450be5146117ab464f8f1993ebee27ea6b58ba625",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lowPoly/lowPoly.createinfo.json",
+      "bytes": 695,
+      "sha256": "d65f10dde6258ade60a06d447f1a750657edf429479118a9884623f7fc23afe7",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/lowPoly/lowPoly.frag",
+      "bytes": 8506,
+      "sha256": "9445826cb99328e3f80a1e1fb10ef8d24cdc7e6bd4d6f27cf68cd0f2c98f4b09",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/median/median.createinfo.json",
+      "bytes": 304,
+      "sha256": "17ba1fd0e4cfb124971fbbf9514b0d127136ade347d26d073aea5571af3f3bcd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/median/median.frag",
+      "bytes": 3860,
+      "sha256": "fa833f9f69947432a7dab3614cf87d211cd3c750b3a95e7f42c6a67fc9ec6125",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/morphology/morphA.createinfo.json",
+      "bytes": 386,
+      "sha256": "fc7415636da4e3251e6e625768f943d2f9f7a085c11cdb34555879bae64765cc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/morphology/morphA.frag",
+      "bytes": 2092,
+      "sha256": "425b78c2445e9fb9087b7617ff4393ca3aa0fb040914b5f24bfe483f3f28c899",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/morphology/morphB.createinfo.json",
+      "bytes": 386,
+      "sha256": "fc7415636da4e3251e6e625768f943d2f9f7a085c11cdb34555879bae64765cc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/morphology/morphB.frag",
+      "bytes": 1223,
+      "sha256": "e4f8e84baff9e1f8777b659942df6bfdfb29a5d7e43aca32393020b58dc167a6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/mosaicTiles/mosaicTiles.createinfo.json",
+      "bytes": 663,
+      "sha256": "ba1afa5ce524959113f1b6e4b2a35bb115ff74955f20cd29cc552cb32fbb2e82",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/mosaicTiles/mosaicTiles.frag",
+      "bytes": 11187,
+      "sha256": "7e7bb1d434b5fca0d8b1c7001c5cc09096fb3ce74ba2cc618b1e5fb043619d21",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/motionBlur/copy.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/motionBlur/copy.frag",
+      "bytes": 388,
+      "sha256": "f42eee83cf0d11f3214793632fb8cc2ca65460de6d2d5af2f5cee827b56679ef",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/motionBlur/motionBlur.createinfo.json",
+      "bytes": 449,
+      "sha256": "24263f6998adc08832ce0085ed6e497898c6a21fa74d24f365393e6db5a744b0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/motionBlur/motionBlur.frag",
+      "bytes": 784,
+      "sha256": "a6e6787c815512d1522c40d98581c71fd9a94ff8d7544117e304020c68752ae5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalMap/normalMap.createinfo.json",
+      "bytes": 436,
+      "sha256": "d45b3af6c5803595bf3fba7df6c9d49505b50d00e559ffea7447abe7d173485a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalMap/normalMap.frag",
+      "bytes": 3924,
+      "sha256": "6e60eb2efbeebdc3fdef8f3519fc08717a3beede9c3a183f03666afb9d489e52",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalize/apply.createinfo.json",
+      "bytes": 411,
+      "sha256": "f2aa39982929f500437131659561a0fadc6cde732a33e09a59e33695304c1f69",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalize/apply.frag",
+      "bytes": 679,
+      "sha256": "ea0c72bff8f8ece303eff681ceffc1edbf7cba5e559f87036199611835b4ec39",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalize/reduce.createinfo.json",
+      "bytes": 354,
+      "sha256": "c9a7d10d242258f3f0cdfb6a509f93a9af8f43c5548e7058fbd1c8fa58aaafdd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalize/reduce.frag",
+      "bytes": 1408,
+      "sha256": "dd7587190899e7a55a64ece0771d1465c4c06cd5aa31285d1d398082bd5349ac",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalize/reduceMinmax.createinfo.json",
+      "bytes": 354,
+      "sha256": "c9a7d10d242258f3f0cdfb6a509f93a9af8f43c5548e7058fbd1c8fa58aaafdd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalize/reduceMinmax.frag",
+      "bytes": 1205,
+      "sha256": "c4047f6a0c7b3a6f6853d777e0a4d87b4a85e45408d4cad3c93d5c0033e6a1a7",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalize/statsFinal.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/normalize/statsFinal.frag",
+      "bytes": 976,
+      "sha256": "298fcbff023cc26f6ec66eaa427bb69371a5b2c73304d9e93c87736be075eee3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/octaveWarp/octaveWarp.createinfo.json",
+      "bytes": 749,
+      "sha256": "9c2f85d5d1b972e96c557432d58b7f51ef3ef7aa27dcd485b93a5e8bfd76aac1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/octaveWarp/octaveWarp.frag",
+      "bytes": 4650,
+      "sha256": "9c14a1a628fac3ae9c60f1633c5c62a28b9397d0e5d1335e045225f7e6ebc837",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/oilPaint/oilFlatten.createinfo.json",
+      "bytes": 299,
+      "sha256": "6abb20dd3c1304bc82711ea5cc32591c0b7e9cf07e15672fe4c71fc634048a03",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/oilPaint/oilFlatten.frag",
+      "bytes": 7352,
+      "sha256": "a4ba20ff499faf86483f262e0b2f39a18c98eb01260047672aba1d8475b45513",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/oilPaint/oilPost.createinfo.json",
+      "bytes": 579,
+      "sha256": "d938a68db13320af10a6ef292917b416f131acd108bf786fc051913f7c2b030f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/oilPaint/oilPost.frag",
+      "bytes": 5381,
+      "sha256": "5e75a8bbc20e6494efbc4db0e5b780594e104676e3ba2670b65f6dd50904a646",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/osd/osd.createinfo.json",
+      "bytes": 655,
+      "sha256": "f4a0352aeb560e6d78100075fea902bcb70014bacd448c4e1994cc2d25d01096",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/osd/osd.frag",
+      "bytes": 5936,
+      "sha256": "ed1778e24533ec58ae01dde6c8813bcacc3cf32cae7ccaede7aa095aab04e399",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/outline/outlineBlend.createinfo.json",
+      "bytes": 458,
+      "sha256": "2d45f6a99f78c82717d6ecbe9feba101a3f6b3458d2c7152f8e89ace37149f47",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/outline/outlineBlend.frag",
+      "bytes": 912,
+      "sha256": "9f1590d11e79335934e9c90973d2a0793491418ff412df3766d240ae4b3a4d73",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/outline/outlineSobel.createinfo.json",
+      "bytes": 500,
+      "sha256": "463585cd6f8674d08354e710d0fd2f3aadc0bff94488dbcbfc950497702bbbe2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/outline/outlineSobel.frag",
+      "bytes": 2270,
+      "sha256": "fed9c972d480af34b63a80041189043bf5ec1652858a33525901a2303e7c0e4f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/outline/outlineValueMap.createinfo.json",
+      "bytes": 354,
+      "sha256": "c9a7d10d242258f3f0cdfb6a509f93a9af8f43c5548e7058fbd1c8fa58aaafdd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/outline/outlineValueMap.frag",
+      "bytes": 1735,
+      "sha256": "2855351aee311a3b836d20ef15de0119f86a0153f12466ff39f538fbca739650",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/palette/palette.createinfo.json",
+      "bytes": 613,
+      "sha256": "fed6449801275c420be93d1b66b1eccbe8078c6359897e011f585ff409b2a7fc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/palette/palette.frag",
+      "bytes": 10488,
+      "sha256": "abdef52c0e2606b56bfa255a426c746a5e1c62a99754aa89b8b3ef4d39e0cbb6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/parallax/parallax.createinfo.json",
+      "bytes": 499,
+      "sha256": "655fbb633a55fe85373349b444e9aeff19aabe41a22b63b3d6d3f25c74c308e0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/parallax/parallax.frag",
+      "bytes": 2476,
+      "sha256": "5fdac814b8bedc2bbb868b67004801683aa3944635a58ad9d379b5aebefcc638",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/patchwork/patchwork.createinfo.json",
+      "bytes": 537,
+      "sha256": "1c557a25fb08cd52f18a8d861a541893e36acf0dfd1f209bc8c1f1a39a099e01",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/patchwork/patchwork.frag",
+      "bytes": 10428,
+      "sha256": "d19f731b8342f319445ee2345dc5356e5e82b8485f25024e62b503064f739234",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/photocopy/pcBlurH.createinfo.json",
+      "bytes": 347,
+      "sha256": "b6b0a86533f9fe80eba624648143ce7e8526847b373b9e117e539889b7a41865",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/photocopy/pcBlurH.frag",
+      "bytes": 1138,
+      "sha256": "b96d1907b6cceaf8d12fb68ddeaccaddaaf7a17a4329c67356052693fd5bb1fc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/photocopy/pcBlurV.createinfo.json",
+      "bytes": 347,
+      "sha256": "b6b0a86533f9fe80eba624648143ce7e8526847b373b9e117e539889b7a41865",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/photocopy/pcBlurV.frag",
+      "bytes": 906,
+      "sha256": "70a1c1e43b04ed525fb9d390530584930fc99951b5ed390b982fbce2778d9bd3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/photocopy/pcCombine.createinfo.json",
+      "bytes": 495,
+      "sha256": "9fab520715651cb3712baff6f57e085010fd2de9b7cc0e3d52629e819bf0b25c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/photocopy/pcCombine.frag",
+      "bytes": 2899,
+      "sha256": "5521bbb7c6d7b17a73b6b20036b86cca4948f13bd1040ca68024f9d376c5bfc8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pinch/pinch.createinfo.json",
+      "bytes": 620,
+      "sha256": "1aeb3b8ecb26bf75582dddb51f6efc32bd84dff7f7fa10437633577e8176ebcc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pinch/pinch.frag",
+      "bytes": 2134,
+      "sha256": "11e4ff3a0d0f62d64dc2c04fca5a6a23687f0cc168db0ad0c9e9227456234b9f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/computeRank.createinfo.json",
+      "bytes": 253,
+      "sha256": "7485e93b74a185574b0aefaf43a2718a33413223edb4da80c21a34d6c2e0ff50",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/computeRank.frag",
+      "bytes": 1441,
+      "sha256": "018aa4e21d507268dd7eda97411b7f674230a4f7da9ef29e0cd14b46b6b78018",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/finalize.createinfo.json",
+      "bytes": 533,
+      "sha256": "3387d7cb169834aaca17124a4ddef526b962787e6be35e00f980eb6c8458064c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/finalize.frag",
+      "bytes": 1700,
+      "sha256": "215a8cecd9872a8540a6ca151a8e1c0112af7238fee46bb6c8bc98018d0cabc9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/findBrightest.createinfo.json",
+      "bytes": 253,
+      "sha256": "7485e93b74a185574b0aefaf43a2718a33413223edb4da80c21a34d6c2e0ff50",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/findBrightest.frag",
+      "bytes": 1066,
+      "sha256": "93aaed4e5eac265a6743b7c801c148652c7083abf72985ee79086d96fcb9b5df",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/gatherSorted.createinfo.json",
+      "bytes": 375,
+      "sha256": "e4d5e1e92415c66a85ba2a7749d1568c11c335eccfa062f63931c79185bba093",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/gatherSorted.frag",
+      "bytes": 1733,
+      "sha256": "e3431aacacd165d7947ee5e7bdabbb51fa5162f6d580bdd9d9e5d9fe2cee7996",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/luminance.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/luminance.frag",
+      "bytes": 1302,
+      "sha256": "73c2734db6414416f5b084b1260c842d127bcfdc479f9c9149c22c7cee9a981e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/prepare.createinfo.json",
+      "bytes": 472,
+      "sha256": "6c21f1a8c8c6baf797b19917cda0537261d25c430748b364de80fddf2c1958ae",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixelSort/prepare.frag",
+      "bytes": 1174,
+      "sha256": "f2f20f5f8f0cb2ecc526deb73c7afd7a8a8a427e2ed564fe4e59e1a252f330ab",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixels/pixels.createinfo.json",
+      "bytes": 395,
+      "sha256": "dead49e8dc6e83bb8b828e7b70f645680a030aa02449775d3dfd28fbf54bf2f1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pixels/pixels.frag",
+      "bytes": 1055,
+      "sha256": "69c1da1a6319ee2a2b4278bdd8ad60468fd956d36f1cc14bda883fa61237b5ce",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/plasticWrap/pwBlurH.createinfo.json",
+      "bytes": 347,
+      "sha256": "b6b0a86533f9fe80eba624648143ce7e8526847b373b9e117e539889b7a41865",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/plasticWrap/pwBlurH.frag",
+      "bytes": 1239,
+      "sha256": "8eecbeeea5fb855ce48fef4960f89a2cd5df1f81776c1e21628354f2a07c8140",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/plasticWrap/pwBlurV.createinfo.json",
+      "bytes": 347,
+      "sha256": "b6b0a86533f9fe80eba624648143ce7e8526847b373b9e117e539889b7a41865",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/plasticWrap/pwBlurV.frag",
+      "bytes": 925,
+      "sha256": "c9472b4969e462ea6d08aec581ed00d54e56df7578dfc692dcc17e3c59b30f6e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/plasticWrap/pwSpec.createinfo.json",
+      "bytes": 503,
+      "sha256": "ded7723f7e0362f2d314c3caf6efecae41fe23620fb1c2c2f75fe21c9572492a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/plasticWrap/pwSpec.frag",
+      "bytes": 4032,
+      "sha256": "ea49f6bc75f8b8ec82b4ad7b69cdad5adfcd134c457cbf1906836908d2113080",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/polar/polar.createinfo.json",
+      "bytes": 659,
+      "sha256": "8d8f118c373fdc8ee720aae8c893ea882e4d508c3459e371dc6e084518611260",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/polar/polar.frag",
+      "bytes": 1844,
+      "sha256": "71241261fba5508872ab815586c850e2b4b008d9ec6dd728a99d2f257a5217f5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pondRipples/pondRipples.createinfo.json",
+      "bytes": 610,
+      "sha256": "99f4536b22e19705072a03700b566144f4e2ab933e68e827003cf8cbbd232765",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/pondRipples/pondRipples.frag",
+      "bytes": 5041,
+      "sha256": "70e4e5ad182ba4b71c3b067fba6d5903a3905433a2c0f6f207a71def1a57b8a4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/posterize/posterize.createinfo.json",
+      "bytes": 484,
+      "sha256": "e0c896b38d9eb7f0660259db211a546f664bb9e8c41badaebbcff44281d43cdc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/posterize/posterize.frag",
+      "bytes": 2546,
+      "sha256": "957140fd765b049e476e7a08c2c637c538f55786d9cf7a22914ccd30fb7f4459",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/prismaticAberration/prismaticAberration.createinfo.json",
+      "bytes": 720,
+      "sha256": "123304f67a791b121a40222fdca655d0cfa912a9ca5ec901c98b7651cc29b0b8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/prismaticAberration/prismaticAberration.frag",
+      "bytes": 4012,
+      "sha256": "2d3489fae87201a722c89854fff4c2182f97a44ec150269d160b059ee14634e4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/reindex/nmReindexApply.createinfo.json",
+      "bytes": 507,
+      "sha256": "0b3ebab2bba8e8055e4a3de5cc7d6c871705d9847c233831f181a05d1b6bfb09",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/reindex/nmReindexApply.frag",
+      "bytes": 2502,
+      "sha256": "47f102b623fe0f365ff3d1304c70009969f3fc7f07b63cec2b0cf754b25b741b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/reindex/nmReindexReduce.createinfo.json",
+      "bytes": 255,
+      "sha256": "e1dbd1e9dc6fe847d6703280c3a579239a0cf7a1e23699f43c200c09f231bd97",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/reindex/nmReindexReduce.frag",
+      "bytes": 1308,
+      "sha256": "f84417cdc6de45c81012a50a11231ba21f93d9fee2199b2923f5d7aeae748f86",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/reindex/nmReindexStats.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/reindex/nmReindexStats.frag",
+      "bytes": 2412,
+      "sha256": "6dc5bb9aec1040cd0c9402a0e540944f4b4198f0e226a4e56d67bd01ef1c6e44",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/relief/rlBlurH.createinfo.json",
+      "bytes": 351,
+      "sha256": "bf4d8a8d4306437823f0bf7c1ad060b39cc5f2de78c717142e0b70602c2ececd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/relief/rlBlurH.frag",
+      "bytes": 1393,
+      "sha256": "bccff58f07766b7fc31b4e512170b9bb8fb2104cec834c8f200fd9b89dc95437",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/relief/rlBlurV.createinfo.json",
+      "bytes": 351,
+      "sha256": "bf4d8a8d4306437823f0bf7c1ad060b39cc5f2de78c717142e0b70602c2ececd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/relief/rlBlurV.frag",
+      "bytes": 966,
+      "sha256": "9a1eccb6f72aa0a7d15aed5d98cd98c0fe915cbcfdcb2da3db52c74f59a45b5d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/relief/rlShade.createinfo.json",
+      "bytes": 677,
+      "sha256": "0b185d3c09c3a802dc904abb87c504a583f3aaa07589102bbdf573fcdd032957",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/relief/rlShade.frag",
+      "bytes": 5694,
+      "sha256": "42a4357b3f552fb742cb39a6f22634e940fce0481c6abc5778ca09e957466a83",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/repeat/repeat.createinfo.json",
+      "bytes": 646,
+      "sha256": "5403581e0b809e4253fe1b01720af534668f700a365eea92216a9827352c6dae",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/repeat/repeat.frag",
+      "bytes": 1209,
+      "sha256": "9ff9b107cc81fb838b89a37940167a51f1416413128f074cbdc7dfef13756929",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/reverb/reverb.createinfo.json",
+      "bytes": 524,
+      "sha256": "6e2eff8e8da6b0dbe03a40bbbb6ea3270de1c030c17ae6acdd0a99c26c8ee739",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/reverb/reverb.frag",
+      "bytes": 1694,
+      "sha256": "9c114014aa0a13423d9b6666308a5bd22aa36a85d3684d62f2d3dafca6a35f9f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/ridge/ridge.createinfo.json",
+      "bytes": 396,
+      "sha256": "661a8b300091af654e5a635de7b8e0614f1ccd23d29195eeee5eef442788bdf6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/ridge/ridge.frag",
+      "bytes": 762,
+      "sha256": "562392b67067a80fb8ebe7d96d7ec5c1c75622ec6d698687d9d4a3b5265ceb04",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/rotate/rot.createinfo.json",
+      "bytes": 423,
+      "sha256": "ee0a0094d861cedbb14ecab0c40195f426c1d6ee4e395202ed0a281d2f998555",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/rotate/rot.frag",
+      "bytes": 1153,
+      "sha256": "70a794ad9f33d853bc1541236a92910ab0c90d9a72761165d92300bb6ba85ac6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scale/scale.createinfo.json",
+      "bytes": 656,
+      "sha256": "a8f3c465f3a02a6910f805a705bbe8b5543d0a0514440cd1e3eb15130908655f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scale/scale.frag",
+      "bytes": 954,
+      "sha256": "8e15dc8b11b68134317190a4383f928df08df9d1819cdc027fbdcea6be282966",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scanlineError/scanlineError.createinfo.json",
+      "bytes": 662,
+      "sha256": "a202986c01c8b67e95c4e518732fb813442e73409cbeb85b7f56f00a80bf2c73",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scanlineError/scanlineError.frag",
+      "bytes": 13108,
+      "sha256": "9557e6e8bfcff1d9495ea550079a6b51c5c28bd20df00ad75fd4cf1484b63ff3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scatter/scatterJitter.createinfo.json",
+      "bytes": 432,
+      "sha256": "bb37f5450f5fd8156474e09ad861717efb258352134f9507fe47ce7012f2b4b2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scatter/scatterJitter.frag",
+      "bytes": 4404,
+      "sha256": "5315ae04c0b3e536f9c80e16997e2e32bcf5d96aeb416ab2e05e8b956d8d2abd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scatter/scatterSmooth.createinfo.json",
+      "bytes": 351,
+      "sha256": "bf4d8a8d4306437823f0bf7c1ad060b39cc5f2de78c717142e0b70602c2ececd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scatter/scatterSmooth.frag",
+      "bytes": 1125,
+      "sha256": "c9b112a1d7a1f1fa926f885a668d5bf04ac26163e977683a6c91b43663a6eb35",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scratches/scratchesBlend.createinfo.json",
+      "bytes": 359,
+      "sha256": "0592a463b1985f2b682b054ea8db25210befc80d63d0ac1e1a3170b7b9dd8592",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scratches/scratchesBlend.frag",
+      "bytes": 496,
+      "sha256": "0ddfc12d3bd092764e7bf6636c8c806242c093bc6b63c9532e42bbfd9659f5de",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scroll/scroll.createinfo.json",
+      "bytes": 685,
+      "sha256": "45e7d6ccbfed7bb6a24372807ed2dafb3241d9192a91caeb3f9666e19bd5ad45",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/scroll/scroll.frag",
+      "bytes": 949,
+      "sha256": "6a79996ca897c8ac9f08b44fb6cfa449db9e1f794c047daba121516ec7b4244e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/seamless/seamless.createinfo.json",
+      "bytes": 383,
+      "sha256": "37e88dd23330d13cb62d1f60f6ff7cbed2175c013f906788d36149694dd2a60e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/seamless/seamless.frag",
+      "bytes": 1489,
+      "sha256": "098c714eb107be1c5aaeb6b0b9fbc1fe2daf5ed0567401a62daa7a65c15ec3b1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/sharpen/sharpen.createinfo.json",
+      "bytes": 445,
+      "sha256": "aba74de99e89c7b967781530812f5d971fadbf2d720f286643b8baeee2b44dca",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/sharpen/sharpen.frag",
+      "bytes": 1593,
+      "sha256": "8833f1a380ca1f263c047771eca3baaf01902ea7258385b962dcfb544362faf6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/simpleAberration/chromaticAberration.createinfo.json",
+      "bytes": 449,
+      "sha256": "da13a94c26e3722f9975797e9239ff53cda687a06d434316c4752e556de0db40",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/simpleAberration/chromaticAberration.frag",
+      "bytes": 1080,
+      "sha256": "2efdd7537b0b373f83ca8e70cbbe41852a1af4407d2db51e761c7155458c183a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/sine/sine.createinfo.json",
+      "bytes": 443,
+      "sha256": "3409a65402133b431822c64e9d0a57d5a7c85372716d37bc6e89a2638df0a807",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/sine/sine.frag",
+      "bytes": 979,
+      "sha256": "27669471884aa3e17fb38005593da2ae7162edb889b1df11108a7fd750690688",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/skew/skew.createinfo.json",
+      "bytes": 532,
+      "sha256": "f33657b84b0744448be5bfd878afbf1c74e370bb7f6cf2de7bfa77e651ca15aa",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/skew/skew.frag",
+      "bytes": 1618,
+      "sha256": "6c9ad4c235b75ace7950c25556d203172091843af3a23891df9d477c48c11b34",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/smooth/smoothBlend.createinfo.json",
+      "bytes": 677,
+      "sha256": "da0e726e05f798b6d0cf6e07964f5e9b8ee3840609faaef500754ac017677fe4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/smooth/smoothBlend.frag",
+      "bytes": 6681,
+      "sha256": "99630fe9d8a0786b78dc284828ad91e9f6813a8b96484753e0cabf1fd12bfde0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/smooth/smoothEdge.createinfo.json",
+      "bytes": 445,
+      "sha256": "30b65808b1883107a213239cb389b1b99cd904a38f01d98e7377dc37c2cea55d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/smooth/smoothEdge.frag",
+      "bytes": 1490,
+      "sha256": "3964693bec989cb889ad8b415f73c30179e174c0acabfab3ae8e675aa08d3bb6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/smoothstep/smoothstep.createinfo.json",
+      "bytes": 438,
+      "sha256": "ec93c8a16f16ab82e35ef40328587be72238f50be1c88135cb86582e1a180639",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/smoothstep/smoothstep.frag",
+      "bytes": 503,
+      "sha256": "2871841d5f409228edf882327aecddb28c3bf6412aa273c293856d999c6a1683",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/snow/snow.createinfo.json",
+      "bytes": 569,
+      "sha256": "2c7db87c8868ca90e7bbfe57e466a7a7661a165f72e2851754b6c2d6ad2d4ddb",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/snow/snow.frag",
+      "bytes": 2839,
+      "sha256": "c07439adbb497c36047f5ed7be7970115c3ea4a3dfff6fbf466a71c9d5403f48",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/sobel/sobel.createinfo.json",
+      "bytes": 487,
+      "sha256": "92eeac912cec88a37faad53a0f385a617d6849e293b6a9747557499247d807d8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/sobel/sobel.frag",
+      "bytes": 2053,
+      "sha256": "e56991faf35c14636132bca59659f153a2165f14648da46d71ba0c3ac1d7fbab",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/spatter/spatter.createinfo.json",
+      "bytes": 607,
+      "sha256": "7969374dc6b379d94d76a3928880cebe0457cf3cd10dab7eea9a45a0c98ec33e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/spatter/spatter.frag",
+      "bytes": 7890,
+      "sha256": "cb41b27f0e56d81990e9b090573c62c5bea627fc46ac6526f5e901e539016b97",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/spinBlur/spinBlur.createinfo.json",
+      "bytes": 531,
+      "sha256": "a2a01add9c016d8c56962e925c8b11cd140579037b70508b5ddff5644b3f6286",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/spinBlur/spinBlur.frag",
+      "bytes": 2962,
+      "sha256": "6112a72e5f6fe6945218dae928d951de388c64fbc3abf63b7de05b3135d475af",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/spiral/spiral.createinfo.json",
+      "bytes": 701,
+      "sha256": "a40158f2ba9641fe19deb5e428573fdef1010338315fda89be27a42a9403f466",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/spiral/spiral.frag",
+      "bytes": 2668,
+      "sha256": "3328d75179580fbe18340c1e28475d38a402e7b3cfb31563d9fb7c0ebf29198f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/spookyTicker/spookyTicker.createinfo.json",
+      "bytes": 509,
+      "sha256": "f7a4778968c7a207bf1d81c63258b6914856d84e73c0e6b8f3d7ac403ac002ab",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/spookyTicker/spookyTicker.frag",
+      "bytes": 4253,
+      "sha256": "b03e11a62a9927433423f3c92cb6f3869f5fa46172226ca6edcc1d955c890bfe",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/stamp/stBlurH.createinfo.json",
+      "bytes": 351,
+      "sha256": "bf4d8a8d4306437823f0bf7c1ad060b39cc5f2de78c717142e0b70602c2ececd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/stamp/stBlurH.frag",
+      "bytes": 1162,
+      "sha256": "beda9d077017685f0cd8576398c9caf68709bb51c849638ff7d67f7362edbde2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/stamp/stBlurV.createinfo.json",
+      "bytes": 351,
+      "sha256": "bf4d8a8d4306437823f0bf7c1ad060b39cc5f2de78c717142e0b70602c2ececd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/stamp/stBlurV.frag",
+      "bytes": 903,
+      "sha256": "121077e1c5b2f658761570a3a339c21f1a22d0108a328eea90ef167e4a33e65b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/stamp/stThreshold.createinfo.json",
+      "bytes": 586,
+      "sha256": "23b8a5202d0c49379718af5ca65fd022c109c681aaa14e004cc3e825bc19dbfc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/stamp/stThreshold.frag",
+      "bytes": 3332,
+      "sha256": "0cc786dbb2c454714dfeb45f89f930b69c05c95fbaebecf4be9f0b2ec9600ef6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/step/step.createinfo.json",
+      "bytes": 445,
+      "sha256": "005f28654f871a873c4d998482f2d461cb31a9c73f0373813229ec463208637f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/step/step.frag",
+      "bytes": 643,
+      "sha256": "8b4f0fde3a11fd679c6167548ba120511b0f79d478e0f4bbc915f230c9e2a257",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/stipple/stipple.createinfo.json",
+      "bytes": 570,
+      "sha256": "e1dc542712ded7047cf701ad5591f23c288e3380f4054b19fbc69e2f611541e3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/stipple/stipple.frag",
+      "bytes": 8359,
+      "sha256": "ee378638b0bfdaa38a56928f70f791ca7448f2499b3e189e73e058f6dfa2f524",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/strayHair/strayHairBlend.createinfo.json",
+      "bytes": 505,
+      "sha256": "84f0405c73df87f88eacd9a7bcad4ba4763b0b1a7434443837b0414bd9393adf",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/strayHair/strayHairBlend.frag",
+      "bytes": 591,
+      "sha256": "9c459ba3731fd6c3611fad9b0dbef98db38cae76f25d29fb2ba2b90e0627c89d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/strokes/stkPost.createinfo.json",
+      "bytes": 407,
+      "sha256": "1fc0a8a07959e2a4255644481366df4a588e7b2e1ecac1e71257f06c71aad6ae",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/strokes/stkPost.frag",
+      "bytes": 1330,
+      "sha256": "50dcbaf64fdf5e53b68fcd3d76f332513d5cb01caf8f31004a4f0606a38aaa6d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/strokes/stkSmear.createinfo.json",
+      "bytes": 489,
+      "sha256": "95f14417bf17c18801387fd6d438208e1e97f3c375c5b6a4fd97f0032a664f33",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/strokes/stkSmear.frag",
+      "bytes": 14681,
+      "sha256": "47a8c9ecd3079358bf903da9c841ca7195f1ef9854f79b25f081c443501737c0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/temporalAberration/delayShift.createinfo.json",
+      "bytes": 253,
+      "sha256": "3ffbd64bc25bcba9deaf44d484b2fc14ae6b6310a3d9c1718a56d1a142503ae0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/temporalAberration/delayShift.frag",
+      "bytes": 698,
+      "sha256": "77bc0902b344780157805767c5067c52669a82c4425aa298d2353d96f8453e04",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/temporalAberration/temporalAberration.createinfo.json",
+      "bytes": 804,
+      "sha256": "cbc1c31040f4a6732f7ef08ba92e5a430072001d97a4a0720062984b5d2ccde0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/temporalAberration/temporalAberration.frag",
+      "bytes": 2042,
+      "sha256": "6cb95d5d5e4859c69ba2347389f708e314bd2fa56f6e167acd52fa61f9ea22f6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tetraColorArray/tetraColorArray.createinfo.json",
+      "bytes": 1465,
+      "sha256": "79e6261e1dba8e472d77fb0d3fd67e65de5ee08fff9c52beb78a635eb12c0be8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tetraColorArray/tetraColorArray.frag",
+      "bytes": 9161,
+      "sha256": "9a43d1312b056efafb7449fafa3098a07dfd16d88e56eb66a81e53bb3f74ce75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tetraCosine/tetraCosine.createinfo.json",
+      "bytes": 1120,
+      "sha256": "07d28205b76dadb38976c4b34ce897092654569c79f240bb69f17db47c7f53e9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tetraCosine/tetraCosine.frag",
+      "bytes": 4867,
+      "sha256": "643f0fa9262d535d8f635172ba05018cbbcd560972eb136a3338608b8a08c43b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/text/text.createinfo.json",
+      "bytes": 551,
+      "sha256": "a11b8176870020ce3b2880313eaeed90bc0919e8240947bbe9c928d5f4294a0b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/text/text.frag",
+      "bytes": 1857,
+      "sha256": "a27a135444b002a8147670fc365710a9197108f4a870c8845310b27b61849878",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/texture/texture.createinfo.json",
+      "bytes": 610,
+      "sha256": "d24806ee24368999443b2d70a29af59824738d272084634c0ad168f18465df95",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/texture/texture.frag",
+      "bytes": 14506,
+      "sha256": "0d81a97810d08d8a249ee064ecf1c040c812413a00ea25a261ab107b7024172e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/threshold/thresh.createinfo.json",
+      "bytes": 442,
+      "sha256": "75ae62772271cf873dc9f1edcfdfcd2436993a42da8ac2f2103e36efd1d141c8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/threshold/thresh.frag",
+      "bytes": 493,
+      "sha256": "6086e00e32d18a76a0420e18c0eff0ae82f9a84acfd232041b9fb9e6471ee638",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tile/tile.createinfo.json",
+      "bytes": 658,
+      "sha256": "e981948fd026d65724b789728d46e2515a696857dceb465662d1a91b6ffd018c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tile/tile.frag",
+      "bytes": 3345,
+      "sha256": "fb85a4179efb3e20948b82cac2b56f6fc64c9b907c22b09a0fb45494812862c1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tint/colorize.createinfo.json",
+      "bytes": 478,
+      "sha256": "b4da192ba992cbf2fa15ee03ff77f527112612d2db2e97e34b04ef6f6431cefa",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tint/colorize.frag",
+      "bytes": 1971,
+      "sha256": "4b4a5d6558e1c50786b4e72552e6d94cdedf3b7860e810173682e55d896f98b7",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/translate/translate.createinfo.json",
+      "bytes": 469,
+      "sha256": "9bdf24c68f819a5342ee8b54deccc67ba971a707e70da795d6bf70ebac45a1cd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/translate/translate.frag",
+      "bytes": 691,
+      "sha256": "f5aef5a95a50253e1bbfd3f25ee47683c001824532ff77687be1491530109cdf",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tunnel/tunnel.createinfo.json",
+      "bytes": 698,
+      "sha256": "918536c27f45103d32bd9d586d20534c01f0f1e9ed246221b93cdfe75dc4e381",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/tunnel/tunnel.frag",
+      "bytes": 2861,
+      "sha256": "5fca93a834c81935aa42f5e9e5de80495b1ad426df1e79b73c49b8b8495ccff9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/unsharpMask/usmBlurH.createinfo.json",
+      "bytes": 347,
+      "sha256": "b75c9f9dce57eb58edff64f19e550dd39abdd07865aaa22e27ce5614d683988f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/unsharpMask/usmBlurH.frag",
+      "bytes": 734,
+      "sha256": "16c1f672489f23df5e3cc733d2783b76b1b8bf33009c859922f1df87912255e7",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/unsharpMask/usmBlurV.createinfo.json",
+      "bytes": 347,
+      "sha256": "b75c9f9dce57eb58edff64f19e550dd39abdd07865aaa22e27ce5614d683988f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/unsharpMask/usmBlurV.frag",
+      "bytes": 732,
+      "sha256": "1ba5e423386965ffcc94ed7ebe95fa8d620b66a7c519bf4f20fc47073e2666e5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/unsharpMask/usmCombine.createinfo.json",
+      "bytes": 449,
+      "sha256": "4a6e9c52801384402b74999f10b4b8745b7e87ffaa68c369fab36fe2353a5a88",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/unsharpMask/usmCombine.frag",
+      "bytes": 802,
+      "sha256": "a8ffa9e039d20a607a957573520f2d36b0467e8c4b383aa5a4352556ef18204e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/vaseline/upsample.createinfo.json",
+      "bytes": 490,
+      "sha256": "fbb9dc82639fd5d9dbac57ac211e95b080fc68e1e9d7125d25c837351e96bed1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/vaseline/upsample.frag",
+      "bytes": 2437,
+      "sha256": "dd68f91244e688733d793c3965f3c83e38204340a513d8a03e2d50d9e20589fa",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/vignette/vignette.createinfo.json",
+      "bytes": 451,
+      "sha256": "c949cb62f0ca67b30619ae5f085834ba4cd6c2d3847f336934eba489c28846a1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/vignette/vignette.frag",
+      "bytes": 1355,
+      "sha256": "7ace071fde3e2f5ad80e2cd83e12ded1e42cd59f44b6be6ae52766cb040d60e8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/warp/warp.createinfo.json",
+      "bytes": 691,
+      "sha256": "113183125ba9d8ded0b584306d91cb3120e9d5b9f0f2e4091adbc02399da6ad8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/warp/warp.frag",
+      "bytes": 2883,
+      "sha256": "ab7e8d771e142a7f1eb1fcc71ba263835a6c7c4ab52213a63cbc76ef43eca313",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/watercolor/wcComposite.createinfo.json",
+      "bytes": 513,
+      "sha256": "4768bad12a8535c53e073327fdb31df8f7467f5cc8f7cf0c7c743b571b937922",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/watercolor/wcComposite.frag",
+      "bytes": 3659,
+      "sha256": "d7a4991fbd5bffb9314cd858499d1b783081920bc4db5d7171976c49980881b5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/watercolor/wcSeed.createinfo.json",
+      "bytes": 304,
+      "sha256": "e3eae5a3748bc452cf5a2f60729d1cfcab3f0b91199989fe0e5ed4c8cc63e206",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/watercolor/wcSeed.frag",
+      "bytes": 380,
+      "sha256": "a5b14cb82cca886fef904e43c4dea311182c1243cd3f51f215948a57b4b5e2a3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/watercolor/wcSimplify.createinfo.json",
+      "bytes": 347,
+      "sha256": "b6b0a86533f9fe80eba624648143ce7e8526847b373b9e117e539889b7a41865",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/watercolor/wcSimplify.frag",
+      "bytes": 2207,
+      "sha256": "b21d3aa24e18c8a42c1893925e85c66ad010b5ae46092dcb93591241b18a4528",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/waves/waves.createinfo.json",
+      "bytes": 697,
+      "sha256": "d482983e3cc4702f51cbd4e7e59af8ab389edc44bf86c9b61c1f65cc498012c6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/waves/waves.frag",
+      "bytes": 2423,
+      "sha256": "37fb0c1ecaf98155bfbd31123b685a272adc957be42ed217c5af12e157746abe",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wind/wind.createinfo.json",
+      "bytes": 485,
+      "sha256": "1e4ce59688ef07acdf081b220b8de07b3090813474090985fd37d7a36a5aa365",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wind/wind.frag",
+      "bytes": 3431,
+      "sha256": "f38a991d093b3fb1e3704308aa3c059b966b4f1a4dfb59cd2caea3dfd8a8f392",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wobble/wobble.createinfo.json",
+      "bytes": 424,
+      "sha256": "13f33737c8d4def2fab29b088ca3e237859e4a3526e8dfa205d7779741137433",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wobble/wobble.frag",
+      "bytes": 3062,
+      "sha256": "7a715fe840252577f72cf47ab70b9d586c30841454d372d29c5e2b213ac067d0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wormhole/blend.createinfo.json",
+      "bytes": 499,
+      "sha256": "831bd02158ca9048fdaa23fde49a82fd8073d167e20aeb50114dfc8633e91b9e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wormhole/blend.frag",
+      "bytes": 1550,
+      "sha256": "34f79b4471e486ffe335d03a0b5319f6d63ed942c98b007caf45f10b02075d56",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wormhole/clear.createinfo.json",
+      "bytes": 196,
+      "sha256": "71447af7921c74ca25f8b32e247bfc208590ab07929cdbe20e157e08f225ae53",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wormhole/clear.frag",
+      "bytes": 43,
+      "sha256": "879826cfbce49d3aa8016b96a76c4b934e9658da1a6369467e1ac0e81cf1c8bb",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wormhole/deposit.createinfo.json",
+      "bytes": 642,
+      "sha256": "eee4861cc15d754336c2dd8279519ce8aca140d95ef67e94f664d2d5f147bcbe",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wormhole/deposit.frag",
+      "bytes": 40,
+      "sha256": "49649e290d101ae9dd87de098a8b5086fb47d422301cbe0f95818c83866ecca9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/wormhole/deposit.vert",
+      "bytes": 2456,
+      "sha256": "bb185e6e77cc035b05e0ec94d594337c68e4bd30e7764314b7b851c3c4b16e23",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/zoomBlur/zoomBlur.createinfo.json",
+      "bytes": 399,
+      "sha256": "0dda1596a0b25508bd6f2e0ed88a98c19bbf94d72cefb82be58b872ad9a8ec71",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter/zoomBlur/zoomBlur.frag",
+      "bytes": 1455,
+      "sha256": "2e5a693fa98967ebe86f73fdfd912ac1e29090c5e2931543f4052234422db84c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/agent.createinfo.json",
+      "bytes": 879,
+      "sha256": "f1b463dd12e7d4090fa3a8c923f2caf1934064ae6bc19c033b97a91d4b89716d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/agent.frag",
+      "bytes": 9528,
+      "sha256": "94b2998bffc2246a17e9daf4f8839dedc181da3da8852faf1a5b16a271d1111d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/blend.createinfo.json",
+      "bytes": 366,
+      "sha256": "2cca41d9a34ada50f404a34a3f2eb4019df712b2ae376e2fde7df2de206899d0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/blend.frag",
+      "bytes": 1139,
+      "sha256": "b5ef01d11aeb0da460f58efd1fc1ee375f51b7dbb47115d3c7fa04e419116cb2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/copy.createinfo.json",
+      "bytes": 256,
+      "sha256": "4531dd6ddf9c1334c1440901c40a59a56eb67cbfba1b39f49414100b31f090f8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/copy.frag",
+      "bytes": 509,
+      "sha256": "c1c5abb32636a74ed77980795d5d99092511b8813be8d9c784a9f6d12b4a6ed4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/deposit.createinfo.json",
+      "bytes": 576,
+      "sha256": "e405edf81ee6d22aa02293237fc984050a57f426b14a7f949f1920f5ee4928ac",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/deposit.frag",
+      "bytes": 118,
+      "sha256": "7c9ac161ab52791125174c46795edf44034d384eddb285fd44af21ba4ac7af04",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/deposit.vert",
+      "bytes": 2167,
+      "sha256": "c24b5584e389f041ac1fcabb7761ba3349479400b171dbaad599dfd40dd8e624",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/diffuse.createinfo.json",
+      "bytes": 305,
+      "sha256": "eef68a1ad887448a99413ecc312e70c1151a6a0047ba22cd777c59402fa2b7e3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/flow3d/diffuse.frag",
+      "bytes": 741,
+      "sha256": "2529129e5fb0375d66f8e9a482fed754a2cf0c3eafeb2eea3bff84fd8aeea209",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/palette3d/palette3d.createinfo.json",
+      "bytes": 519,
+      "sha256": "fc4db1ab056ef7135422474be5e804ccd8e6a0bbb2944626278fc57fc48e4369",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/filter3d/palette3d/palette3d.frag",
+      "bytes": 10518,
+      "sha256": "bef302b1b8a7a5830ce52b74b0fac39c49ce0f9cfdf917f095748a385704cd7e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/alphaMask/alphaMask.createinfo.json",
+      "bytes": 595,
+      "sha256": "24b339e21dbf726951c6312717ce9f7055ed89fc3baa49d599f677ed1cfa6c3c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/alphaMask/alphaMask.frag",
+      "bytes": 1339,
+      "sha256": "d117c93203be76e298a9ee54baeae517d3b35322a235a4acaa70bf0a088b3f46",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/applyMode/applyMode.createinfo.json",
+      "bytes": 534,
+      "sha256": "1d0977fd4a642afe143f4d3a26075e67da927e1f32c2d9c36286e3adff19fcb1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/applyMode/applyMode.frag",
+      "bytes": 1930,
+      "sha256": "e54e8e1eee07b06858164980561ed42b5b985cfa72490a890eba50bffb905edc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/blendMode/blendMode.createinfo.json",
+      "bytes": 534,
+      "sha256": "1d0977fd4a642afe143f4d3a26075e67da927e1f32c2d9c36286e3adff19fcb1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/blendMode/blendMode.frag",
+      "bytes": 4177,
+      "sha256": "883c6290bb8f069a38dad23a227400bc1691975dd6fc8511a911a076ac7e90d0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/cellSplit/cellSplit.createinfo.json",
+      "bytes": 742,
+      "sha256": "3ff14edc28d0826fd290b15af9e58dfdf46f64c68ee29fdffeb7f225f3365935",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/cellSplit/cellSplit.frag",
+      "bytes": 3831,
+      "sha256": "4dc9e4b3f2966e2d697ac1ef657afdafeba9b817eefa010b281ebc0eda60fbcf",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/centerMask/centerMask.createinfo.json",
+      "bytes": 623,
+      "sha256": "bbd3bb01c68387fa72bacb377ba4b08c5494fcbf8a79a454dcb9e70aacf6c365",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/centerMask/centerMask.frag",
+      "bytes": 4709,
+      "sha256": "f841e9bbb15e0e1ac911c15c65a0439c829fa40b2a53762ad86443b38f8d47ef",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/channelCombine/channelCombine.createinfo.json",
+      "bytes": 631,
+      "sha256": "dc8b80fffb883a2d42a2ba2417b672d2c40b1b69844ab2bb5056f8d87c9da7db",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/channelCombine/channelCombine.frag",
+      "bytes": 669,
+      "sha256": "352d15a6f6180b54079f03952d1f2d0592966c10ef6609eb4d2c053857ef489f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/distortion/distortion.createinfo.json",
+      "bytes": 758,
+      "sha256": "12c25ad13979f7814e070b03f771ecc5aa1a1759310ed1ccbc9cd08a6266656f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/distortion/distortion.frag",
+      "bytes": 7843,
+      "sha256": "50d707506101b141fcec56cd7c8305b94d1fd6655d5bdbda430ca5dab874e1de",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/focusBlur/focusBlur.createinfo.json",
+      "bytes": 640,
+      "sha256": "dbb9fbdf60b98249fe33ef863abd0b336379ae7ca1f34eaca0e929fe17273a94",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/focusBlur/focusBlur.frag",
+      "bytes": 2096,
+      "sha256": "7938cdc2fb2f4e4861cc7c05efa6f905a65c80824cd39c0c47bf74953b9c985c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/mashup/mashup.createinfo.json",
+      "bytes": 1246,
+      "sha256": "d91f8fa92dd8192246a9f9e6ecde4febd998390e830f2a836b72cf7d608cc377",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/mashup/mashup.frag",
+      "bytes": 2693,
+      "sha256": "dbf22d2cc6cacd83813e58ce5b7278e41bf24337b01738676ca48ddc6bf605f4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/patternMix/patternMix.createinfo.json",
+      "bytes": 719,
+      "sha256": "9ffe1d26ac8af083a54eb693086bfcb1bc37003c91c443f0ce08b4d01a5bb51f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/patternMix/patternMix.frag",
+      "bytes": 5375,
+      "sha256": "ef8351b849baadd580660c07b2eb87f9ea608c4058eaaeea9e4006813f7902df",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/shadow/shadow.createinfo.json",
+      "bytes": 891,
+      "sha256": "11267a467b2aa71c5104d5f5147db400e602f3616e32b692fc03e648dc5383ab",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/shadow/shadow.frag",
+      "bytes": 3816,
+      "sha256": "61f78a2bcfd1e50cb86899feb0b2cc2444e3ebdded9b3425bc4548aba5623604",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/shapeMask/shapeMask.createinfo.json",
+      "bytes": 831,
+      "sha256": "ce9dec07656703c771c29cb070cb2fd36d66a9746adea21fc7bd5bb8931ed9d9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/shapeMask/shapeMask.frag",
+      "bytes": 3522,
+      "sha256": "1a41791cbbb6622f42984977c963e166246acd999fa5ad310394104b7339263e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/split/split.createinfo.json",
+      "bytes": 711,
+      "sha256": "96d68f63b04e6032b7e8d9a906b8c8907cc2b0fc7e6e5a83b34b8116c53b5f2a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/split/split.frag",
+      "bytes": 1883,
+      "sha256": "5f0d0a98fc3a377c198d8544b62365b04a04292c7335275a991f2044f71632c5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/thresholdMix/thresholdMix.createinfo.json",
+      "bytes": 936,
+      "sha256": "150f0a88c1440ed6591eab7a0b0c89dd8120a6d7b045f0bf846ba03a20bec59c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/thresholdMix/thresholdMix.frag",
+      "bytes": 2702,
+      "sha256": "442d1310f6f3ec3395a6efaf2b093d0db854e6da6a97e3f4f179a6aa43640d4a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/uvRemap/uvRemap.createinfo.json",
+      "bytes": 662,
+      "sha256": "deba092779129d9ecee5a34cbaa5a6346432b9f6d886ab8adb6f0feebefe30b7",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/mixer/uvRemap/uvRemap.frag",
+      "bytes": 1329,
+      "sha256": "207a27e5e7d7534e59cc705d017b9753a9ae56a28a9e7051ca750a604b9fabe6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/attractor/agent.createinfo.json",
+      "bytes": 707,
+      "sha256": "6e5d2f7477f4fce1f4e9fc9570c5ebfcac10050570e854989d4ef26edbd83597",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/attractor/agent.frag",
+      "bytes": 4707,
+      "sha256": "d2d5222c3001c525301bd777c70e3d41629036944d611e9e1d6a90d07dc3d0f9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/attractor/passthrough.createinfo.json",
+      "bytes": 304,
+      "sha256": "e3eae5a3748bc452cf5a2f60729d1cfcab3f0b91199989fe0e5ed4c8cc63e206",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/attractor/passthrough.frag",
+      "bytes": 230,
+      "sha256": "aae8376fc517b3e4a9158f525fe462bb84a0542d3812fc9b807984c017f0a84b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/buddhabrot/agent.createinfo.json",
+      "bytes": 834,
+      "sha256": "664f6cf269a8741885dddec0e54a183839c3bb950afb7f10fb14231feccce48d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/buddhabrot/agent.frag",
+      "bytes": 4533,
+      "sha256": "87892e6a0b2bc5c599c37af0dbf3367d2bc9e54461d2a2b8031b746adb198f6d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/buddhabrot/passthrough.createinfo.json",
+      "bytes": 304,
+      "sha256": "e3eae5a3748bc452cf5a2f60729d1cfcab3f0b91199989fe0e5ed4c8cc63e206",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/buddhabrot/passthrough.frag",
+      "bytes": 230,
+      "sha256": "aae8376fc517b3e4a9158f525fe462bb84a0542d3812fc9b807984c017f0a84b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/buddhabrot/zWrite.createinfo.json",
+      "bytes": 398,
+      "sha256": "e99b533b386a07044bf2432d9ec5c9ff46babfcdbac36e4b6acbbcd7be18530d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/buddhabrot/zWrite.frag",
+      "bytes": 828,
+      "sha256": "2f9a8b563c8ffc294fdb3da5767bbed2c8b1f1326fca8c28cd464e67416ddcbe",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/agent.createinfo.json",
+      "bytes": 962,
+      "sha256": "98c58f1adae88072b02520df5641e8ea5bfb3b7f23a5dce886f2483ced383a7c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/agent.frag",
+      "bytes": 5412,
+      "sha256": "d543f1ed92886516fb9505f56d6a548ca8b2334f365ede68a630bece7ec43e53",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/copyGrid.createinfo.json",
+      "bytes": 303,
+      "sha256": "b1b7aaafbeb35b26bad5bc073558a2b228bc480974cab72bd99f28539787e949",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/copyGrid.frag",
+      "bytes": 294,
+      "sha256": "edba4d4ff6e8c160e7f039b6c75f5b9e54cea1bc01e1c8f1ed951cc390fe679f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/depositGrid.createinfo.json",
+      "bytes": 643,
+      "sha256": "d07f96a9d7bfa5533eed18c4570d8e8e808d4455b9e28ffe6a5d45362db07216",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/depositGrid.frag",
+      "bytes": 352,
+      "sha256": "190b6d3633e396445e72ae48b8950b453795d05f6888e53b651add1ed978f46c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/depositGrid.vert",
+      "bytes": 1237,
+      "sha256": "bd29f6e410bed633e050ad99dbd5213394c9e00d2e66b4f20d515cc7e6df028e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/initGrid.createinfo.json",
+      "bytes": 481,
+      "sha256": "ef024b1ccd568711e02784e342b3dda20562860707638ed29b3bd7e35390ad36",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/initGrid.frag",
+      "bytes": 1734,
+      "sha256": "dd10ead24f5de9e1050e57c52f6a8230f297fd3831ba9ae39cd8aa9a1677d609",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/passthrough.createinfo.json",
+      "bytes": 409,
+      "sha256": "1e055567c0fca113129ac192eb8fc66287def30b43b6c7e452f70262253ab13e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/dla/passthrough.frag",
+      "bytes": 819,
+      "sha256": "8332e3bf607724f653396b8b83d5c9bb19b6d608264eb48936ec7d13288da219",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/flock/agent.createinfo.json",
+      "bytes": 1058,
+      "sha256": "e092758e5521ff39da834fd4498cc82bfd674b7b99f6b64430001e5ba6e3a83a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/flock/agent.frag",
+      "bytes": 9221,
+      "sha256": "a96a822518ee20429f9017825d2c940d4f632b3af71c18edf930ad9a0146e091",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/flock/passthrough.createinfo.json",
+      "bytes": 304,
+      "sha256": "e3eae5a3748bc452cf5a2f60729d1cfcab3f0b91199989fe0e5ed4c8cc63e206",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/flock/passthrough.frag",
+      "bytes": 230,
+      "sha256": "aae8376fc517b3e4a9158f525fe462bb84a0542d3812fc9b807984c017f0a84b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/flow/agent.createinfo.json",
+      "bytes": 913,
+      "sha256": "d2fff610154b30cc7537438caf71c8c09441811764aae9b699060abc48f8e182",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/flow/agent.frag",
+      "bytes": 5384,
+      "sha256": "a64cccae9564a088c047f94551028d113adedc8d9bb85bc06f33f15d9549384d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/flow/passthrough.createinfo.json",
+      "bytes": 304,
+      "sha256": "e3eae5a3748bc452cf5a2f60729d1cfcab3f0b91199989fe0e5ed4c8cc63e206",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/flow/passthrough.frag",
+      "bytes": 230,
+      "sha256": "aae8376fc517b3e4a9158f525fe462bb84a0542d3812fc9b807984c017f0a84b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/heightGrid/agent.createinfo.json",
+      "bytes": 699,
+      "sha256": "1d86716ab17b6e1fea842daa2e2fd400466bb087b4d2b6b00f6f87a889117cec",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/heightGrid/agent.frag",
+      "bytes": 800,
+      "sha256": "f0492364fe8dbaf3535b98f95fc650a53904b1c6ed81733c1c343123b8a9f436",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/heightGrid/passthrough.createinfo.json",
+      "bytes": 304,
+      "sha256": "e3eae5a3748bc452cf5a2f60729d1cfcab3f0b91199989fe0e5ed4c8cc63e206",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/heightGrid/passthrough.frag",
+      "bytes": 230,
+      "sha256": "aae8376fc517b3e4a9158f525fe462bb84a0542d3812fc9b807984c017f0a84b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/hydraulic/agent.createinfo.json",
+      "bytes": 819,
+      "sha256": "b1e9d137bc503f587730d93c489f6746dc683aa50879c934533cf298447c1d1d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/hydraulic/agent.frag",
+      "bytes": 5924,
+      "sha256": "255786823fda0c3581e7aaea2d82bb44e0c7697d9c0e4d295365c17f3f99ca9d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/hydraulic/passthrough.createinfo.json",
+      "bytes": 304,
+      "sha256": "e3eae5a3748bc452cf5a2f60729d1cfcab3f0b91199989fe0e5ed4c8cc63e206",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/hydraulic/passthrough.frag",
+      "bytes": 230,
+      "sha256": "aae8376fc517b3e4a9158f525fe462bb84a0542d3812fc9b807984c017f0a84b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/agentField.createinfo.json",
+      "bytes": 766,
+      "sha256": "7794153447f290e064341229b4c0dca0db7d1f3e8337892e14989209cbf17297",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/agentField.frag",
+      "bytes": 3070,
+      "sha256": "f07ac471b9608bac7722974b5a476e64863aef145c5d3ec2f2275bbf37a1dc70",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/clear.createinfo.json",
+      "bytes": 196,
+      "sha256": "71447af7921c74ca25f8b32e247bfc208590ab07929cdbe20e157e08f225ae53",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/clear.frag",
+      "bytes": 96,
+      "sha256": "4378ae5e97c52302fb94f4681aa6040f005c2aecad089ba048b0b1f673ec47f9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/convolve.createinfo.json",
+      "bytes": 438,
+      "sha256": "1d9d167667d88ae6d0c704d03c97db00ab72a584335b0ac563ba6fcdaa42c5dd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/convolve.frag",
+      "bytes": 1892,
+      "sha256": "f386f32db5640771244042aecaf27fedc15b7c33d8543618c4a036eb05a5c48c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/deposit.createinfo.json",
+      "bytes": 462,
+      "sha256": "172cf14b82112ac1261e3865f4718f3d1376a55a34c169b9ef4edf55ce672116",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/deposit.frag",
+      "bytes": 186,
+      "sha256": "11fe4c6ae07876641853ef5c84361f9408e72f588ff1362b26aa0880b8ebebee",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/deposit.vert",
+      "bytes": 661,
+      "sha256": "2d2fd4cfc58da75abce973155670270727a3ca01f2c4d5e0ffa157581010107b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/passthrough.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/lenia/passthrough.frag",
+      "bytes": 309,
+      "sha256": "e49330e27bfc529349d84270f23ba70a8f718454ae09ab8002edd7efb6b5ce01",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/life/agent.createinfo.json",
+      "bytes": 1329,
+      "sha256": "3255f82ce46954dacfb59a77b993526e8aa1f85f2c2560e8435938aecaa7c8c0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/life/agent.frag",
+      "bytes": 8743,
+      "sha256": "182bd697812ea754b98876d7c9df47bc0ef68b0d7b0de0a4c9ad90282903b097",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/life/matrix.createinfo.json",
+      "bytes": 387,
+      "sha256": "2143f7c8e07935e6b621e152c19e51c5be6e07d90824194be68b5f9ad1e6ea25",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/life/matrix.frag",
+      "bytes": 1723,
+      "sha256": "00fb70eb92dd4d64b06a4465f098eb6b8a3bbb0bdbcded6d32a05d49a2fca904",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/life/passthrough.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/life/passthrough.frag",
+      "bytes": 309,
+      "sha256": "e49330e27bfc529349d84270f23ba70a8f718454ae09ab8002edd7efb6b5ce01",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physarum/agent.createinfo.json",
+      "bytes": 935,
+      "sha256": "8fceb62e3fdeb7e0ae2bec584e3e83c25e0090cc4d174892c3ddfa5e9ca3d92d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physarum/agent.frag",
+      "bytes": 4240,
+      "sha256": "a1148d42b4d3e5c69172d1be985096c73835468409f3abb916858f5fe20d79c0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physarum/deposit.createinfo.json",
+      "bytes": 572,
+      "sha256": "448bc44df32a7bf3868f7956d29acb44d6c98bb3569349ee3f8cca9cabfcbbd6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physarum/deposit.frag",
+      "bytes": 98,
+      "sha256": "f0ed1914cf7ad7d697fcefb5b2ff6e33a2a31fb72ed324dd456679e21be9da52",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physarum/deposit.vert",
+      "bytes": 1212,
+      "sha256": "00808c06ee66ef1f09252b063d5cd620eb73125f4c0792288dbe8f4f8a926f3b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physarum/diffuse.createinfo.json",
+      "bytes": 392,
+      "sha256": "daee8efd5bf043ad56ee88c4bb2d8c693fa5d9b9030c78e974310ed29a5ee4d7",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physarum/diffuse.frag",
+      "bytes": 678,
+      "sha256": "428352c50844cc081f177a93e5f2df626b2e9fcc4ad807f0db0763a040f786ec",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physarum/passthrough.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physarum/passthrough.frag",
+      "bytes": 309,
+      "sha256": "e49330e27bfc529349d84270f23ba70a8f718454ae09ab8002edd7efb6b5ce01",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physical/agent.createinfo.json",
+      "bytes": 897,
+      "sha256": "fc405f23fa85c443a487919c8259abd9e46f6b75e31b0238fe1cb4b5ad4cc93c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physical/agent.frag",
+      "bytes": 3703,
+      "sha256": "0dd4b6e87161cb23c5daf6346cf47ae8dec4b833b6cbca293115d5ea8e9d32dd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physical/passthrough.createinfo.json",
+      "bytes": 304,
+      "sha256": "e3eae5a3748bc452cf5a2f60729d1cfcab3f0b91199989fe0e5ed4c8cc63e206",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/points/physical/passthrough.frag",
+      "bytes": 230,
+      "sha256": "aae8376fc517b3e4a9158f525fe462bb84a0542d3812fc9b807984c017f0a84b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/loopBegin/loopBegin.createinfo.json",
+      "bytes": 449,
+      "sha256": "6cc20dbcad2a743c9e0a7d88524ff6bd946b717920e655507230485719178f06",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/loopBegin/loopBegin.frag",
+      "bytes": 1005,
+      "sha256": "28540f2b2b1a444fc84f2844fa1e0646651dc9cde05c0821637d8a80e4509099",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/loopEnd/copy.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/loopEnd/copy.frag",
+      "bytes": 388,
+      "sha256": "f42eee83cf0d11f3214793632fb8cc2ca65460de6d2d5af2f5cee827b56679ef",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/meshLoader/preview.createinfo.json",
+      "bytes": 463,
+      "sha256": "912bfef3b768df8efc7eaffa8db17e8f2550c2882034d7ed41d32aa55fc59aef",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/meshLoader/preview.frag",
+      "bytes": 1385,
+      "sha256": "23a2babbfed4e5dd3e0917b2016d6fe3e2e96ba4f7861507852ae7734da08823",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/meshRender/clear.createinfo.json",
+      "bytes": 286,
+      "sha256": "762e49a97eb3561db16502ae4cf06c889e466d4fa9900fdde5af202f55e89e47",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/meshRender/clear.frag",
+      "bytes": 132,
+      "sha256": "70ef3b3525269e9fe49f27471ee9f7fcc7dbc15875de4a73150652070728669c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/meshRender/render.createinfo.json",
+      "bytes": 1727,
+      "sha256": "5d2e1a7fbaab5d65cd6a0b5de4dc94a7731d2301af38524bda59cdf7cce5b33f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/meshRender/render.frag",
+      "bytes": 1636,
+      "sha256": "752f1851f4b5c9584a4affbb2edfcc37d0bee23d756d30d7634f0aa13b1cb567",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/meshRender/render.vert",
+      "bytes": 2569,
+      "sha256": "606436f7825d3fe5de7216b5bd274d17aba328e35cb44f44eb88b0c8c3025d09",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/blend.createinfo.json",
+      "bytes": 456,
+      "sha256": "9523a0f452be0d7d21b4b100e283d0a3c86348edc94ba157575efb2ff7fa8a2b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/blend.frag",
+      "bytes": 1235,
+      "sha256": "8ec4db1c11de0d9c12b0a7c5bb1ced0dfd68735dd3ff4f30f530311e7648942a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/clearDefocus.createinfo.json",
+      "bytes": 246,
+      "sha256": "d0bf0eb8e57a5ce56e4ba1b84b8d5011ed8292040df618903d95c0d3a88c054e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/clearDefocus.frag",
+      "bytes": 50,
+      "sha256": "52a31c052cab85a96318104738d2befef88735ef6cec337c5091f415443b98d2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/copy.createinfo.json",
+      "bytes": 305,
+      "sha256": "d75caa4fbc12a5e01fc71154a752a197b14198be9729ce611db6b7adcd2f5c6f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/copy.frag",
+      "bytes": 301,
+      "sha256": "93d3a3df5fa3b3234391a72436a481f0724fcb380b872eecdb4b4e3421748116",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/deposit.createinfo.json",
+      "bytes": 1702,
+      "sha256": "3f6a91c02880b61b0bcbf53d52a8302ba6a98209c869ba4c48aaf9fb3ad936f5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/deposit.frag",
+      "bytes": 4173,
+      "sha256": "4ca44c22dc349f5d8040cfbc2d1fafa549be2f0bae7a043ec8d414ea9bc702ce",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/deposit.vert",
+      "bytes": 8020,
+      "sha256": "6f8d99083f678ec84caef36bf3f738c140833257ff00b85e33b6208ca9c0f132",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/depthKeys.createinfo.json",
+      "bytes": 385,
+      "sha256": "7a22e5cea44d35c79601b85d4da276905daedfc01f217fa759e15579e7f1600a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/depthKeys.frag",
+      "bytes": 1091,
+      "sha256": "3b16bcb809f8e6468da6f2308ece114861bbaf7a582363f73508015a7e289fda",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/depthMerge.createinfo.json",
+      "bytes": 302,
+      "sha256": "de5773730f235ecb52d29302ca1a833d0f8e99c1641f5085b136e068fb90fbe9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/depthMerge.frag",
+      "bytes": 1570,
+      "sha256": "0229d3299fb4828bddf9833f3a49f499315850c99f9ffdcf3b727d984da5f276",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/diffuse.createinfo.json",
+      "bytes": 541,
+      "sha256": "66db807ee1a2cb1aede3cf4295abfb305a71ca7eed38a47a2196cd8f2180ae4c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/diffuse.frag",
+      "bytes": 1250,
+      "sha256": "1ca58cee30a6d05e9cd56b95f4f764e1fc8a3034baa56445b8a5158cff29c250",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/spriteMean.createinfo.json",
+      "bytes": 390,
+      "sha256": "27acd7d131a50788c30991b554f2dbd8ba79898f072477774753c47102e8d08b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/spriteMean.frag",
+      "bytes": 1158,
+      "sha256": "eaa5727c5e1c36ad148e0257a686059bf34e531ecdc8fd0bb3ca9700cb82c33f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/spriteMeanTiles.createinfo.json",
+      "bytes": 391,
+      "sha256": "c4b71ddf14d1dfc15a6cca7f965b4a360b89b90acb0507df76802daa27c45d60",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsBillboardRender/spriteMeanTiles.frag",
+      "bytes": 1079,
+      "sha256": "74933db79d0b68abfceb903e6f2b6d302abd670d3ba0bf6d027415aa2a4854cd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsEmit/init.createinfo.json",
+      "bytes": 859,
+      "sha256": "754fc7d14b47accecbab50152814407f314d6594bf97fa681cfcbbe14c56dda8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsEmit/init.frag",
+      "bytes": 4804,
+      "sha256": "6430b3333c698425185c770af78f1e738c61a26291fb3877f1abe1ca167a93f8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsEmit/passthrough.createinfo.json",
+      "bytes": 304,
+      "sha256": "e3eae5a3748bc452cf5a2f60729d1cfcab3f0b91199989fe0e5ed4c8cc63e206",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsEmit/passthrough.frag",
+      "bytes": 230,
+      "sha256": "aae8376fc517b3e4a9158f525fe462bb84a0542d3812fc9b807984c017f0a84b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsRender/blend.createinfo.json",
+      "bytes": 461,
+      "sha256": "971c80730b4e41e7dcee413daf6944deffb87f401798af762eb4e9e978ab5907",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsRender/blend.frag",
+      "bytes": 983,
+      "sha256": "fa97f2a688c20ab90c2c61c5f9365442fbd2f61adefde289441b52c97d87249e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsRender/copy.createinfo.json",
+      "bytes": 305,
+      "sha256": "d75caa4fbc12a5e01fc71154a752a197b14198be9729ce611db6b7adcd2f5c6f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsRender/copy.frag",
+      "bytes": 301,
+      "sha256": "93d3a3df5fa3b3234391a72436a481f0724fcb380b872eecdb4b4e3421748116",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsRender/deposit.createinfo.json",
+      "bytes": 921,
+      "sha256": "32567f5550598fb7204f7ac7c0c8b4aa1c114a3d38ed09df547dff7ce6ec55f9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsRender/deposit.frag",
+      "bytes": 98,
+      "sha256": "f0ed1914cf7ad7d697fcefb5b2ff6e33a2a31fb72ed324dd456679e21be9da52",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsRender/deposit.vert",
+      "bytes": 3838,
+      "sha256": "c82db31f327cfd5d5e9afb19de30863a11ee61fc26a2d832d47629a051345688",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsRender/diffuse.createinfo.json",
+      "bytes": 350,
+      "sha256": "cfffe3e600a9c724dc6486039041e1aa6bdeac84379fdc093bc947f9ebe9eca2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/pointsRender/diffuse.frag",
+      "bytes": 611,
+      "sha256": "ca14c1ccef43b77c1fd248154a63ae60d0684d6ff68d797a50e365135e3f2e0b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/render3d/render3d.createinfo.json",
+      "bytes": 746,
+      "sha256": "e18b09fbd42a8f92bb33a8280c26885eb4d4eb580432a582dfd0e6c1378b8fed",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/render3d/render3d.frag",
+      "bytes": 13942,
+      "sha256": "34a4e45e1bce558b3839c896040f77b4a148a15be5e6ea4f7967c33f97bfe461",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/renderCubemap3d/renderCubemap3d.createinfo.json",
+      "bytes": 705,
+      "sha256": "a5766cd9a02d9dc5e1ad17685f438617ac69bd687b783d76aa52ac63f2d46003",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/renderCubemap3d/renderCubemap3d.frag",
+      "bytes": 13819,
+      "sha256": "4994e1e36be06e1139336c21d838dc8e73a76f211cd4f3a4b9107c4b6372e4e3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/renderCubemapSurface/renderCubemapSurface.createinfo.json",
+      "bytes": 796,
+      "sha256": "b9c92fcaa924210b48a0a68192d30838d718846f8f6f0f9017ff832a2cc1b775",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/renderCubemapSurface/renderCubemapSurface.frag",
+      "bytes": 4148,
+      "sha256": "0bf726eaa64069579f9c3f1afb9e4009d5d60c95626d8cd627412b645addaacc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/renderLandscape3d/landscape.createinfo.json",
+      "bytes": 1396,
+      "sha256": "259e76a37e5a072b15cc48053ded89668af7901ea0a289362eccd28588d333c2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/renderLandscape3d/landscape.frag",
+      "bytes": 12809,
+      "sha256": "c22eb6ea9fd307165b98e9e545ac7cb9d178c51580dcfe497921977b35fb0083",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/renderLit3d/renderLit3d.createinfo.json",
+      "bytes": 1369,
+      "sha256": "d32e55923da543efbc858d073b488bd26c1b20ea05a65d619279277db368123f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/render/renderLit3d/renderLit3d.frag",
+      "bytes": 11588,
+      "sha256": "2e385d6f118bb45ed6514389330095fd0307c532328b67ea3f48c4f1a61bf588",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/bitwise/bitwise.createinfo.json",
+      "bytes": 855,
+      "sha256": "8b5ec9518bd5755446e627b8883e9698875c1acda8fc8c7337dddf7af95f653a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/bitwise/bitwise.frag",
+      "bytes": 2671,
+      "sha256": "c3155df5be8a99ec21dbb8d63e2e0d5738e3d2bfac78c82b2272156f0105ab82",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/cell/cell.createinfo.json",
+      "bytes": 733,
+      "sha256": "32773e13a91ac36c9b1079d550c86a1bc6d289ad0fd4f832154207d6d19d6e6b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/cell/cell.frag",
+      "bytes": 3446,
+      "sha256": "e125e785d2d562b6a0d2b2e2fb4766104f86baa47a6f5c28ad4e3d9990a924cd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/cellularAutomata/ca.createinfo.json",
+      "bytes": 582,
+      "sha256": "1a3587ebb166064361ebf70d25091037d9491d39b79f807a99ff4ba0c1b6bf98",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/cellularAutomata/ca.frag",
+      "bytes": 11001,
+      "sha256": "f4e2606e2f510855d6be856da11b34168addcfba382ed6c23f7f36773f393bc1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/cellularAutomata/caFb.createinfo.json",
+      "bytes": 781,
+      "sha256": "2ec4a77f7975fdd77aa8f74c929fe3f7d1f89469b3211765fb583821fa9c15f3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/cellularAutomata/caFb.frag",
+      "bytes": 7704,
+      "sha256": "9f9be2d6589098a239cdc5fe0e1aa10bb310a5e9f35b92d924e485d3a28c72e6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/curl/curl.createinfo.json",
+      "bytes": 551,
+      "sha256": "6e3e809a7d37d0c56344dfa477c96a2eb8738764046bccd493be7effcb52052e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/curl/curl.frag",
+      "bytes": 7047,
+      "sha256": "39b171b9c844e5cdbcc222f0562e3dc20426e3c1350f6f3b91b13cf28ba1b161",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/gabor/gabor.createinfo.json",
+      "bytes": 734,
+      "sha256": "bd2bfcbca4f364674b5cdeeb7a76da5cd5979ca1d4f222b74f137fae3f4792ca",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/gabor/gabor.frag",
+      "bytes": 3504,
+      "sha256": "105f6f754cca1fd929044fd1bd8da5a657e65b82b1029e778fd2bc50b77769cb",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/gradient/gradient.createinfo.json",
+      "bytes": 810,
+      "sha256": "695e7972db755395a0b0b382ec23266b0f0aedbfe31db29f348514c39bb5adc6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/gradient/gradient.frag",
+      "bytes": 5061,
+      "sha256": "10ec3436e18c78b4f763a869a2c2db179a727d5a3672649a38e196d8dffee042",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/julia/julia.createinfo.json",
+      "bytes": 1126,
+      "sha256": "24c0390689ccc29689c5a3290a57de0b2e3ae85840e677bae0aadfdaf9dd12d2",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/julia/julia.frag",
+      "bytes": 11835,
+      "sha256": "67a749e337dc7cfdd2c48d95335e3fd1b6784741ca42855c8a045a9b2305f47b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/mandala/mandala.createinfo.json",
+      "bytes": 1129,
+      "sha256": "75ab32a25dea349930a8979b8535819278c5a4e36dd54752c020c86af0417a4d",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/mandala/mandala.frag",
+      "bytes": 4574,
+      "sha256": "91ec3bbc1fb668e1a429f374cdaad176a6abd5ed23deead45d9c28d8a9dd0f57",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/mandelbrot/mandelbrot.createinfo.json",
+      "bytes": 1012,
+      "sha256": "eb74e1bf66ab834f960b8eed61ddd206ccddf690bae74218f2dde8b3df968399",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/mandelbrot/mandelbrot.frag",
+      "bytes": 14332,
+      "sha256": "f53fd0e9fba9bf2db076642c17976c8224b86927a3d54800f8337cf4c03ca67f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/media/mediaInput.createinfo.json",
+      "bytes": 778,
+      "sha256": "f730818523e8353982012405cd22b871cf3aee9a8cacba3faf76fa52a58a0db1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/media/mediaInput.frag",
+      "bytes": 6368,
+      "sha256": "29e392bf7de2edcdf49734f624b0bd2fe16f12edf37b136fc2e57dac4eb2d8a0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/mnca/mnca.createinfo.json",
+      "bytes": 582,
+      "sha256": "1a3587ebb166064361ebf70d25091037d9491d39b79f807a99ff4ba0c1b6bf98",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/mnca/mnca.frag",
+      "bytes": 10889,
+      "sha256": "d92d50082fda0b1d45d3467c1af588b1706c6abc3743b1bdd976e4a66fa22620",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/mnca/mncaFb.createinfo.json",
+      "bytes": 1107,
+      "sha256": "b9fc853609a8d10b7364891f8f3b2a98b6443a141ae6967e8f8a5c585c113c7f",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/mnca/mncaFb.frag",
+      "bytes": 4637,
+      "sha256": "63970c593469ff040edc408d711ea1945e12041f5295197a5344e7c10f0ff439",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/modPattern/modPattern.createinfo.json",
+      "bytes": 937,
+      "sha256": "ea0eab755c7e0e5eb6f6a8b797dc43573369a163c959199a8f087a09ab5cd9e4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/modPattern/modPattern.frag",
+      "bytes": 3375,
+      "sha256": "a7c671be3bac2135bfa31c4623de096b195b340aa884942175431c2cd9591edb",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/ns.createinfo.json",
+      "bytes": 505,
+      "sha256": "a41b2a2f73f8301143c699278177580bd8102b8a08895aab6d0be5914dfc3a65",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/ns.frag",
+      "bytes": 1609,
+      "sha256": "70061c5c72a2fb08cdec4cc14de774bb27143dd1cbcff699036a23e5b28149df",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsAdvect.createinfo.json",
+      "bytes": 439,
+      "sha256": "9a289c3919b894e90edd294e95f2f2c9263a65567ac786c63fc60788b818cdc5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsAdvect.frag",
+      "bytes": 1883,
+      "sha256": "13514f2fde2bf9d141705ec32281742be3d084eda1c102a9106f84b9540baeb0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsDivergence.createinfo.json",
+      "bytes": 302,
+      "sha256": "3e34d3f1c0bae15d1e7761f8981b16147a77b8666d1f4b6878cac4f871ba37c4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsDivergence.frag",
+      "bytes": 1157,
+      "sha256": "ce2880d744eb5370dce21d2fbbaa7b9da910c08bed0cabbfd756abb31c79851c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsGradient.createinfo.json",
+      "bytes": 362,
+      "sha256": "5ee9f407468446fd52ed5025f58c9fd06722ccf7e053df2b88e4c1d25e80932b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsGradient.frag",
+      "bytes": 947,
+      "sha256": "4a3aa8ad1ccf9584695cf505c947d6aec81c612888ab5a034957d9960bacc722",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsPressure.createinfo.json",
+      "bytes": 302,
+      "sha256": "bde781e8204697d0a5f64c19a1d913cc873d3c69e4a3ef44320c032b6c2553df",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsPressure.frag",
+      "bytes": 919,
+      "sha256": "14e65a39760869fa91fc41759bef130fb37308c643a9517f74dff2831978c4f1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsSmooth.createinfo.json",
+      "bytes": 349,
+      "sha256": "269ae31bd2da4b82c30ef3ccad473366e663fb0757e4d1c12db09a0f99c01069",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsSmooth.frag",
+      "bytes": 5281,
+      "sha256": "671bffd2e1245737d92d4abf4103e77e418f5336f00250134b47d3da3caa5781",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsSplat.createinfo.json",
+      "bytes": 578,
+      "sha256": "ae261cb6ca1e79cecc0cfd48f8f3aaec8c878143ea0987fe943186171f5f39cb",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/navierStokes/nsSplat.frag",
+      "bytes": 3104,
+      "sha256": "a3fe36f2481cf85cffada4d2ffd135b835ba132ae6a8e1409814f0f7511947c4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/newton/newton.createinfo.json",
+      "bytes": 1207,
+      "sha256": "43d6370d5393b2e81b1c46aab5c778af0dd2bb638f082d3ee6f9c94684798abf",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/newton/newton.frag",
+      "bytes": 9693,
+      "sha256": "890fdf67d6f892ecf09099aee0f323bafe36fc024a3a048a463b6e9c3f39da22",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/noise/noise.createinfo.json",
+      "bytes": 763,
+      "sha256": "d61fb54ae57f14cbb05c2ff4e1001d6d7ff73f8bd88e6ec7abd277dc80867ee3",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/noise/noise.frag",
+      "bytes": 17760,
+      "sha256": "337e6fb00f30bb423dbc826a0b00477c08b91e7150e6c5d8f1023771ea62473e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/osc2d/osc2d.createinfo.json",
+      "bytes": 637,
+      "sha256": "38d9e2be9d691ea0074f8b9975dd90db5591f5793b2885318980f541e0c7e6dc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/osc2d/osc2d.frag",
+      "bytes": 4272,
+      "sha256": "f406162b90c90229b48fcb3c2eb4a38eddc7626ac2421aa5fabcec02f9608658",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/pattern/pattern.createinfo.json",
+      "bytes": 864,
+      "sha256": "1e5e7c358ae5c040c8722b4bd90dae9960705dd1b3488d3914848fe58b836483",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/pattern/pattern.frag",
+      "bytes": 7958,
+      "sha256": "69bbe75304b965aace3906dc59e1d0c17b3809165a734ea4d4ff69c2d0260409",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/perlin/perlin.createinfo.json",
+      "bytes": 820,
+      "sha256": "a582fc755fea8663c067c7f41dda0b4644d5a67e489d1dc2ada858335d883ba4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/perlin/perlin.frag",
+      "bytes": 10472,
+      "sha256": "ef7e35849b6153012b4a3733aacb393799ed70cb325b6376692016a481f378fa",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/polygon/shape.createinfo.json",
+      "bytes": 732,
+      "sha256": "9572b1a4c466474d8221d4f3a7fc0a2c2248002444f20ab3a9649ef449e540c5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/polygon/shape.frag",
+      "bytes": 1367,
+      "sha256": "ada4d1d07d0b27c8161851680a86db10427b7c362a80ae78a30dc9c31726e28b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/reactionDiffusion/rd.createinfo.json",
+      "bytes": 629,
+      "sha256": "f7a0adff9b50b1d68fa35918604e82b62096fe6f92fc9b651275290db63fe1cc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/reactionDiffusion/rd.frag",
+      "bytes": 12510,
+      "sha256": "074551ed2c7dfd86982d68bc820feb8cfb6799b4f5dbd9fa6465197e587ed41b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/reactionDiffusion/rdFb.createinfo.json",
+      "bytes": 947,
+      "sha256": "598c55369fa0db232ec28812d4e34305df26fc95bd871b0e62dc260c712f40e1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/reactionDiffusion/rdFb.frag",
+      "bytes": 5426,
+      "sha256": "784a8cbb677d6d1eadef55b0df350f17c4f39cddf17fdb7a55c6ba03c29d4617",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/remap/remap.createinfo.json",
+      "bytes": 24225,
+      "sha256": "dee105aa87bbc32ff46bce90edd3beb9786070548742e1bcfa7282a18c13f8a5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/remap/remap.frag",
+      "bytes": 6946,
+      "sha256": "ba40d0c7bd9f9ae7da4bb8a213cf1f0e31eaee956c601938d5a58a3b744582cd",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/roll/copy.createinfo.json",
+      "bytes": 255,
+      "sha256": "3d61b9bffe0f20cddb04732128e32749739cf73e676af167c290648420a58d75",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/roll/copy.frag",
+      "bytes": 388,
+      "sha256": "f42eee83cf0d11f3214793632fb8cc2ca65460de6d2d5af2f5cee827b56679ef",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/roll/roll.createinfo.json",
+      "bytes": 729,
+      "sha256": "a6c4bd11b369c6a45900e63f87b55ab0c016b8d90c56a7d98af4b393036c705e",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/roll/roll.frag",
+      "bytes": 2093,
+      "sha256": "4c5b38b4ca49083395208d47005b95ace6c9f0da9b24d458ce71ad638f048c31",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/sacredGeometry/sacredGeometry.createinfo.json",
+      "bytes": 953,
+      "sha256": "4dad78ea06d95aa0f7759c184410ebabfa4aad3a82c5adb62878885993f52177",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/sacredGeometry/sacredGeometry.frag",
+      "bytes": 9255,
+      "sha256": "b6ed3affd1521e69d32b272b579c2ebef6ff2a98701b48774247f421ad5d2ec7",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/scope/scope.createinfo.json",
+      "bytes": 541,
+      "sha256": "493761d67af8be9194faeea03c062147293af8441cfbde688b59039cc3ebc0d6",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/scope/scope.frag",
+      "bytes": 914,
+      "sha256": "a22c1e8ffe2de71a95ca28c43563da80547acb728b0d6f891102a65bbf513f24",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/shape/shape.createinfo.json",
+      "bytes": 641,
+      "sha256": "b68fdcf1d2982b7e55c93aaa0ef6aa5b4c01877413e26592d95e6f6f5acad51b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/shape/shape.frag",
+      "bytes": 15835,
+      "sha256": "720f39dde79c5e4946aba4db33c5121877a5174b3197d18c509bdcff9992356c",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/solid/solid.createinfo.json",
+      "bytes": 282,
+      "sha256": "9e5d019f68f5b2391881bd153777ccb775aa2805bc15d59f355852ccfab09ea8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/solid/solid.frag",
+      "bytes": 173,
+      "sha256": "f2dcacc7e4271b6ff3424f9b1df64d103237ea3ad67c887e7a4261be8fe6b5f9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/spectrum/spectrum.createinfo.json",
+      "bytes": 541,
+      "sha256": "b3dcf80ec5413abd99ca81fd2e344c3f5ea0301b6eaeb9ece00f06102daac316",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/spectrum/spectrum.frag",
+      "bytes": 894,
+      "sha256": "e730ebc147ee512c70fd58017d9722689a27b50c9791c4625027156cf05715a4",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/subdivide/subdivide.createinfo.json",
+      "bytes": 870,
+      "sha256": "88e91b74d7a7dc93f77c93c62bc88ce2ded2c5b92c37644c73c56db9c910a252",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/subdivide/subdivide.frag",
+      "bytes": 8852,
+      "sha256": "409f8b656b8d76efbdc447534cac81117669315bda2745c46b4d2235a2b6f961",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/testPattern/testPattern.createinfo.json",
+      "bytes": 426,
+      "sha256": "37850650d363766ce22101d1f5e093ba10d1b8132f5bcdd817995624a64d2685",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth/testPattern/testPattern.frag",
+      "bytes": 5736,
+      "sha256": "a0b819a256da3f5833282321c457224c46a806350e8be97cebb528df73497831",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/cell3d/precompute.createinfo.json",
+      "bytes": 635,
+      "sha256": "7076e176219e90be5fea591b99cabaa75115ccd92378cabf969d67bc8a995587",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/cell3d/precompute.frag",
+      "bytes": 4775,
+      "sha256": "3f8cca6d2462ed385c485482b57f18bf59b7e1c7fbaeb8340aa4ad0e65952541",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/cellularAutomata3d/simulate.createinfo.json",
+      "bytes": 705,
+      "sha256": "ecda22443c10b5cf11eab5e1921eb89651fa4d5f72abb1f8209466c4a9a2c08a",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/cellularAutomata3d/simulate.frag",
+      "bytes": 8624,
+      "sha256": "f2a734d0d8a8ece38b7f10c3b611814ff5dda3b0692e3005f1364eef47433f79",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/flythrough3d/precompute.createinfo.json",
+      "bytes": 762,
+      "sha256": "796dcbac85edb2420b2ce7ce1459b6a2ddee2123206c003795a231db54cc7b02",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/flythrough3d/precompute.frag",
+      "bytes": 11035,
+      "sha256": "64129cbd8d5581693dc5fc5b9b83d96b07568475b47327556735b86ae199ebb1",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/fractal3d/precompute.createinfo.json",
+      "bytes": 765,
+      "sha256": "874a26e2061bb0a2db55bb11ab06934ae21dd3b11bc8f2cbf0b56c589513f4b5",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/fractal3d/precompute.frag",
+      "bytes": 6540,
+      "sha256": "cf49e55debc3ca479f22c0c76c617b79acd721141c24574c10db41ea0f4ff3a9",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/heightmap3d/precompute.createinfo.json",
+      "bytes": 530,
+      "sha256": "616c21ac6df4b0a73b5a981080292826d02217c2902ecf8f06f8a022e808c8dc",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/heightmap3d/precompute.frag",
+      "bytes": 1639,
+      "sha256": "c7dd447651c7922ab2c9b06e7b12a14085486c5b848eeb8464045b3a9089d3a0",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/noise3d/precompute.createinfo.json",
+      "bytes": 583,
+      "sha256": "507401800b59e3b611d00a4353ad907757e18c0a843d817ea2f717d8ea34ca7b",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/noise3d/precompute.frag",
+      "bytes": 7393,
+      "sha256": "f7acc54033fb6fb69ecc87c77e2730893ff528aa519364ba434d7617f641f6fa",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/reactionDiffusion3d/simulate.createinfo.json",
+      "bytes": 825,
+      "sha256": "bc7767818d7e792a2a1bc2f9e23870fefd611163948a9605ad7a24824a34a789",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/reactionDiffusion3d/simulate.frag",
+      "bytes": 5981,
+      "sha256": "9a89fd9a5530044eb0de4f9e0dfaea65a20ac464d2e11cde5d19028fd6942ca8",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/shape3d/precompute.createinfo.json",
+      "bytes": 780,
+      "sha256": "492fcc2f506939c080d82269eeaee1f3eff3f87ceadd9e44acace1c209a230fe",
+      "when": "shaders"
+    },
+    {
+      "path": "shaders/synth3d/shape3d/precompute.frag",
+      "bytes": 6124,
+      "sha256": "f881c482786ef5277ca2c8f5136ce7d3ef2aca62f365c208ae25f9f5fc08d8c0",
+      "when": "shaders"
+    }
+  ],
+  "readme": "README.template.md",
+  "estBytes": {
+    "base": 15255,
+    "engine": 917966,
+    "shaders": 1594209
+  }
+}

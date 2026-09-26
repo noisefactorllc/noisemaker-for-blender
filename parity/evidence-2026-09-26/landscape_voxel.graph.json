@@ -1,0 +1,474 @@
+{
+  "id": "-ucsqtn",
+  "source": "search synth, synth3d, render\n\nnoise(scaleX: 90, scaleY: 90, colorMode: mono, speed: 0).write(o1)\ngradient(type: fourCorners, color1: #006e94, color2: #24e4ff, color3: #bcff46, color4: #efffff).write(o2)\nheightmap3d(heightTex: read(o1), tex: read(o2)).renderLandscape3d(panY: -0.18, filtering: voxel).write(o0)\nrender(o0)\n",
+  "renderSurface": "o0",
+  "passes": [
+    {
+      "id": "node_0_pass_0",
+      "passType": "effect",
+      "namespace": "synth",
+      "func": "noise",
+      "progName": "noise",
+      "program": "node_0_noise__LOOP_OFFSET_300__NOISE_TYPE_10",
+      "defines": {
+        "LOOP_OFFSET": 300,
+        "NOISE_TYPE": 10
+      },
+      "inputs": {},
+      "outputs": {
+        "fragColor": "node_0_out"
+      },
+      "uniforms": {
+        "octaves": 2,
+        "scaleX": 90,
+        "scaleY": 90,
+        "seed": 1,
+        "wrap": true,
+        "ridges": false,
+        "loopScale": 75,
+        "speed": 0,
+        "colorMode": 0
+      },
+      "uniformSpecs": {
+        "octaves": {
+          "min": 1,
+          "max": 8
+        },
+        "scaleX": {
+          "min": 1,
+          "max": 100
+        },
+        "scaleY": {
+          "min": 1,
+          "max": 100
+        },
+        "seed": {
+          "min": 1,
+          "max": 100
+        },
+        "loopScale": {
+          "min": 1,
+          "max": 100
+        },
+        "speed": {
+          "min": -100,
+          "max": 100
+        }
+      },
+      "effectKey": "synth.noise",
+      "nodeId": "node_0",
+      "stepIndex": 0,
+      "scopedParams": null
+    },
+    {
+      "id": "node_1_write_blit",
+      "passType": "blit",
+      "namespace": null,
+      "func": "blit",
+      "progName": "blit",
+      "program": "blit",
+      "defines": {},
+      "inputs": {
+        "src": "node_0_out"
+      },
+      "outputs": {
+        "color": "global_o1"
+      },
+      "uniforms": {},
+      "uniformSpecs": {},
+      "effectKey": null,
+      "nodeId": "node_1",
+      "stepIndex": 1,
+      "scopedParams": null
+    },
+    {
+      "id": "node_2_pass_0",
+      "passType": "effect",
+      "namespace": "synth",
+      "func": "gradient",
+      "progName": "gradient",
+      "program": "node_2_gradient",
+      "defines": {},
+      "inputs": {},
+      "outputs": {
+        "color": "node_2_out"
+      },
+      "uniforms": {
+        "gradientType": 2,
+        "rotation": 0,
+        "repeat": 1,
+        "speed": 0,
+        "seed": 1,
+        "color1": [
+          0,
+          0.43137254901960786,
+          0.5803921568627451,
+          1
+        ],
+        "color2": [
+          0.1411764705882353,
+          0.8941176470588236,
+          1,
+          1
+        ],
+        "color3": [
+          0.7372549019607844,
+          1,
+          0.27450980392156865,
+          1
+        ],
+        "color4": [
+          0.9372549019607843,
+          1,
+          1,
+          1
+        ],
+        "colorCount": 4
+      },
+      "uniformSpecs": {
+        "rotation": {
+          "min": -180,
+          "max": 180
+        },
+        "repeat": {
+          "min": 1,
+          "max": 4
+        },
+        "speed": {
+          "min": -5,
+          "max": 5
+        },
+        "seed": {
+          "min": 0,
+          "max": 100
+        },
+        "colorCount": {
+          "min": 2,
+          "max": 4
+        }
+      },
+      "effectKey": "synth.gradient",
+      "nodeId": "node_2",
+      "stepIndex": 2,
+      "scopedParams": null
+    },
+    {
+      "id": "node_3_write_blit",
+      "passType": "blit",
+      "namespace": null,
+      "func": "blit",
+      "progName": "blit",
+      "program": "blit",
+      "defines": {},
+      "inputs": {
+        "src": "node_2_out"
+      },
+      "outputs": {
+        "color": "global_o2"
+      },
+      "uniforms": {},
+      "uniformSpecs": {},
+      "effectKey": null,
+      "nodeId": "node_3",
+      "stepIndex": 3,
+      "scopedParams": null
+    },
+    {
+      "id": "node_4_pass_0",
+      "passType": "effect",
+      "namespace": "synth3d",
+      "func": "heightmap3d",
+      "progName": "precompute",
+      "program": "node_4_precompute",
+      "defines": {},
+      "inputs": {
+        "heightTex": "global_o1",
+        "tex": "global_o2"
+      },
+      "outputs": {
+        "color": "node_4_volumeCache",
+        "geoOut": "node_4_geoBuffer"
+      },
+      "uniforms": {
+        "volumeSize": 64,
+        "heightScale": 0.35,
+        "baseHeight": 0,
+        "volumeSize_chain_2": 64
+      },
+      "uniformSpecs": {
+        "heightScale": {
+          "min": 0,
+          "max": 1
+        },
+        "baseHeight": {
+          "min": 0,
+          "max": 1
+        }
+      },
+      "drawBuffers": 2,
+      "viewport": {
+        "width": {
+          "param": "volumeSize",
+          "default": 64
+        },
+        "height": {
+          "param": "volumeSize",
+          "power": 2,
+          "default": 4096
+        }
+      },
+      "effectKey": "synth3d.heightmap3d",
+      "nodeId": "node_4",
+      "stepIndex": 4,
+      "scopedParams": {
+        "volumeSize": "volumeSize_chain_2"
+      }
+    },
+    {
+      "id": "node_5_pass_0",
+      "passType": "effect",
+      "namespace": "render",
+      "func": "renderLandscape3d",
+      "progName": "landscape",
+      "program": "node_5_landscape__FILTERING_1__VIEW_MODE_1",
+      "defines": {
+        "FILTERING": 1,
+        "VIEW_MODE": 1
+      },
+      "inputs": {
+        "volumeCache": "node_4_volumeCache",
+        "analyticalGeo": "node_4_geoBuffer"
+      },
+      "outputs": {
+        "color": "node_5_out",
+        "geoOut": "node_5_screenGeoBuffer"
+      },
+      "uniforms": {
+        "volumeSize": 64,
+        "heightScale": 0.35,
+        "baseHeight": 0,
+        "volumeSize_chain_2": 64,
+        "threshold": 0.5,
+        "zoom": 1,
+        "panX": 0,
+        "panY": -0.18,
+        "lightDirection": [
+          -0.4,
+          0.85,
+          0.6
+        ],
+        "ambient": 0.35,
+        "diffuseIntensity": 0.85,
+        "specularIntensity": 0.12,
+        "bgColor": [
+          0.025,
+          0.045,
+          0.075
+        ],
+        "bgAlpha": 1,
+        "rotateX": 0.3,
+        "rotateY": 0,
+        "rotateZ": 0,
+        "viewScale": 0.8,
+        "posX": 0,
+        "posY": 0,
+        "posZ": 0,
+        "fieldOfView": 60,
+        "densitySource": 0
+      },
+      "uniformSpecs": {
+        "volumeSize": {
+          "min": 0,
+          "max": 100
+        },
+        "threshold": {
+          "min": 0,
+          "max": 1
+        },
+        "zoom": {
+          "min": 0.25,
+          "max": 4
+        },
+        "panX": {
+          "min": -1,
+          "max": 1
+        },
+        "panY": {
+          "min": -1,
+          "max": 1
+        },
+        "ambient": {
+          "min": 0,
+          "max": 1
+        },
+        "diffuseIntensity": {
+          "min": 0,
+          "max": 2
+        },
+        "specularIntensity": {
+          "min": 0,
+          "max": 1
+        },
+        "bgAlpha": {
+          "min": 0,
+          "max": 1
+        },
+        "rotateX": {
+          "min": 0,
+          "max": 6.283185
+        },
+        "rotateY": {
+          "min": 0,
+          "max": 6.283185
+        },
+        "rotateZ": {
+          "min": 0,
+          "max": 6.283185
+        },
+        "viewScale": {
+          "min": 0.1,
+          "max": 10
+        },
+        "posX": {
+          "min": -50,
+          "max": 50
+        },
+        "posY": {
+          "min": -50,
+          "max": 50
+        },
+        "posZ": {
+          "min": -200,
+          "max": 200
+        },
+        "fieldOfView": {
+          "min": 10,
+          "max": 150
+        }
+      },
+      "drawBuffers": 2,
+      "effectKey": "render.renderLandscape3d",
+      "nodeId": "node_5",
+      "stepIndex": 5,
+      "inheritsVolumeSize": true,
+      "scopedParams": null
+    },
+    {
+      "id": "node_6_write_blit",
+      "passType": "blit",
+      "namespace": null,
+      "func": "blit",
+      "progName": "blit",
+      "program": "blit",
+      "defines": {},
+      "inputs": {
+        "src": "node_5_out"
+      },
+      "outputs": {
+        "color": "global_o0"
+      },
+      "uniforms": {},
+      "uniformSpecs": {},
+      "effectKey": null,
+      "nodeId": "node_6",
+      "stepIndex": 6,
+      "scopedParams": null
+    }
+  ],
+  "allocations": {
+    "node_0_out": "phys_0",
+    "node_2_out": "phys_0",
+    "node_4_volumeCache": "phys_0",
+    "node_4_geoBuffer": "phys_1",
+    "node_5_out": "phys_2",
+    "node_5_screenGeoBuffer": "phys_3"
+  },
+  "textures": {
+    "node_4_volumeCache": {
+      "width": {
+        "param": "volumeSize_chain_2",
+        "default": 64
+      },
+      "height": {
+        "param": "volumeSize_chain_2",
+        "power": 2,
+        "default": 4096
+      },
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_4_geoBuffer": {
+      "width": {
+        "param": "volumeSize_chain_2",
+        "default": 64
+      },
+      "height": {
+        "param": "volumeSize_chain_2",
+        "power": 2,
+        "default": 4096
+      },
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_5_screenGeoBuffer": {
+      "width": "screen",
+      "height": "screen",
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_0_out": {
+      "width": "screen",
+      "height": "screen",
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_2_out": {
+      "width": "screen",
+      "height": "screen",
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    },
+    "node_5_out": {
+      "width": "screen",
+      "height": "screen",
+      "format": "rgba16f",
+      "usage": [
+        "render",
+        "sample",
+        "copySrc",
+        "copyDst"
+      ]
+    }
+  },
+  "programs": {
+    "blit": {
+      "uniformLayout": {},
+      "defines": {}
+    }
+  }
+}
