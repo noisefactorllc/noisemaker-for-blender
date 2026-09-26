@@ -15,6 +15,8 @@ and so does the port. No available reference revision reproduces a golden lackin
 stale retained golden evidence, not a port compiler regression.
 
 Fresh gates 2026-09-26 (see sibling check_*.log, unit.log):
-  lex 20/20 | parse 20/20 | compile 20/20 (B5oBsA included) | expanded 19/19 | graph 19/19 | unit 143/143
+  lex 20/20 | parse 20/20 | compile 20/20 (B5oBsA included) | expanded 19/19 | graph 19/19 | unit 157/157
+  (unit.log refreshed at integrated tip a5f8986: Ran 157 tests, OK; 143/143 at the audited revision 9631bf6f,
+  the delta being the 14 texture-pooling tests added in a5f8986)
 
 Checkpoint: unchanged (STATUS pin 643b2be1e28b; parity/out/ untracked by design).
