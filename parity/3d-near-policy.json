@@ -6,6 +6,18 @@
       "mean_abs_diff": 0.0103,
       "ssim_min": 0.999,
       "mechanism": "sub-ULP cross-GPU divergence flips a discrete fractal raymarch surface-boundary hit or miss"
+    },
+    "heightmap3d_landscape": {
+      "max_abs_diff": 242.001,
+      "mean_abs_diff": 0.1403,
+      "ssim_min": 0.9975,
+      "mechanism": "sub-ULP cross-GPU divergence flips the landscape raymarch's discrete voxel-presence test in the shared volume atlas (measured: 663/262144 atlas voxels appear or drop outright while every other cell stays within 1/255), so isolated single terrain-edge pixels flip"
+    },
+    "heightmap3d_landscape_isosurface": {
+      "max_abs_diff": 244.001,
+      "mean_abs_diff": 0.2584,
+      "ssim_min": 0.994,
+      "mechanism": "sub-ULP cross-GPU divergence flips the isosurface landscape raymarch's discrete voxel-presence test in the shared volume atlas (measured: 663/262144 atlas voxels appear or drop outright while every other cell stays within 1/255), so isolated single terrain-edge pixels flip"
     }
   }
 }

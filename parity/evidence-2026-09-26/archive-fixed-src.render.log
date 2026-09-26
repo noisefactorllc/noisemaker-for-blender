@@ -1,0 +1,57 @@
+Failed to create /home/node/.cache for shader cache (Read-only file system)---disabling.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 176 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 184 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 176 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 184 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, howeveNMR WARN uniform resolution (VEC2) not set — value=[256.0, 256.0] kept its shader default
+NMR WARN uniform wrap (BOOL) not set — value=True kept its shader default
+NMR WARN uniform rotateX (FLOAT) not set — value=0.3 kept its shader default
+NMR WARN uniform rotateY (FLOAT) not set — value=0 kept its shader default
+NMR WARN uniform rotateZ (FLOAT) not set — value=0 kept its shader default
+NMR WARN uniform viewScale (FLOAT) not set — value=0.8 kept its shader default
+NMR WARN uniform posX (FLOAT) not set — value=0 kept its shader default
+NMR WARN uniform posY (FLOAT) not set — value=0 kept its shader default
+NMR WARN uniform posZ (FLOAT) not set — value=0 kept its shader default
+NMR WARN uniform fieldOfView (FLOAT) not set — value=60 kept its shader default
+NMR OK fx_landscape_default.png mean=[21.7, 43.7, 47.4, 255.0] px00=[6, 11, 19, 255] pxCtr=[88, 212, 215, 255]
+NMR OK fx_landscape_voxel.png mean=[21.7, 43.7, 47.4, 255.0] px00=[6, 11, 19, 255] pxCtr=[88, 212, 215, 255]
+NMR OK fx_landscape_isosurface.png mean=[22.3, 44.1, 48.0, 255.0] px00=[6, 11, 19, 255] pxCtr=[82, 200, 203, 255]
+00:28.278  blend            | Saved session recovery to "/state/cache/scratch/quit.blend"
+r the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 152 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 160 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 168 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 176 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 184 bytes. Consider using UBO.
+
+Blender quit
+fixed-archive render exit=0

@@ -7,3 +7,5 @@ reactionDiffusion3d
 shape3d
 flow3d
 palette3d
+heightmap3d_landscape
+heightmap3d_landscape_isosurface
