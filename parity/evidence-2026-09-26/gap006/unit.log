@@ -1,27 +1,33 @@
-# GAP-006 candidate — archive license + version identity (base d9a4243) — generated 2026-09-26T23:30:18Z
-# environment: Linux container, python 3.11.2 venv (numpy 2.5.3, pillow 12.3.0) — no Blender binary on host; compiler gates regenerated against a fresh reference clone pinned at 6a0af04d3c4f (see check_*.log: 20/20 lex/parse/compile, 19/19 expand/graph); bpy 5.2.2 wheel module used as the Blender-host for the upgrade-cycle harness (environment disclosed, as in the committed test_backend_contract.log)
+# GAP-006 candidate — archive license + version identity (base d9a4243) — regenerated 2026-09-27T00:40:08Z
+# environment: Linux container, python 3.11.2 venv (numpy 2.5.3, pillow 12.3.0) — no Blender binary on host; compiler gates regenerated against a fresh reference clone pinned at 6a0af04d3c4f (see check_*.log: 20/20 lex/parse/compile, 19/19 expand/graph); bpy 5.2.2 wheel module used as the Blender-host for the upgrade-cycle harness (environment disclosed)
 
-test_3d_fixture_coverage.py: OK
-test_archive_identity.py: OK
-test_artistic_matrix.py: OK
-test_audio_nested_automation.py: OK
-test_automation_runtime.py: OK
-test_batch_compare.py: OK
-test_compiler.py: OK
-test_frame_export.py: OK
-test_midi_device_selection.py: OK
-test_midi_expression.py: OK
-test_pipeline_limits.py: OK
-test_pipeline_sink.py: OK
-test_runtime_sink.py: OK
-test_text_style.py: OK
-test_texture_pooling.py: OK
-test_transform.py: OK
+test_3d_fixture_coverage.py: Ran 5 tests in 0.040s OK 
+test_archive_identity.py: Ran 5 tests in 0.689s OK 
+test_artistic_matrix.py: Ran 11 tests in 0.348s OK 
+test_audio_nested_automation.py: Ran 6 tests in 0.033s OK 
+test_automation_runtime.py: Ran 9 tests in 0.147s OK 
+test_batch_compare.py: Ran 16 tests in 10.751s OK 
+test_compiler.py: Ran 41 tests in 0.090s OK 
+test_frame_export.py: Ran 8 tests in 0.001s OK 
+test_midi_device_selection.py: Ran 9 tests in 0.033s OK 
+test_midi_expression.py: Ran 8 tests in 0.051s OK 
+test_pipeline_limits.py: Ran 2 tests in 0.000s OK 
+test_pipeline_sink.py: Ran 4 tests in 0.001s OK 
+test_runtime_sink.py: Ran 14 tests in 0.001s OK 
+test_text_style.py: Ran 1 test in 0.027s OK 
+test_texture_pooling.py: Ran 14 tests in 0.001s OK 
+test_transform.py: Ran 9 tests in 0.030s OK 
 
+--- archive-identity detail:
+test_addon_version_identifies_an_upgrade (parity.test_archive_identity.StandaloneArchiveIdentityTests.test_addon_version_identifies_an_upgrade) ... ok
+test_kit_config_ships_the_license_notice_to_the_enclosing_kit (parity.test_archive_identity.StandaloneArchiveIdentityTests.test_kit_config_ships_the_license_notice_to_the_enclosing_kit) ... ok
+test_standalone_zip_carries_the_license_notice (parity.test_archive_identity.StandaloneArchiveIdentityTests.test_standalone_zip_carries_the_license_notice) ... ok
+test_standalone_zip_entry_point_and_source_identity (parity.test_archive_identity.StandaloneArchiveIdentityTests.test_standalone_zip_entry_point_and_source_identity) ... ok
+test_standalone_zip_license_matches_the_repo_notice (parity.test_archive_identity.StandaloneArchiveIdentityTests.test_standalone_zip_license_matches_the_repo_notice) ... ok
+Ran 5 tests in 0.680s
+OK
+
+--- red-before at base d9a4243: see archive-identity-red-before.log (FAILED failures=3, errors=1; green OK at candidate HEAD)
 --- upgrade-cycle harness (bpy 5.2.2 module, isolated BLENDER_USER_RESOURCES, clean host):
-# installs the SERVED kit 0.1.26 engine zip (bl_info 0.1.0), then the candidate archive
-# (bl_info (0,1,1) + LICENSE.txt), then removes — full log: upgrade-cycle.log
-# (harness: /state/cache/scratch/gap006_upgrade_cycle.py — steps and outcomes below)
-UPGRADE-CYCLE PASS — install previous (0,1,0, no notice, reproducing GAP-006) OK; upgrade via
-addon_install OK; upgraded version (0,1,1) OK; LICENSE.txt present + MIT text OK; enable OK;
-inventory 869 entries OK; disable OK; removal OK.
+# installs the SERVED kit 0.1.26 engine zip (bl_info 0.1.0), then the candidate archive (bl_info (0,1,1) + LICENSE.txt), then removes — full log: upgrade-cycle.log
+UPGRADE-CYCLE PASS — install previous (0,1,0, no notice, reproducing GAP-006) OK; upgrade via addon_install OK; upgraded version (0,1,1) OK; LICENSE.txt present + MIT text OK; enable OK; inventory 869 entries OK; disable OK; removal OK.

@@ -1,0 +1,28 @@
+{
+  "all_entries_under_addon_dir": true,
+  "all_passed": true,
+  "archive_identifies_source_via_checkout_equality": true,
+  "bl_info_literal_parses": true,
+  "bl_info_version": [
+    0,
+    1,
+    1
+  ],
+  "bl_info_version_is_upgrade_over_0_1_0": true,
+  "checkout_files_missing_from_zip": [],
+  "engine_zip_bytes": 928028,
+  "engine_zip_bytes_match_kit_json": true,
+  "engine_zip_sha256": "cfba99cbe1893855b5ef7b44b4d7aba3e78e2ab712e56ef36f72346c59720484",
+  "engine_zip_sha_matches_kit_json": true,
+  "entry_byte_mismatches_vs_checkout": [],
+  "entry_count": 869,
+  "entry_point_registers": true,
+  "kit_source_repo": "noisefactorllc/noisemaker-for-blender",
+  "kit_source_sha": "81ca79e5ea32c87dd273257c04d2e91da48ea078",
+  "kit_version": "0.1.30",
+  "notice_byte_identical_to_repo_LICENSE": true,
+  "notice_is_mit_text": true,
+  "notice_present": true,
+  "notice_sha256": "e502d1baf14c5fde7a7476f8a860665352d31d26f75b7a6977943606c8b51259",
+  "zip_entries_missing_from_checkout": []
+}
