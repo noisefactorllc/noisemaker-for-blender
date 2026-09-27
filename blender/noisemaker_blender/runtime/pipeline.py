@@ -5,7 +5,10 @@ skip conditions), ping-pong global outputs after each execution, persist state a
 end of frame. Supports multi-frame settle and sampling for stateful effects.
 """
 import math
+import os
 import time as clock
+
+from .preflight import preflight_effect
 
 
 _TAU = math.pi * 2
@@ -783,6 +786,92 @@ def resource_plan(backend, graph):
         "sharedTextures": shared_textures,
         "textures": texture_records,
     }
+
+
+def _resolved_shader_buckets(backend, graph):
+    """Resolve each pass program's source availability against the backend's
+    own compile path (reference Pipeline.preflight's resolveProgramSpec step).
+
+    The port's programs are transpiled `.frag` + `.createinfo.json` pairs under
+    ``shaders_root/<namespace>/<func>/<progName>`` (or the builtin `blit`), so a
+    bucket is present only when the backend's compile step would actually find
+    its source. Programs the compile step would fail to locate stay out of the
+    map — the report then reasons "no compiled source" instead of guessing.
+    """
+    buckets = {}
+    for render_pass in (getattr(graph, "passes", None) or []):
+        program = render_pass.get("program") if isinstance(render_pass, dict) else None
+        if not program or program in buckets:
+            continue
+        namespace = render_pass.get("namespace")
+        func = render_pass.get("func")
+        prog_name = render_pass.get("progName")
+        if namespace is None and func == "blit":
+            buckets[program] = {"frag": "<builtin:blit>"}
+            continue
+        shaders_root = getattr(backend, "shaders_root", None)
+        if not (shaders_root and namespace and func and prog_name):
+            continue
+        base = os.path.join(str(shaders_root), namespace, func, prog_name)
+        if os.path.isfile(base + ".frag"):
+            buckets[program] = {"frag": base + ".frag"}
+    return buckets
+
+
+def _predict_volume_clamps(graph, max_texture_size):
+    """Predict the volumeSize clamps the pipeline applies at init (GAP-016's
+    prediction/runtime lockstep, port side). Shares `_clamp_volume_size` with
+    `FrameStepper.__init__`'s actual mutation, so the prediction and the
+    runtime can never drift. Read-only; never mutates the graph."""
+    clamps = []
+    if not max_texture_size:
+        return clamps
+    for render_pass in (getattr(graph, "passes", None) or []):
+        uniforms = (render_pass.get("uniforms") or {}) if isinstance(render_pass, dict) else {}
+        for name, value in uniforms.items():
+            if not _is_volume_size_uniform(name):
+                continue
+            clamped = _clamp_volume_size(value, max_texture_size)
+            if clamped != value:
+                clamps.append({
+                    "pass": render_pass.get("name") or render_pass.get("id"),
+                    "uniform": name,
+                    "requested": value,
+                    "clamped": clamped,
+                    "limit": max_texture_size,
+                })
+    return clamps
+
+
+def preflight(backend, graph, capabilities=None, shaders=None):
+    """Static preflight of a graph against device capabilities, before any
+    pipeline initialization or compilation (GAP-016; reference commit
+    12b4d74fb4f2). Port-side equivalent of reference `Pipeline.preflight`.
+
+    Runs the same analysis as `preflight_effect` — per-backend authorability
+    (the port's single Blender backend, judged against the backend's own
+    compile path), predicted MRT format demotions (only when a
+    `maxColorBytesPerSample` capability is supplied; the Blender runtime
+    applies none), and predicted `maxTextureSize` clamps — plus, port-side,
+    the `volumeClamps` the pipeline init actually applies (shared with the
+    runtime's own clamp logic). Read-only; never mutates the graph.
+
+    Returns a report dict:
+      {backends: {blender: {authorable, reasons}}, formatChanges, clamps,
+       volumeClamps}
+    """
+    caps = dict(capabilities or {})
+    if caps.get("maxTextureSize") is None and callable(getattr(backend, "max_texture_size", None)):
+        caps["maxTextureSize"] = backend.max_texture_size()
+    if shaders is None:
+        shaders = _resolved_shader_buckets(backend, graph)
+    definition = {
+        "passes": getattr(graph, "passes", None) or [],
+        "textures": getattr(graph, "textures", None),
+    }
+    report = preflight_effect(definition, caps, shaders)
+    report["volumeClamps"] = _predict_volume_clamps(graph, caps.get("maxTextureSize"))
+    return report
 
 
 def resolve_repeat_count(p, lookup):

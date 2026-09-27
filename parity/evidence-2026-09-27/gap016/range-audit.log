@@ -1,0 +1,57 @@
+# GAP-016 upstream range audit (fresh clone, upstream main tip 8fe3ccaf2cc8f111ba574f4dc356ee68501af971)
+2026-09-27T10:44:51Z
+
+## ancestry
+403c2a4bf2cb IS ancestor of 12b4d74fb4f2 (declared range contiguous)
+e73a44a37f0c IS ancestor of 12b4d74fb4f2 (observed range contiguous)
+403c2a4bf2cb IS ancestor of origin/main (force-push flag: range start on the delivered main line)
+
+## shaders/ commits in 403c2a4..12b4d74f (delivery order is not ancestry order)
+12b4d74f feat(runtime): static effect preflight for per-backend authorability and device-limit format changes (GAP-016)
+e73a44a3 test(harness): warm up frames before pausing for explicit-time render requests (GAP-014)
+c2252f0c test(metrics): auditable GAP-015 metric interchangeability mirror
+7443f6e6 test(docs): pin the harness WebGPU render-surface readback and narrow GAP-012
+7dc0f564 feat(tests): auditable measured uniform deltas in the harness uniforms report (GAP-011)
+9f85687d feat(tests): truthful uniform-responsiveness aggregation behind --strict-uniforms (GAP-010)
+
+## shaders/ diff stat (full range)
+ shaders/src/runtime/pipeline.js      |  40 +++--
+ shaders/src/runtime/preflight.js     | 191 +++++++++++++++++++++++
+ shaders/tests/frame-readback.js      |  83 ++++++++++
+ shaders/tests/frame-warmup.js        |  61 ++++++++
+ shaders/tests/image-metrics.js       | 283 +++++++++++++++++++++++++++++++++++
+ shaders/tests/test-harness.js        |  94 ++++++++++--
+ shaders/tests/test_frame_readback.js | 183 ++++++++++++++++++++++
+ shaders/tests/test_frame_warmup.js   | 144 ++++++++++++++++++
+ shaders/tests/test_image_metrics.js  | 164 ++++++++++++++++++++
+ shaders/tests/test_preflight.js      | 267 +++++++++++++++++++++++++++++++++
+ shaders/tests/test_uniform_deltas.js | 122 +++++++++++++++
+ shaders/tests/test_uniform_status.js | 116 ++++++++++++++
+ shaders/tests/uniform-deltas.js      | 282 ++++++++++++++++++++++++++++++++++
+ shaders/tests/uniform-status.js      |  78 ++++++++++
+ 14 files changed, 2086 insertions(+), 22 deletions(-)
+
+## shaders/ diff stat split: effects/glsl untouched
+(empty above = no effect-definition or GLSL changes)
+
+## shaders/src/ runtime delta (the only source change)
+ shaders/src/runtime/pipeline.js  |  40 ++++++--
+ shaders/src/runtime/preflight.js | 191 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 221 insertions(+), 10 deletions(-)
+
+## non-shaders/ files touched in range
+12b4d74f feat(runtime): static effect preflight for per-backend authorability and device-limit format changes (GAP-016)
+e73a44a3 test(harness): warm up frames before pausing for explicit-time render requests (GAP-014)
+c2252f0c test(metrics): auditable GAP-015 metric interchangeability mirror
+132d1bf9 docs: advance AI development contract checkpoint through 7443f6e (GAP-011/012 verified pair audit)
+7443f6e6 test(docs): pin the harness WebGPU render-surface readback and narrow GAP-012
+7dc0f564 feat(tests): auditable measured uniform deltas in the harness uniforms report (GAP-011)
+407eb7a7 docs: advance AI development contract checkpoint through 9f85687 (GAP-010 verified pair audit)
+7730ea4a docs: state the at-least-one-entry requirement in the GAP-010 uniforms guidance prose
+9f85687d feat(tests): truthful uniform-responsiveness aggregation behind --strict-uniforms (GAP-010)
+0ac52500 docs: advance AI development contract checkpoint through 403c2a4 (GAP-008/009 verified pair audit)
+
+## commits after 12b4d74f on main (target stays 12b4d74f)
+8fe3ccaf docs: record post-publication deployed-contract evidence and correct the open-gap enumeration
+ec457c2e docs: advance AI development contract checkpoint through 12b4d74 (GAP-014/015/016 verified pair audit)
+shaders/ commits after 12b4d74f: 0

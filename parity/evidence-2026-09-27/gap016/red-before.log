@@ -1,0 +1,7 @@
+# GAP-016 red-before evidence — parity/test_preflight.py run at base a225d2195d65 (without runtime/preflight.py)
+2026-09-27T10:45:11Z
+
+Traceback (most recent call last):
+  File "/workspace/repos/noisemaker-for-blender/parity/test_preflight.py", line 34, in <module>
+    from noisemaker_blender.runtime.preflight import (  # noqa: E402
+ModuleNotFoundError: No module named 'noisemaker_blender.runtime.preflight'
