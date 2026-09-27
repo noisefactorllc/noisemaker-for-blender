@@ -77,7 +77,11 @@ def main(argv):
     checks["entry_point_registers"] = "def register():" in init
     import ast
     m = re.search(r"bl_info = (\{.*?\n\})", init, re.S)
-    bl_info = ast.literal_eval(m.group(1)) if m else None
+    if m is None:
+        raise AssertionError(
+            "no literal bl_info dict matched in the packaged __init__.py — "
+            "the ast.literal_eval contract cannot be checked")
+    bl_info = ast.literal_eval(m.group(1))
     checks["bl_info_literal_parses"] = bl_info is not None
     checks["bl_info_version"] = list(bl_info["version"]) if bl_info else None
     checks["bl_info_version_is_upgrade_over_0_1_0"] = bool(

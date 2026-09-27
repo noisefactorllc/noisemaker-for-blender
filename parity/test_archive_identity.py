@@ -75,7 +75,8 @@ class StandaloneArchiveIdentityTests(unittest.TestCase):
         # Blender parses bl_info with ast.literal_eval at install time: it must be
         # a literal dict (a constant reference would break bl_info parsing).
         m = re.search(r"bl_info = (\{.*?\n\})", init, re.S)
-        self.assertIsNotNone(m, "bl_info literal dict must be present")
+        self.assertIsNotNone(
+            m, "no literal bl_info dict matched in the packaged __init__.py")
         bl_info = ast.literal_eval(m.group(1))
         self.assertEqual(bl_info["version"], (0, 1, 1))
         self.assertEqual(bl_info["version"], noisemaker_blender.VERSION,
