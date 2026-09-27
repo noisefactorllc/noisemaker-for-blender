@@ -103,8 +103,8 @@ Current served declaration: 208 effect IDs. This inventory is not evidence of ex
 | `classicNoisedeck/shapes` | yes | unverified |
 | `classicNoisedeck/shapes3d` | yes | unverified |
 | `classicNoisedeck/splat` | yes | unverified |
-| `filter/adjust` | yes | measured 2026-09-25 (bake path vs reference engine; full parity unverified) |
-| `filter/bloom` | yes | measured 2026-09-25 (individual vs reference engine; zero-tolerance retained-golden defect open; full parity unverified) |
+| `filter/adjust` | yes | measured 2026-09-25 (bake path) and 2026-09-27 (Metal host, PASS at tol=2.0; full parity unverified) |
+| `filter/bloom` | yes | measured 2026-09-25 and 2026-09-27 (Metal host, PASS at tol=2.0; zero-tolerance retained-golden defect open; full parity unverified) |
 | `filter/blur` | yes | unverified |
 | `filter/bulge` | yes | unverified |
 | `filter/celShading` | yes | unverified |
@@ -139,7 +139,7 @@ Current served declaration: 208 effect IDs. This inventory is not evidence of ex
 | `filter/highPass` | yes | unverified |
 | `filter/historicPalette` | yes | unverified |
 | `filter/invert` | yes | unverified |
-| `filter/lens` | yes | measured 2026-09-25 (individual vs reference engine; full parity unverified) |
+| `filter/lens` | yes | measured 2026-09-25 and 2026-09-27 (OPEN DEFECT: 10/255 cross-engine max-abs-diff at the strict tol=2.0 gate, ssim 0.99999; full parity unverified) |
 | `filter/lensFlare` | yes | unverified |
 | `filter/lensWarp` | yes | unverified |
 | `filter/lightLeak` | yes | unverified |
@@ -376,6 +376,32 @@ Archive render (kit `0.1.18`): the packed engine (`engine/noisemaker_blender.zip
 The runs exposed a real port defect, fixed in the same commit as this record: `GpuBackend._set_uniform` passed a 4-component color value to Blender's `uniform_float` for a declared `vec3` uniform; Blender raises `ValueError`, which the handler swallowed, so every vec3 color uniform silently stayed zero and `synth/gradient` (and any landscape mode consuming it) rendered all-black. Pre-fix gradient probe: all-black (max-abs-diff 255 vs the reference render); post-fix: PASS at tol=2.0 (max-abs-diff=1.000, ssim=0.99999). The setter now normalizes any sequence to the declared vecN width, and every rejected or normalized assignment prints a one-time `NMR WARN` line (benign for uniforms the shader compiler optimized out, and for the ordinary RGBA-for-vec3 color truncation) instead of staying fully silent; under-length values are skipped with that warning rather than passed. The regression coverage in `blender/harness/test_backend_contract.py` was extended accordingly (over-length list/tuple/numpy sequences with a visible one-time truncation warning, under-length skip-with-warning, optimized-out uniform skip-with-once-warning). Correction (2026-09-26 review): the original run's log actually recorded an `AssertionError` at the truncation-warning-key assertion while still exiting 0 under Blender (which does not propagate the script exception) — `_warn_uniform_once` stored the full detail string for the truncation case because its one-time key splits on the ` — ` separator the truncation message lacked. The truncation detail now leads with the `truncated —` key segment, so the assertion holds; the corrected clean-exit-0 run is `parity/evidence-2026-09-26/gap006/test_backend_contract.log`, and the earlier failing log is retained unmodified at `parity/evidence-2026-09-26/test_backend_contract.log`. Raw evidence for this run is committed under `parity/evidence-2026-09-26/` (candidate and reference-engine PNGs for all three modes, graph JSONs, compare reports, `analysis.json` including the raw volumeCache atlas comparison, compiler-gate and unit logs, the packed kit compiler probe, the kit archive render candidates and reports, and the Blender logs).
 
 Compiler checks bound to this run: `parity/compiler/check_{lex,parse,compile,expanded,graph}.py` all pass (20/20 lex/parse/compile, 19/19 expand/graph with `B5oBsA` compile-error exclusion) against the reference engine at `8eeb7b5ac14e`; 143/143 parity unit tests pass, including the extended `test_3d_fixture_coverage` / `test_batch_compare` gates that now track the two landscape fixtures and lock the NEAR-policy bounds (set above the measured values with explicit headroom for cross-host variation) to their exact policy values (the `flythrough3d` entry is unchanged). Packed compiler graphs: kit `0.1.18` (source `e9299fd8af7d546d27491959677211e8e89b1dc1`) `engine/noisemaker_blender.zip` fetched at its immutable `kit.json` SHA-256 (`9437b9a4198d392b3ce12de404c131885e482acdb1a82894433023218cfa1c8f`), extracted into an isolated directory, and its own packed compiler produced `FILTERING: 1` for default and voxel and `FILTERING: 0` for isosurface — matching the checkout compiler's defines. Full rendered parity remains unverified; the host remains not GAP-003-qualified.
+
+### Native observations, 2026-09-27
+
+Host: macOS 26.5, darwin arm64, Apple M4, Blender 5.1.2 with `--factory-startup`, GPU backend METAL (`gpu.platform`: backend METAL, vendor "Apple M4", renderer "Metal API", version 1.2 — `parity/evidence-2026-09-27/gap001/gpuinfo.json`). This is the Apple Silicon/Metal GPU class named by GAP-001's 2026-09-25 closure-withholding ("a GAP-003-qualified GPU host"); the run was driven through the job's host runtime (one run at a time, sandboxed checkout). GAP-003 itself remains open on its interactive-GUI and platform-matrix items; this section records rendered-parity measurements on that GPU class.
+
+Scope and method: exactly the 2026-09-25 scope re-run on the qualified host — individual `bloom` (`parity/programs/bloom.dsl`), individual `lens` (`parity/evidence-2026-09-27/gap001/lens.dsl`, the same three-line program), the `north_star` chain, and an `adjust` candidate — via `blender/harness/render_all.py` (256x256, NM_TIME 0.25, NM_FRAMES 1), plus the public bake path (`blender/harness/test_integration.py`). Graded with the repo's CURRENT integer-exact `parity/compare.py` (commit `74bd4ca`: uint8 inputs, 8-bit units, "thresholds unchanged") at the existing tolerances tol=2.0 / ssim_min=0.98, against the UNCHANGED committed 2026-09-25 authority PNGs (the reference engine's own WebGL2/SwiftShader renders at provenance `2f47612c2904`). No tolerance, golden, or engine input was altered.
+
+Results (candidate vs reference-engine authority PNGs):
+
+| Case | Result |
+|---|---|
+| `bloom` (individual) | PASS: max-abs-diff=1.000 mean-abs-diff=0.1460 ssim=0.99998 (tol=2.0) |
+| `adjust` (candidate) | PASS: max-abs-diff=1.000 mean-abs-diff=0.0358 ssim=1.00000 (tol=2.0) |
+| `adjust` (baked, public bake operator) | PASS at the integration gate: max-abs-diff=1.000 ssim=1.00000 (tol=1); PASS vs reference at tol=2.0 |
+| `lens` (individual) | FAIL: max-abs-diff=10.000 mean-abs-diff=0.0498 ssim=0.99999 (tol=2.0) — open defect |
+| `north_star` (chain) | FAIL: max-abs-diff=255.000 mean-abs-diff=59.5691 ssim=-0.15266 (tol=2.0) — open defect |
+
+The public bake path: `test_integration.py` on this host reports INTEGRATION PASS with INVARIANT A (bake == direct pipeline) max-abs-diff=0 (INVARIANT B is skipped there for lack of a seeded `parity/out` golden — its full execution as integration.sh defines it is the 2026-09-25 record); the dumped bake graded PASS at tol=1 and tol=2.0 (reports in the evidence directory).
+
+Determinism: a second full render pass on the same host produced byte-identical candidates (sha256 `576b4360…`, `23fc2f1c…`, `48ef2a99…` for bloom/lens/north_star rerun vs first run), so these are stable host measurements, not noise. Cross-host, the individual-effect candidates are 1-LSB-close to the 2026-09-25 llvmpipe renders; the `north_star` chain is not (max-abs-diff=255, ssim=0.75231 vs the llvmpipe render): the chain's chaotic stateful solvers (flow particles → 40-iteration navierStokes → palette/lighting) amplify sub-LSB cross-engine FP differences, the same mechanism class as `docs/CHAOS-GATE.md` and the landscape NEAR precedent — but no pre-existing policy binds this program, so the strict-gate numbers are recorded as an open chain divergence, not classified NEAR.
+
+Re-grade of the committed 2026-09-25 llvmpipe candidates with the current integer-exact grader (`regrade-0925-integer.log`): bloom 1.000/0.1460/0.99998 PASS; lens 10.000/0.0498/0.99999 FAIL; north_star 255.000/53.9232/-0.10900 FAIL. The 2026-09-25 record's cross-engine numbers (0.004/0.039/1.000 with ssim 0.99610) were produced by the pre-`74bd4ca` float32 grader and DO NOT reproduce on the committed PNGs under the current integer-exact grader; that historical text stands unchanged above, and this section records the current measurements. Consequence for GAP-001's descriptions: `lens` is no longer described as matching within tolerance — it renders with a recorded open defect (10/255 at the strict gate); `bloom` is confirmed within tolerance on the qualified host; the `north_star` chain carries the recorded chain divergence. The kit export README template was updated to the same statements (this commit).
+
+Retained 2026-09-24 authority goldens: still unreachable — now evidenced on the macOS host itself: a probe run in the host sandbox (`retained-goldens-reachability.json`) shows `/Users/alex` raises `PermissionError(1, 'Operation not permitted')` and both `.codex` paths do not exist in the sandbox; the unchanged-authority comparison against those exact files cannot be executed by automation and is recorded as blocked in GAP-001.
+
+Raw evidence for this run is committed under `parity/evidence-2026-09-27/gap001/` (candidate PNGs, rerun PNGs, lens.dsl, gpuinfo.json, compare reports, regrade and compare logs, render_all and rerun logs, integration log, baked PNG, reachability probe).
 
 ## 4. Evidence
 

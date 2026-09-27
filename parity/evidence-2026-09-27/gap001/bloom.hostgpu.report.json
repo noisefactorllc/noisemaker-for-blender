@@ -1,0 +1,16 @@
+{
+  "name": "bloom",
+  "golden": "parity/evidence-2026-09-25/bloom.reference-webgl.golden.png",
+  "candidate": "parity/evidence-2026-09-27/gap001/bloom.png",
+  "shape": [
+    256,
+    256,
+    4
+  ],
+  "max_abs_diff": 1.0,
+  "mean_abs_diff": 0.14597320556640625,
+  "ssim": 0.9999844899820789,
+  "tolerance": 2.0,
+  "ssim_min": 0.98,
+  "passed": true
+}

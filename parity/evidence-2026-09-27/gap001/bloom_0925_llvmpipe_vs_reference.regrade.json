@@ -1,0 +1,16 @@
+{
+  "name": "bloom_0925_llvmpipe_vs_reference",
+  "golden": "parity/evidence-2026-09-25/bloom.png",
+  "candidate": "parity/evidence-2026-09-25/bloom.reference-webgl.golden.png",
+  "shape": [
+    256,
+    256,
+    4
+  ],
+  "max_abs_diff": 1.0,
+  "mean_abs_diff": 0.14600372314453125,
+  "ssim": 0.9999844835367481,
+  "tolerance": 2.0,
+  "ssim_min": 0.98,
+  "passed": true
+}

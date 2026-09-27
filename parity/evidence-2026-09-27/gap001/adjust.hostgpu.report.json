@@ -1,0 +1,16 @@
+{
+  "name": "adjust",
+  "golden": "parity/evidence-2026-09-25/adjust.reference-webgl.golden.png",
+  "candidate": "parity/evidence-2026-09-27/gap001/adjust.png",
+  "shape": [
+    256,
+    256,
+    4
+  ],
+  "max_abs_diff": 1.0,
+  "mean_abs_diff": 0.03580474853515625,
+  "ssim": 0.9999950440847899,
+  "tolerance": 2.0,
+  "ssim_min": 0.98,
+  "passed": true
+}

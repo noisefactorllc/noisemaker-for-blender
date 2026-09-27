@@ -119,7 +119,11 @@ see the [README](README.md).
   (lex / parse / compile / expand / graph); the full 19-program blaster corpus compiles to
   byte-identical graphs. The addon needs **no external engine** to author or compile.
 - **2D effects (single-pass + stateful) and agent deposit:** whole catalog **byte-identical / ±1**,
-  except the discontinuity-heavy subset of the artistic-filter batch noted below.
+  except the discontinuity-heavy subset of the artistic-filter batch noted below and the recorded
+  2026-09-27 cross-engine defects in the compatibility record: `filter/lens` renders with a measured
+  10/255 worst per-channel difference against the reference engine (above the strict 2-step
+  tolerance; ssim 0.99999), and chaotic-solver chains (e.g. `north_star`'s flow → 40-iteration
+  navierStokes) diverge structurally across engines.
 - **Artistic-filter batch re-verification (this crystallization round):** all 37 reference dirs that
   changed upstream (33 with real GLSL/definition content drift + 4 confirmed N/A — see below) were
   re-ported from the pinned snapshot and graded per (effect, mode) against 97 freshly-minted goldens

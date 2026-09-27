@@ -1,0 +1,58 @@
+00:00.463  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/1af9747ed9cd470c_essentials_brushes-curve_sculpt.blend.index.json".
+00:00.472  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/19e7737b6a725ab1_essentials_brushes-gp_draw.blend.index.json".
+00:00.478  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/3bc94ef3ef7c217e_essentials_brushes-gp_sculpt.blend.index.json".
+00:00.484  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/3dee6b6431e84621_essentials_brushes-gp_vertex.blend.index.json".
+00:00.492  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/3ea06ec0e50757eb_essentials_brushes-gp_weight.blend.index.json".
+00:00.548  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/e619d034c2154c34_essentials_brushes-mesh_sculpt.blend.index.json".
+00:00.557  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/c1f229fde41f54ca_essentials_brushes-mesh_texture.blend.index.json".
+00:00.564  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/e83eeca5048170d7_essentials_brushes-mesh_vertex.blend.index.json".
+00:00.569  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/e8f0f001b7a082a1_essentials_brushes-mesh_weight.blend.index.json".
+00:00.576  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/3d20ad633dcc0745_compositing_nodes_essentials.blend.index.json".
+00:00.590  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/d8721859531bbaa5_geometry_nodes_essentials.blend.index.json".
+00:00.626  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/97a2c373d1e15692_procedural_hair_node_assets.blend.index.json".
+00:00.631  asset.index      | ERROR Index not created: couldn't create folder "/Users/alex/Library/Caches/Blender/asset-library-indices/05006252667d456c/e8cf12754cf829b7_shading_nodes_essentials.blend.index.json".
+  reg OK    operator
+  reg OK    Scene.noisemaker (NoisemakerSettings)
+  reg OK    NOISEMAKER_PT_compositor
+  reg OK    NOISEMAKER_PT_image_editor
+  node OK   tree='NM Test' node='Noisemaker Program' size=256
+Info: Baked 'NM_e2e' (256x256, 1 frame)
+  img OK    'NM_e2e' size=(256, 256) float=True colorspace=Non-Color
+  dump OK   /tmp/nm_bake_adjust.png
+  diag      direct mean=[108.6, 113.7, 111.2, 255.0] px[0,0]=[63, 84, 32, 255] ctr=[144, 244, 185, 255]
+  diag      bake   mean=[108.6, 113.7, 111.2, 255.0] px[0,0]=[63, 84, 32, 255] ctr=[144, 244, 185, 255]
+  INVARIANT A (bake == direct pipeline): max-abs-diff=0
+  INVARIANT B skipped: golden not present: /Users/alex/.local/state/scaffold-cloud/office/jobs/a140bd3c-1836-49ff-9553-0116836587f9/repos/noisemaker-for-blender/parity/out/adjust.golden.png
+Info: Baked 'NM_sweep_bRUa1g' (256x256, 1 frame)
+  sweep OK   A(bake==pipeline) max-diff=0  [bRUa1g]  multi-pass static (perlin->tetraCosine->lighting)
+NMR WARN uniform fgColor (VEC3) truncated — over-length value cut to the declared 3-component width — value=[0.8313725490196079, 0.6549019607843137, 0.047058823529411764, 1]
+NMR WARN uniform bgColor (VEC3) truncated — over-length value cut to the declared 3-component width — value=[0.9725490196078431, 0.39215686274509803, 0.16862745098039217, 1]
+NMR WARN uniform edgeColor (VEC3) truncated — over-length value cut to the declared 3-component width — value=[0.20392156862745098, 0, 0.00392156862745098, 1]
+Info: Baked 'NM_sweep_kQ_2mw' (256x256, 1 frame)
+  sweep OK   A(bake==pipeline) max-diff=0  [kQ_2mw]  12 passes, 3 write surfaces o0/o1/o2
+Info: Baked 'NM_sweep_MQ2ojg' (256x256, 8 frames)
+  sweep OK   A(bake==pipeline) max-diff=0  [MQ2ojg]  stateful reactionDiffusion (exercises frames+timestep)
+Error: DSL error: Unexpected character '@' at line 1 col 1
+  errpath OK invalid-dsl    -> reported: Error: DSL error: Unexpected character '@' at line 1 c
+Error: No DSL source set (pick a Text block or a .dsl file)
+  errpath OK no-source      -> reported: Error: No DSL source set (pick a Text block or a .dsl 
+  unreg OK
+
+INTEGRATION PASS — DSL -> operator -> Image is byte-exact end-to-end
+00:01.232  blend            | Saved session recovery to "/Users/alex/.nmr/runner/b/zfwt8s/t/quit.blend"
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 136 bytes. Consider using UBO.
+Push constants have a minimum supported size of 128 bytes, however the constants added so far already reach 144 bytes. Consider using UBO.
+
+Blender quit
