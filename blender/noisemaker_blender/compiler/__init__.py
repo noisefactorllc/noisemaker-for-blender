@@ -22,7 +22,12 @@ from .lexer import lex
 from .parser import parse, parse_source
 from .validator import validate
 from .compile import compile
-from .transform import replace_effect, list_steps, get_compatible_replacements
+from .transform import (
+    replace_effect,
+    list_steps,
+    get_compatible_replacements,
+    predict_replacement,
+)
 from .expander import expand
 from .palette_expansion import expand_palette
 from .resources import allocate_resources, analyze_liveness
@@ -43,6 +48,7 @@ __all__ = [
     "replace_effect",
     "list_steps",
     "get_compatible_replacements",
+    "predict_replacement",
     "expand",
     "expand_palette",
     "allocate_resources",

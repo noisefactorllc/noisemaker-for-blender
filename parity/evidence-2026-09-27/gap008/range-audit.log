@@ -1,0 +1,63 @@
+# GAP-008 upstream range audit (fresh clone pinned at 403c2a4bf2cb56307448ea2fc1d6fa3cd74b7d6e)
+
+## ancestry
+6a0af04d3c4f IS ancestor of 403c2a4bf2cb (contiguous range, no force-push effect on start)
+
+## shaders/ commits in 6a0af04..403c2a4b
+403c2a4b feat(lang): predict replaceEffect compatibility before mutation (GAP-008)
+b35361e0 feat(shaders): temporal no-animation and universal low-variety metrics from renderEffectFrame (GAP-009)
+
+## shaders/ diff stat (full range)
+ shaders/src/index.js                |   2 +-
+ shaders/src/lang/index.js           |   4 +-
+ shaders/src/lang/paramAliases.js    |  11 ++
+ shaders/src/lang/transform.js       | 377 +++++++++++++++++++++++++++++++++++-
+ shaders/tests/frame-metrics.js      |  80 ++++++++
+ shaders/tests/test-harness.js       | 167 +++++++++++++++-
+ shaders/tests/test_frame_metrics.js |  71 +++++++
+ shaders/tests/test_transform.js     | 200 +++++++++++++++++++
+ 8 files changed, 898 insertions(+), 14 deletions(-)
+
+## shaders/ diff stat split: effects/glsl untouched
+(empty above = no effect-definition or GLSL changes)
+
+## non-shaders/ files touched in range
+403c2a4b feat(lang): predict replaceEffect compatibility before mutation (GAP-008)
+
+llms-full.txt
+shaders/src/index.js
+shaders/src/lang/index.js
+shaders/src/lang/paramAliases.js
+shaders/src/lang/transform.js
+shaders/tests/test_transform.js
+19fdcb56 docs: close GAP-009 with temporal no-animation and low-variety metric evidence for b35361e0
+
+llms-full.txt
+b35361e0 feat(shaders): temporal no-animation and universal low-variety metrics from renderEffectFrame (GAP-009)
+
+scripts/run-js-tests.js
+shaders/tests/frame-metrics.js
+shaders/tests/test-harness.js
+shaders/tests/test_frame_metrics.js
+66b8ce7d docs: advance AI development contract checkpoint through a651c075 (GAP-005/006/007 verified pair audit)
+
+LEDGER.md
+llms-full.txt
+a651c075 docs: record CI and deployment evidence for the 01e9d62 docs pass
+
+LEDGER.md
+3968f6c4 docs: advance Documentation checkpoint to 01e9d62
+
+LEDGER.md
+01e9d620 docs: catch Sphinx docs up to 6a0af04d (texture pooling opt-in, structured shader diagnostics)
+
+LEDGER.md
+docs/shaders/compiler.rst
+docs/shaders/pipeline.rst
+
+## commits after 403c2a4b on main (delivery sub-ranges, tests-only)
+e73a44a3 test(harness): warm up frames before pausing for explicit-time render requests (GAP-014)
+c2252f0c test(metrics): auditable GAP-015 metric interchangeability mirror
+7443f6e6 test(docs): pin the harness WebGPU render-surface readback and narrow GAP-012
+7dc0f564 feat(tests): auditable measured uniform deltas in the harness uniforms report (GAP-011)
+9f85687d feat(tests): truthful uniform-responsiveness aggregation behind --strict-uniforms (GAP-010)

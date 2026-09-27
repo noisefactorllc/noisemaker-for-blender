@@ -284,6 +284,17 @@ def is_starter_op(name) -> bool:
     return False
 
 
+def get_param_aliases(op_name: str) -> dict:
+    """Port of ``paramAliases.getParamAliases`` (read-only; no mutation).
+
+    Returns a copy of the alias map registered for ``op_name``
+    (``{ oldName: newName }``, empty when none).
+    """
+    _ensure_built()
+    aliases = _PARAM_ALIASES.get(op_name)
+    return dict(aliases) if aliases else {}
+
+
 def resolve_param_aliases(op_name: str, kwargs: dict):
     """Port of ``paramAliases.resolveParamAliases`` (mutates ``kwargs``).
 

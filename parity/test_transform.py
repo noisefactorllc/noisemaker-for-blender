@@ -145,5 +145,179 @@ class TransformTests(unittest.TestCase):
         self.assertEqual(res["error"], "Step with index %s not found" % builtin_step["temp"])
 
 
+# ============================================================================
+# Replacement preflight prediction tests (GAP-008, reference 403c2a4bf2cb)
+# ============================================================================
+
+
+class PredictionTests(unittest.TestCase):
+    def setUp(self):
+        self.compiled = compile("search synth, filter\nnoise(10).blur().write(o0)\nrender(o0)")
+        self.steps = list_steps(self.compiled)
+
+    def _step(self, index):
+        return self.steps[index]
+
+    def test_predictions_expose_candidate_dimensions(self):
+        result = get_compatible_replacements(self.compiled, self._step(1)["stepIndex"])
+
+        self.assertTrue(result["success"])
+        self.assertIn("predictions", result)
+        grain = result["predictions"]["filter.grain"]
+        self.assertIsNotNone(grain)
+        self.assertTrue(grain["available"], "Registered instance should be available")
+        self.assertEqual(grain["arguments"]["unknown"], [], "No unknown arguments without provided args")
+        self.assertEqual(grain["types"], [], "No type mismatches without provided args")
+        self.assertEqual(grain["ranges"], [], "No range violations without provided args")
+        self.assertEqual(grain["passes"][0]["program"], "grain", "Pass prediction should name the shader program")
+        self.assertEqual(
+            grain["passes"][0]["outputs"]["fragColor"], "outputTex", "Pass prediction should list outputs"
+        )
+        self.assertIsNone(grain["backendSupport"], "Backend support is unknown without a manifest")
+
+    def test_manifest_predicts_backend_support(self):
+        grain_manifest = {
+            "filter/grain": {
+                "description": "Grain",
+                "glsl": {"grain": "combined"},
+                "starter": False,
+                # no wgsl entry: WebGPU unsupported
+            }
+        }
+        result = get_compatible_replacements(
+            self.compiled, self._step(1)["stepIndex"], {"manifest": grain_manifest}
+        )
+        grain = result["predictions"]["filter.grain"]
+        self.assertTrue(grain["backendSupport"]["webgl2"], "GLSL-only manifest should mark WebGL2 supported")
+        self.assertFalse(grain["backendSupport"]["webgpu"], "Missing WGSL entry should mark WebGPU unsupported")
+
+        missing = get_compatible_replacements(
+            self.compiled,
+            self._step(1)["stepIndex"],
+            {"manifest": {"filter/grain": {"glsl": {}, "wgsl": {}}}},
+        )
+        self.assertFalse(
+            missing["predictions"]["filter.grain"]["backendSupport"]["webgl2"],
+            "Empty program table is unsupported",
+        )
+
+    def test_default_classification_is_unchanged(self):
+        result = get_compatible_replacements(self.compiled, self._step(1)["stepIndex"])
+        self.assertIn("filter.bloom", result["compatible"], "Bloom stays compatible without preflight opt-in")
+        self.assertIn("synth.noise", result["incompatible"], "Starters stay incompatible without preflight opt-in")
+
+    def test_replace_default_behavior_unchanged_prediction_attached(self):
+        # Unknown argument, out-of-range value: previously accepted, must stay accepted
+        result = replace_effect(self.compiled, self._step(1)["stepIndex"], "grain", {"amnt": 9})
+        self.assertTrue(result["success"], "Previously accepted input must still succeed without opt-in")
+        self.assertIn("prediction", result, "Success should carry the prediction")
+        self.assertIn("amnt", result["prediction"]["arguments"]["unknown"])
+        self.assertEqual(result["prediction"]["ranges"], [], "Unknown arguments have no declared range to check")
+
+    def test_replace_preflight_refuses_unknown_argument(self):
+        result = replace_effect(
+            self.compiled, self._step(1)["stepIndex"], "grain", {"amnt": 0.9}, {"preflight": True}
+        )
+        self.assertFalse(result["success"], "Preflight should refuse unknown arguments")
+        self.assertIn("preflight", result["error"], "Error should mention preflight")
+        self.assertIn("amnt", result["error"], "Error should name the unknown argument")
+        self.assertNotIn("program", result, "No program should be produced on preflight failure")
+
+    def test_replace_preflight_refuses_out_of_range_value(self):
+        result = replace_effect(
+            self.compiled, self._step(1)["stepIndex"], "grain", {"alpha": 5}, {"preflight": True}
+        )
+        self.assertFalse(result["success"], "Preflight should refuse out-of-range values")
+        self.assertIn("outside range", result["error"], "Error should mention the range")
+
+    def test_replace_preflight_refuses_choice_violation(self):
+        # filter.invert mode choices: full=0, solarize=1
+        result = replace_effect(
+            self.compiled, self._step(1)["stepIndex"], "invert", {"mode": 7}, {"preflight": True}
+        )
+        self.assertFalse(result["success"], "Preflight should refuse invalid choice values")
+        self.assertIn("not one of", result["error"], "Error should mention the choices")
+
+    def test_replace_preflight_refuses_type_mismatch(self):
+        result = replace_effect(
+            self.compiled, self._step(1)["stepIndex"], "grain", {"alpha": "high"}, {"preflight": True}
+        )
+        self.assertFalse(result["success"], "Preflight should refuse type mismatches")
+        self.assertIn("expects float", result["error"], "Error should mention the expected type")
+
+    def test_replace_preflight_passes_valid_replacement_through_with_prediction(self):
+        result = replace_effect(
+            self.compiled, self._step(1)["stepIndex"], "grain", {"alpha": 0.75}, {"preflight": True}
+        )
+        self.assertTrue(result["success"], "Valid preflight replacement should succeed")
+        chain = result["program"]["plans"][0]["chain"]
+        replaced = next(s for s in chain if s.get("temp") == self._step(1)["stepIndex"])
+        self.assertEqual("filter.grain", replaced["op"], "Effect should be replaced")
+        self.assertEqual(0.75, replaced["args"]["alpha"], "Args should be applied")
+        self.assertTrue(result["prediction"]["available"], "Prediction should mark the effect available")
+        self.assertIsNotNone(result["prediction"]["samplerTopology"])
+
+    def test_prediction_registered_param_alias_is_accepted_with_canonical_checks(self):
+        # The lang-level alias registry is intentionally empty (Stage-1 golden
+        # contract, see compiler/ops.py); mirror the reference test's
+        # registerParamAliases by injecting a temporary map.
+        from noisemaker_blender.compiler import ops as ops_mod
+
+        ops_mod._ensure_built()
+        ops_mod._PARAM_ALIASES["filter.grain"] = {"amt": "alpha"}
+        try:
+            # Supplied via deprecated alias: not unknown, range/type checked canonically
+            via_alias = replace_effect(self.compiled, self._step(1)["stepIndex"], "grain", {"amt": 0.9})
+            self.assertTrue(via_alias["success"], "Alias-supplied replacement should succeed without opt-in")
+            self.assertEqual(
+                via_alias["prediction"]["arguments"]["unknown"], [], "Alias name should not be predicted unknown"
+            )
+            self.assertEqual(
+                via_alias["prediction"]["arguments"]["missing"], [], "No missing-argument issue for grain"
+            )
+
+            via_alias_preflight = replace_effect(
+                self.compiled, self._step(1)["stepIndex"], "grain", {"amt": 0.9}, {"preflight": True}
+            )
+            self.assertTrue(via_alias_preflight["success"], "Alias-supplied replacement should pass preflight")
+            self.assertEqual(
+                via_alias_preflight["prediction"]["ranges"], [], "Alias value within range should not be flagged"
+            )
+
+            # Range violation through the alias still fires canonically
+            out_of_range = replace_effect(
+                self.compiled, self._step(1)["stepIndex"], "grain", {"amt": 5}, {"preflight": True}
+            )
+            self.assertFalse(out_of_range["success"], "Out-of-range value via alias should be refused under preflight")
+            self.assertIn("alpha", out_of_range["error"], "Range error should name the canonical argument")
+        finally:
+            del ops_mod._PARAM_ALIASES["filter.grain"]
+
+    def test_preflight_moves_unavailable_candidates_to_blocked(self):
+        # Simulate a never-registered effect definition by hiding one from the
+        # registry (reference test registers a fake instance; the port's
+        # registry is fully populated from effects/*.json, so an *unavailable*
+        # prediction needs a temporarily-shadowed key).
+        from noisemaker_blender.compiler import registry as registry_mod
+        from noisemaker_blender.compiler import transform as transform_mod
+
+        registry_mod._ensure_loaded()
+        saved = registry_mod._REGISTRY.pop("filter.bloom")
+        try:
+            result = get_compatible_replacements(self.compiled, self._step(1)["stepIndex"], {"preflight": True})
+            self.assertNotIn("filter.bloom", result["compatible"], "Bloom should leave compatible under preflight")
+            self.assertIn("filter.grain", result["compatible"], "Grain should stay compatible under preflight")
+            self.assertIn("blocked", result, "Preflight should return a blocked list")
+            bloom_block = next((b for b in result["blocked"] if b["effect"] == "filter.bloom"), None)
+            self.assertIsNotNone(bloom_block, "Bloom should be blocked")
+            self.assertTrue(
+                any(i["dimension"] == "shader-availability" for i in bloom_block["issues"]),
+                "Block reason should be shader availability",
+            )
+            self.assertIs(transform_mod._get_effect_instance("filter.bloom"), None)
+        finally:
+            registry_mod._REGISTRY["filter.bloom"] = saved
+
+
 if __name__ == "__main__":
     unittest.main()
