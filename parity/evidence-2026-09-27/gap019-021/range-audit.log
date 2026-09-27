@@ -1,0 +1,32 @@
+# GAP-019/GAP-021 upstream range audit (fresh clone, upstream tip 296e0138c4744ed485b2e95de3eeb466c17629ee)
+2026-09-27T16:40:07Z
+
+## ancestry
+403c2a4bf2cb IS ancestor of 296e0138c474 (declared range start contained)
+93229933b102 IS ancestor of 296e0138c474 (target's prior sync pin; new delta is 93229933..296e0138)
+a912749fab5c IS ancestor of 296e0138c474 (declared end a912749f is itself inside the delta; observed end 296e0138c474 supersedes it)
+11d7c69922f3 IS ancestor of 296e0138c474 (second observed delivery range start contained)
+
+## commits in 93229933..296e0138 (the only unsynced delta)
+296e0138 feat(harness): report requested-vs-returned frame resolution on every renderEffectFrame result (GAP-021)
+11d7c699 docs: narrow GAP-020 — shared MCP domain error envelope lives in the Shade repository, which noisemaker cannot write; nothing of the tool-result wrapper is vendored and no noisemaker module consumes the MCP envelope, so no repository-side surface exists
+a912749f feat(harness): true input-passthrough probe with a live write-blit control (GAP-019)
+7c5f1765 docs: advance AI development contract checkpoint through 9322993 (GAP-017 verified pair audit)
+
+## full-tree diff stat 93229933b102..296e0138c474
+ LEDGER.md                               |  75 ++++-
+ llms-full.txt                           |  37 ++-
+ scripts/run-js-tests.js                 |   2 +
+ shaders/tests/frame-resolution.js       |  95 +++++++
+ shaders/tests/passthrough-input.js      | 489 ++++++++++++++++++++++++++++++++
+ shaders/tests/test-harness.js           | 104 ++++++-
+ shaders/tests/test_frame_resolution.js  | 189 ++++++++++++
+ shaders/tests/test_passthrough_input.js | 259 +++++++++++++++++
+ 8 files changed, 1241 insertions(+), 9 deletions(-)
+
+## shaders/ diff stat split: effects/glsl/lang/runtime untouched
+(empty above = no effect-definition, GLSL, DSL-op, or runtime changes)
+
+## shaders/ commits in the delta
+296e0138 feat(harness): report requested-vs-returned frame resolution on every renderEffectFrame result (GAP-021)
+a912749f feat(harness): true input-passthrough probe with a live write-blit control (GAP-019)
