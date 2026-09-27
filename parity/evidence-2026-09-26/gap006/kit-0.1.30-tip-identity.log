@@ -1,0 +1,9 @@
+# kit 0.1.30 <-> published-tip 1f506a6252db448f1c7ad2e2854faf0c43d3f078 engine identity
+# generated 2026-09-27T02:13:44Z at HEAD 1f506a6252db448f1c7ad2e2854faf0c43d3f078
+
+git diff 81ca79e5ea32c87dd273257c04d2e91da48ea078..1f506a6252db448f1c7ad2e2854faf0c43d3f078 -- blender export-kit LICENSE .github/workflows/export-kit.yml:
+(empty output = no engine/distribution-path change between the kit-building commit and the published tip)
+
+export-kit.yml trigger paths: export-kit/**, .github/workflows/export-kit.yml, LICENSE, blender/noisemaker_blender/** — none of the three docs/evidence commits touched them, so no kit rebuild was dispatched and kit 0.1.30 remains the current served engine artifact.
+
+re-run of parity/verify_standalone_kit.py 0.1.30 against THIS checkout (1f506a6): all_passed=true (published-kit-0.1.30-verification.json), i.e. the served kit's 869 engine-zip entries byte-match the published tip's blender/noisemaker_blender tree.
