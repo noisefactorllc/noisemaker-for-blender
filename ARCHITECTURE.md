@@ -85,7 +85,8 @@ Graded by `parity/compare.py` (max-abs-diff + SSIM). Two modes:
 - **default** — single deterministic frame / short settle (synth/filter/mixer): `render_all.py`
   with `NM_FRAMES=1`, `NM_TIMESTEP=0` (the defaults).
 - **stateful** — env-driven evolution (navierStokes, reactionDiffusion, cellularAutomata, agents):
-  `NM_FRAMES=1800 NM_TIMESTEP=0.0016667` (≈30 s @ 1/600), snapshot every `NM_SAMPLE_EVERY` frames.
+  `NM_FRAMES=1800 NM_TIMESTEP=0.0016667` (1/600; 1800 frames ≈ 3.0 normalized time units, the
+  runtime wraps time at 1), snapshot every `NM_SAMPLE_EVERY` frames.
   Cracks the multi-frame-feedback class the sibling ports deferred.
 
 Expect relaxed tolerance (±1–2, SSIM ≥ 0.98) — Blender GLSL→MSL vs ANGLE→Metal, per the
@@ -94,9 +95,9 @@ Metal-backed godot/td precedent. Byte-tight parity is not expected.
 ## Status
 
 The port is end-to-end and self-contained (Blender 5.1 / Py 3.13 / Metal): whole catalog
-transpiled (303/303), **301/303 compile** on Metal (only `scope`/`spectrum` = audio, out of
-scope; program total dropped from 305 when upstream's `filter/median` collapsed 3 passes into 1);
-the in-Blender DSL compiler is **byte-identical** to the reference
+transpiled (309/309), **307/309 compile** on Metal (only `scope`/`spectrum` = audio, out of
+scope; the program total is 309 after upstream's `filter/median` pass collapse and the
+2026-09-21 removal of expired `bc`/`hs`/`colorspace`); the in-Blender DSL compiler is **byte-identical** to the reference
 (`parity/compiler/check_graph.py`); the P5 integration surface is built and **gated byte-exact**
 (`parity/integration.sh`); single-pass / agents / 3D-volume / navierStokes are byte-exact or
 1-ULP; chaotic iteration is chaos-gated (`docs/CHAOS-GATE.md`). A crystallization pass re-verified

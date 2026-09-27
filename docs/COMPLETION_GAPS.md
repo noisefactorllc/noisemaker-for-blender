@@ -265,7 +265,7 @@ Original gap evidence dates to 2026-09-22. Dated review evidence below supplemen
 
 ### GAP-007: User-facing counts and simulation duration are stale
 
-- Status: open. Priority: P3. Category: usability.
+- Status: closed 2026-09-27. Priority: P3. Category: usability.
 - Scope: README, STATUS coverage rows, and exported bake instructions.
 - Expected: documentation agrees with the retained source and explains simulation timing accurately.
 - Observed: README says 213 definitions. The checkout contains 210.
@@ -276,6 +276,7 @@ Original gap evidence dates to 2026-09-22. Dated review evidence below supplemen
 - Dependencies: GAP-003 before adding fresh runtime qualification claims.
 - Required checks: derive counts from current files and check frame/time arithmetic against the runtime loop.
 - Acceptance: instructions state consistent counts and duration without upgrading historical results to current qualification.
+- Status update 2026-09-27: closed — all three observations reconciled in documentation-only changes, with no historical result upgraded to current qualification. (1) Counts: the checkout's `blender/noisemaker_blender/effects` holds exactly 210 effect definition JSONs (filter 113, synth 29, mixer 15, classicNoisedeck 20, points 11, render 12, synth3d 8, filter3d 2 — matching STATUS.md's coverage table) and `blender/noisemaker_blender/shaders/effects` holds 309 `.frag` programs; README's two stale "213" claims now read 210 (`count-and-time-check.log`). (2) Historical verification labels: STATUS's coverage rows no longer say "not yet Metal-verified" for `points/heightGrid`, `render/renderLandscape3d`, and `synth3d/heightmap3d` below the 2026-09-15 sync section that reports those four fixtures rendered PASS in the real-Metal session; the rows now cite that historical session and state the results are "not re-verified since" — historical results stay historical, and full rendered parity remains unverified per this document's standing scope note. (3) Simulation duration: the runtime loop is `tt = (time + f * timestep) % 1.0` with per-frame delta equal to the timestep (`runtime/pipeline.py`, `FrameStepper.step`), so 1800 frames at timestep 0.00167 (1/600) advance normalized simulation time by 3.006 (3.000 at exactly 1/600) units wrapping at 1 — there is no seconds conversion. README, both exported bake instructions (`export-kit/kit/README.template.md`, `export-kit/kit/bake.template.py`), and ARCHITECTURE.md's validation section now state the normalized-time arithmetic and drop the "30 seconds" equation; the recommended 1800-frame / 1-600 recipe itself is unchanged. Executed check committed as `parity/evidence-2026-09-27/gap007/count-and-time-check.log` (counts derived from current files, loop line quoted from source, arithmetic, and a scan asserting no "213"/"30 seconds" claims remain; exit 0). No source, test, golden, tolerance, or checkpoint changed; GAP-003's dependency is untouched because no fresh runtime qualification is claimed.
 
 ## 5. Ordered next actions
 

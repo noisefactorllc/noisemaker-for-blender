@@ -26,12 +26,13 @@ import bpy
 # Edit this to taste; the export does not choose a bake size for you.
 SIZE = 1024
 
-# Frames of simulation to run before capturing, and the simulated seconds each one covers.
+# Frames of simulation to run before capturing, and the normalized time each one advances.
 #
 # Still effects want the defaults below. Fluid, agent, reaction-diffusion and cellular-automata
 # effects start from an empty state, so one frame of those is legitimately blank: for those set
-# FRAMES = 1800 and TIMESTEP = 0.00167, which is about 30 seconds of evolution. That bake takes
-# real time and holds the window while it runs.
+# FRAMES = 1800 and TIMESTEP = 0.00167 (1/600). The runtime advances normalized simulation time
+# by one timestep per frame and wraps it at 1, so that recipe steps the simulation by about 3.0
+# normalized time units. That bake takes real time and holds the window while it runs.
 FRAMES = 1
 TIMESTEP = 0.0
 

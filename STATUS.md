@@ -107,8 +107,8 @@ see the [README](README.md).
 | `filter` | 113 | renders — color ops, convolutions, warps, multi-pass, feedback (byte-identical / ±1) |
 | `mixer` | 15 | renders (whole namespace) |
 | `classicNoisedeck` | 20 | renders — legacy generators |
-| `points` / `render` | 11 / 12 | renders — agents; deposit/billboards byte-identical (chaotic flows chaos-gated). NEW `points/heightGrid` (deterministic landscape grid) + `render/renderLandscape3d` (isometric/perspective voxel raymarch) not yet Metal-verified |
-| `synth3d` / `filter3d` | 8 / 2 | renders — 3D volumes, raymarch, cubemaps (byte-exact / 1-ULP); filter3d: palette3d byte-exact, flow3d (3D flow sim) chaos-gated. NEW `synth3d/heightmap3d` not yet Metal-verified |
+| `points` / `render` | 11 / 12 | renders — agents; deposit/billboards byte-identical (chaotic flows chaos-gated). `points/heightGrid` (deterministic landscape grid) + `render/renderLandscape3d` (isometric/perspective voxel raymarch): rendered 2026-09-15 in the historical Metal session above (all four new fixtures PASS); not re-verified since |
+| `synth3d` / `filter3d` | 8 / 2 | renders — 3D volumes, raymarch, cubemaps (byte-exact / 1-ULP); filter3d: palette3d byte-exact, flow3d (3D flow sim) chaos-gated. `synth3d/heightmap3d`: rendered 2026-09-15 in the historical Metal session above; not re-verified since |
 
 ## Parity
 

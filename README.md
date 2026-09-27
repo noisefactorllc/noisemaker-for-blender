@@ -29,8 +29,8 @@ render(o0)
 That little language is Noisemaker's **DSL** (a domain-specific language for visuals). The original
 engine runs in the browser at [noisedeck.app](https://noisedeck.app).
 
-**Noisemaker for Blender** runs that same engine *inside Blender* — the same programs and the same ~213
-effects, rendered on Blender's GPU. Use it to make textures, materials, and animated backgrounds
+**Noisemaker for Blender** runs that same engine *inside Blender* — the same programs and the same
+210 effects, rendered on Blender's GPU. Use it to make textures, materials, and animated backgrounds
 from code, with no image files.
 
 Blender's compositor cannot run custom shader code. Instead of adding new effect nodes, this addon
@@ -119,7 +119,9 @@ chaotic particle flow → fluid → color, lighting, and lens).
   Everything else is. Time-based animation still works.
 - **Simulations need time to evolve.** Fluid, agent sims, reaction-diffusion, and cellular automata
   start from nothing, so a single frame looks empty. Raise **Frames** to ~**1800** and set
-  **Timestep** ≈ **`0.00167`** (1/600, about 30 s of simulation). Plain still effects want the
+  **Timestep** ≈ **`0.00167`** (1/600). The runtime advances normalized simulation time by one
+  timestep per frame and wraps it at 1, so 1800 frames step the simulation by ≈ 3.0 normalized
+  time units — there is no seconds conversion. Plain still effects want the
   defaults (Frames = 1, Timestep = 0). A long bake takes real time and holds the window.
 
 ## Use it in your own Blender project
@@ -137,7 +139,7 @@ evolved or animated result.
 ## What works today
 
 - The **2D single-pass catalog plus agent-deposit** is **pixel-identical to the web reference**
-  (byte-exact / ±1). Chaotic continuous sims are chaos-gated (below). In all, **213 effect
+  (byte-exact / ±1). Chaotic continuous sims are chaos-gated (below). In all, **210 effect
   definitions** span 8 namespaces (including the 3D `synth3d` / `filter3d`) — see STATUS.md for
   the 2026-09-15 landscape-effects sync and its verification status.
 - **Particle/agent sims, fluid (navier–stokes), and the 3D volume renderer** all render and match the

@@ -33,8 +33,9 @@ called `NoisedeckExport`, with the resolution, frame count and timestep as const
 
 Fluid, agent, reaction-diffusion and cellular-automata effects start from an empty state, so a
 single frame of one is legitimately blank. For those, raise **Frames** to about **1800** and set
-**Timestep** to **0.00167**, which is roughly 30 seconds of simulated time. Programs made only of
-still effects want the defaults (**Frames** 1, **Timestep** 0).
+**Timestep** to **0.00167** (1/600): the runtime advances normalized simulation time by one
+timestep per frame and wraps it at 1, so that recipe steps the simulation by about 3.0 normalized
+time units. Programs made only of still effects want the defaults (**Frames** 1, **Timestep** 0).
 
 A long bake takes real time and holds the window while it runs.
 
