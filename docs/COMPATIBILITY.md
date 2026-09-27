@@ -401,7 +401,7 @@ Re-grade of the committed 2026-09-25 llvmpipe candidates with the current intege
 
 Retained 2026-09-24 authority goldens: still unreachable — now evidenced on the macOS host itself: a probe run in the host sandbox (`retained-goldens-reachability.json`) shows `/Users/alex` raises `PermissionError(1, 'Operation not permitted')` and both `.codex` paths do not exist in the sandbox; the unchanged-authority comparison against those exact files cannot be executed by automation and is recorded as blocked in GAP-001.
 
-Raw evidence for this run is committed under `parity/evidence-2026-09-27/gap001/` (candidate PNGs, rerun PNGs, lens.dsl, gpuinfo.json, compare reports, regrade and compare logs, render_all and rerun logs, integration log, baked PNG, reachability probe).
+Raw evidence for this run is committed under `parity/evidence-2026-09-27/gap001/` (candidate PNGs, rerun PNGs, lens.dsl, gpuinfo.json, compare reports, regrade and compare logs, render_all and rerun logs, integration log, baked PNG, reachability probe). The kit deliverable is verified: Export kit workflow run `36353873056` completed success at `dffc073` (the push that delivered the template change), and the served kit `0.1.34` (git_hash `dffc073…`) byte-checks — `README.template.md` identical to the committed source including the lens-defect statement, `compat.json` containing `filter/bloom`/`filter/lens`/`filter/adjust`, and the engine zip and `LICENSES/noisemaker-MIT.txt` matching their `kit.json` SHA-256s.
 
 ## 4. Evidence
 
