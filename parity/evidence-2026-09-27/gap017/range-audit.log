@@ -1,0 +1,27 @@
+# GAP-017 upstream range audit (fresh clone, upstream main tip 93229933b102ba82e713402be19db57207698850)
+2026-09-27T11:40:31Z
+
+## ancestry
+403c2a4bf2cb IS ancestor of 93229933b102 (declared range contiguous)
+12b4d74fb4f2 IS ancestor of 93229933b102 (target's prior sync pin; new delta is 12b4d74f..93229933)
+8fe3ccaf2cc8 IS ancestor of 93229933b102 (observed delivery range contained)
+
+## commits in 12b4d74f..93229933 (the only unsynced delta; 403c2a4..12b4d74f covered by the prior two STATUS rounds)
+93229933 feat(harness): complete, lossless definition-schema introspection with an upstream-loss audit (GAP-017)
+8fe3ccaf docs: record post-publication deployed-contract evidence and correct the open-gap enumeration
+ec457c2e docs: advance AI development contract checkpoint through 12b4d74 (GAP-014/015/016 verified pair audit)
+
+## full-tree diff stat 12b4d74f..93229933
+ LEDGER.md                               |  94 +++++++++++++-
+ llms-full.txt                           |  27 +++-
+ scripts/run-js-tests.js                 |   1 +
+ shaders/tests/definition-schema.js      | 220 ++++++++++++++++++++++++++++++++
+ shaders/tests/test-harness.js           |  60 ++++++++-
+ shaders/tests/test_definition_schema.js | 161 +++++++++++++++++++++++
+ 6 files changed, 553 insertions(+), 10 deletions(-)
+
+## shaders/ diff stat split: effects/glsl/lang/runtime untouched
+(empty above = no effect-definition, GLSL, DSL-op, or runtime changes)
+
+## shaders/ commits in the delta
+93229933 feat(harness): complete, lossless definition-schema introspection with an upstream-loss audit (GAP-017)

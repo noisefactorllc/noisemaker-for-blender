@@ -1,0 +1,154 @@
+# GAP-017 unit evidence — 2026-09-27T11:40:56Z
+# interpreter: /state/cache/scratch/venv/bin/python (numpy+PIL venv; system python3 lacks numpy for parity/batch-compare.py — environmental)
+
+== parity/test_3d_fixture_coverage.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.030s
+
+OK
+exit=0
+
+== parity/test_archive_identity.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.565s
+
+OK
+exit=0
+
+== parity/test_artistic_matrix.py
+...........
+----------------------------------------------------------------------
+Ran 11 tests in 0.265s
+
+OK
+exit=0
+
+== parity/test_audio_nested_automation.py
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.029s
+
+OK
+exit=0
+
+== parity/test_automation_runtime.py
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.163s
+
+OK
+exit=0
+
+== parity/test_batch_compare.py
+................
+----------------------------------------------------------------------
+Ran 16 tests in 9.030s
+
+OK
+exit=0
+
+== parity/test_compiler.py
+.........................................
+----------------------------------------------------------------------
+Ran 41 tests in 0.073s
+
+OK
+exit=0
+
+== parity/test_frame_export.py
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.001s
+
+OK
+exit=0
+
+== parity/test_midi_device_selection.py
+.........
+----------------------------------------------------------------------
+Ran 9 tests in 0.029s
+
+OK
+exit=0
+
+== parity/test_midi_expression.py
+........
+----------------------------------------------------------------------
+Ran 8 tests in 0.038s
+
+OK
+exit=0
+
+== parity/test_pipeline_limits.py
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+exit=0
+
+== parity/test_pipeline_sink.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+OK
+exit=0
+
+== parity/test_preflight.py
+test_lockstep_volume_clamps_match_the_runtime (__main__.PipelinePreflightTests.test_lockstep_volume_clamps_match_the_runtime) ... ok
+test_port_backend_supplies_no_byte_budget (__main__.PipelinePreflightTests.test_port_backend_supplies_no_byte_budget) ... ok
+test_predict_volume_clamps_helper_is_read_only (__main__.PipelinePreflightTests.test_predict_volume_clamps_helper_is_read_only) ... ok
+test_preflight_does_not_mutate_the_graph (__main__.PipelinePreflightTests.test_preflight_does_not_mutate_the_graph) ... ok
+test_source_availability_judged_against_the_backend_compile_path (__main__.PipelinePreflightTests.test_source_availability_judged_against_the_backend_compile_path) ... ok
+test_dimensions_past_max_texture_size_are_reported_as_clamps (__main__.PreflightTests.test_dimensions_past_max_texture_size_are_reported_as_clamps) ... ok
+test_malformed_input_is_reported_not_thrown (__main__.PreflightTests.test_malformed_input_is_reported_not_thrown) ... ok
+test_mrt_outputs_past_max_draw_buffers_make_backend_not_renderable (__main__.PreflightTests.test_mrt_outputs_past_max_draw_buffers_make_backend_not_renderable) ... ok
+test_over_budget_mrt_predicts_the_trailing_rgba32f_demotion (__main__.PreflightTests.test_over_budget_mrt_predicts_the_trailing_rgba32f_demotion) ... ok
+test_preflight_never_mutates_the_definition (__main__.PreflightTests.test_preflight_never_mutates_the_definition) ... ok
+test_program_with_source_is_authorable (__main__.PreflightTests.test_program_with_source_is_authorable) ... ok
+test_program_without_source_is_not_authorable (__main__.PreflightTests.test_program_without_source_is_not_authorable) ... ok
+test_reference_glsl_bucket_shapes_count_as_authored (__main__.PreflightTests.test_reference_glsl_bucket_shapes_count_as_authored) ... ok
+test_within_budget_mrt_predicts_no_format_changes (__main__.PreflightTests.test_within_budget_mrt_predicts_no_format_changes) ... ok
+test_without_a_budget_capability_no_demotion_is_predicted (__main__.PreflightTests.test_without_a_budget_capability_no_demotion_is_predicted) ... ok
+test_without_shader_info_source_availability_is_not_judged (__main__.PreflightTests.test_without_shader_info_source_availability_is_not_judged) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.002s
+
+OK
+exit=0
+
+== parity/test_runtime_sink.py
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 0.001s
+
+OK
+exit=0
+
+== parity/test_text_style.py
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.023s
+
+OK
+exit=0
+
+== parity/test_texture_pooling.py
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 0.001s
+
+OK
+exit=0
+
+== parity/test_transform.py
+....................
+----------------------------------------------------------------------
+Ran 20 tests in 0.046s
+
+OK
+exit=0
