@@ -108,7 +108,9 @@ patch version in the same change that alters the distributed add-on; never reuse
 
 Ready-to-bake examples live in [`parity/programs/`](parity/programs). The flagship is
 [`parity/programs/north_star.dsl`](parity/programs/north_star.dsl) — a 33-pass program (3D noise →
-chaotic particle flow → fluid → color, lighting, and lens).
+chaotic particle flow → fluid → color, lighting, and lens). Its chaotic flow → fluid chain renders
+faithfully but, like all chaos-gated programs, does not reproduce the reference engine
+pixel-for-pixel across engines (recorded as an open divergence in the compatibility record).
 
 ## Good to know
 
@@ -139,9 +141,12 @@ evolved or animated result.
 ## What works today
 
 - The **2D single-pass catalog plus agent-deposit** is **pixel-identical to the web reference**
-  (byte-exact / ±1). Chaotic continuous sims are chaos-gated (below). In all, **210 effect
-  definitions** span 8 namespaces (including the 3D `synth3d` / `filter3d`) — see STATUS.md for
-  the 2026-09-15 landscape-effects sync and its verification status.
+  (byte-exact / ±1) — with the recorded exception of `filter/lens`, which renders with a measured
+  worst per-channel difference of 10/255 against the reference (above the strict 2-step tolerance;
+  structural similarity 0.99999) and carries an open defect. Chaotic continuous sims are
+  chaos-gated (below). In all, **210 effect definitions** span 8 namespaces (including the 3D
+  `synth3d` / `filter3d`) — see STATUS.md and the compatibility record for the measured
+  status of each effect.
 - **Particle/agent sims, fluid (navier–stokes), and the 3D volume renderer** all render and match the
   reference.
 - **Chaotic** programs (chaotic agent flows feeding fluid, continuous cellular automata) render
