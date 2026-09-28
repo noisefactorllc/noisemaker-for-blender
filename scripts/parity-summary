@@ -1,0 +1,279 @@
+#!/usr/bin/env python3
+"""parity-summary — render the authority's manifest cases with THIS port and grade
+each against the authority's golden; print a PARITY-SUMMARY count line.
+
+Contract (gap-closure counts): the last output line is
+  PARITY-SUMMARY {"expected":N,"executed":N,"exact":N,"strict":N,"near":N,"defer":N,"skip":N,"fail":N,"missing":N}
+expected counts the authority's cases (the union of parity/3d-expected.txt and
+parity/artistic-expected.txt, or the given case ids); exact the byte-identical
+ones; strict the other passes within the port's published numerical contract
+(mad <= 2, ssim >= 0.98); near the per-case policy-bounded mismatches
+(parity/3d-near-policy.json + parity/artistic-near-policy.json, unchanged);
+defer, skip, fail and missing the rest. Given case ids as arguments, only those
+are rendered and counted.
+
+Render protocol (both engines, unchanged): 256x256, time 0.25, 8 frames from a
+zeroed state — the port side via `blender/harness/render_all.py` (NM_BLENDER,
+default `blender`), the authority side via `parity/golden-cdp.mjs` against the
+reference engine (NM_REFERENCE_ROOT + headless Chromium over CDP), matching
+`parity/batch-golden.mjs`'s determinism contract.
+
+Environment:
+  NM_BLENDER       blender executable (default `blender`)
+  NM_PARITY_WORK   work dir for gold/ and cand/ (default parity/out/parity-summary)
+  NM_CASE_TIMEOUT  per-case blender render timeout seconds (default 300)
+  NM_SIZE/NM_TIME/NM_FRAMES  capture parameters (defaults 256 / 0.25 / 8)
+  NM_SKIP          comma-separated case ids to count as skip (never rendered)
+  NM_GOLDEN_AUTO   when set, generate missing goldens from NM_REFERENCE_ROOT
+  NM_REFERENCE_ROOT, NM_CHROME (default `chromium`), NM_CDP_PORT (9222),
+  NM_SERVE_PORT (8777)  — golden generation
+  --fresh          re-render candidates even if a PNG already exists
+
+Exit code 0 only when fail == missing == 0. Never fabricates: every count names
+a measured comparison or an explicitly absent side.
+"""
+import json
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import zlib
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "blender" / "harness"))
+import pngread  # noqa: E402
+
+MANIFESTS = [ROOT / "parity" / "3d-expected.txt", ROOT / "parity" / "artistic-expected.txt"]
+POLICIES = [ROOT / "parity" / "3d-near-policy.json", ROOT / "parity" / "artistic-near-policy.json"]
+TOLERANCE = 2.0
+SSIM_MIN = 0.98
+
+
+def manifest_cases():
+    names = []
+    for m in MANIFESTS:
+        for line in m.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and line not in names:
+                names.append(line)
+    return names
+
+
+def load_policies():
+    cases = {}
+    for p in POLICIES:
+        doc = json.loads(p.read_text())
+        if doc.get("version") != 1 or not isinstance(doc.get("cases"), dict):
+            raise SystemExit("invalid policy %s" % p)
+        cases.update(doc["cases"])
+    return cases
+
+
+def load_rgba(path):
+    flat, width, height = pngread.read_png_rgba(str(path))
+    return flat, (height, width, 4)
+
+
+def compare(gold_path, cand_path, policy):
+    g, gshape = load_rgba(gold_path)
+    c, cshape = load_rgba(cand_path)
+    if gshape != cshape:
+        return {"cls": "FAIL", "reason": "size_mismatch", "gshape": gshape, "cshape": cshape}
+    n = len(g)
+    mad = 0
+    total = 0
+    for i in range(n):
+        d = g[i] - c[i]
+        if d < 0:
+            d = -d
+        if d > mad:
+            mad = d
+        total += d
+    mean = total / n
+    # global_ssim on the /255 normalized luma (batch-compare.py math)
+    ya = [0.0] * (n // 4)
+    yb = [0.0] * (n // 4)
+    for p in range(n // 4):
+        ya[p] = (g[p * 4] + g[p * 4 + 1] + g[p * 4 + 2]) / (3.0 * 255.0)
+        yb[p] = (c[p * 4] + c[p * 4 + 1] + c[p * 4 + 2]) / (3.0 * 255.0)
+    m = len(ya)
+    mu_a = sum(ya) / m
+    mu_b = sum(yb) / m
+    va = sum((x - mu_a) ** 2 for x in ya) / m
+    vb = sum((x - mu_b) ** 2 for x in yb) / m
+    cov = sum((ya[i] - mu_a) * (yb[i] - mu_b) for i in range(m)) / m
+    c1 = 0.01 ** 2
+    c2 = 0.03 ** 2
+    ssim = ((2 * mu_a * mu_b + c1) * (2 * cov + c2)) / ((mu_a ** 2 + mu_b ** 2 + c1) * (va + vb + c2))
+    if mad <= TOLERANCE + 0.001 and ssim >= SSIM_MIN:
+        cls = "exact" if mad == 0 else "strict"
+    elif policy and (mad <= float(policy["max_abs_diff"]) and mean <= float(policy["mean_abs_diff"])
+                     and ssim >= float(policy["ssim_min"]) and bool(policy.get("mechanism"))):
+        cls = "near"
+    else:
+        cls = "fail"
+    return {"cls": cls, "max_abs_diff": mad, "mean_abs_diff": round(mean, 4), "ssim": round(ssim, 5)}
+
+
+def render_candidate(name, dsl, out_png, size, time, frames, timeout):
+    jobs = json.dumps([{"dsl": str(dsl), "out": str(out_png)}])
+    env = dict(os.environ, NM_JOBS=jobs, NM_SIZE=str(size), NM_TIME=str(time), NM_FRAMES=str(frames))
+    blender = os.environ.get("NM_BLENDER", "blender")
+    try:
+        proc = subprocess.run([blender, "--factory-startup", "--python", str(ROOT / "blender" / "harness" / "render_all.py")],
+                              env=env, cwd=str(ROOT), capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return {"cls": "fail", "reason": "render timeout after %ss" % timeout}
+    if not out_png.exists():
+        tail = (proc.stdout + proc.stderr).strip().splitlines()
+        return {"cls": "fail", "reason": "no candidate PNG; blender tail: " + " | ".join(tail[-2:])}
+    return None
+
+
+def ensure_golden_infra(ref_root, serve_port, cdp_port, chrome):
+    """Serve the reference root and start headless Chromium over CDP if needed.
+    Returns (server_proc, chrome_proc) — caller terminates after generation."""
+    import socket
+    import time as _time
+    import urllib.request
+
+    def up(port):
+        try:
+            urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version" if port == cdp_port else f"http://127.0.0.1:{port}/", timeout=2)
+            return True
+        except Exception:
+            return False
+
+    procs = []
+    if not up(serve_port):
+        procs.append(subprocess.Popen([sys.executable, "-m", "http.server", str(serve_port), "--bind", "127.0.0.1"],
+                                      cwd=str(ref_root), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+        for _ in range(20):
+            if up(serve_port):
+                break
+            _time.sleep(0.5)
+    if not up(cdp_port):
+        prof = Path(os.environ.get("NM_CHROME_PROFILE", str(work_profile_dir())))
+        procs.append(subprocess.Popen([chrome, "--headless=new", f"--remote-debugging-port={cdp_port}",
+                                       "--enable-unsafe-swiftshader", "--use-gl=angle", "--use-angle=swiftshader",
+                                       "--no-sandbox", f"--user-data-dir={prof}", "about:blank"],
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+        for _ in range(30):
+            if up(cdp_port):
+                break
+            _time.sleep(1)
+    return procs
+
+
+def work_profile_dir():
+    import tempfile
+    return Path(tempfile.gettempdir()) / "nm-parity-summary-chrome"
+
+
+def generate_goldens(missing, gold_dir, ref_root, timeout):
+    node = shutil.which("node")
+    chrome = os.environ.get("NM_CHROME", "chromium")
+    serve_port = os.environ.get("NM_SERVE_PORT", "8777")
+    cdp_port = os.environ.get("NM_CDP_PORT", "9222")
+    if not node or not shutil.which(chrome):
+        return "node or chromium not available"
+    pairs = [f"{n}={ROOT / 'parity' / 'programs' / f'{n}.dsl'}" for n in missing]
+    procs = ensure_golden_infra(ref_root, serve_port, cdp_port, chrome)
+    try:
+        env = dict(os.environ, NM_GOLDEN_OUT=str(gold_dir), NM_CDP_PORT=str(cdp_port),
+                   NM_SERVE_PORT=serve_port, NM_GOLDEN_SIZE=os.environ.get("NM_SIZE", "256"),
+                   NM_GOLDEN_TIME=os.environ.get("NM_TIME", "0.25"),
+                   NM_GOLDEN_FRAMES=os.environ.get("NM_FRAMES", "8"))
+        try:
+            subprocess.run([node, str(ROOT / "parity" / "golden-cdp.mjs")] + pairs,
+                           cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return "golden generation timeout after %ss" % timeout
+    finally:
+        for p in procs:
+            p.terminate()
+    return None
+
+
+def main():
+    argv = [a for a in sys.argv[1:] if a != "--fresh"]
+    fresh = "--fresh" in sys.argv
+    size = int(os.environ.get("NM_SIZE", "256"))
+    time = float(os.environ.get("NM_TIME", "0.25"))
+    frames = int(os.environ.get("NM_FRAMES", "8"))
+    timeout = int(os.environ.get("NM_CASE_TIMEOUT", "300"))
+    work = Path(os.environ.get("NM_PARITY_WORK", ROOT / "parity" / "out" / "parity-summary"))
+    gold_dir = work / "gold"
+    cand_dir = work / "cand"
+    gold_dir.mkdir(parents=True, exist_ok=True)
+    cand_dir.mkdir(parents=True, exist_ok=True)
+    skip = {s.strip() for s in os.environ.get("NM_SKIP", "").split(",") if s.strip()}
+
+    expected = manifest_cases()
+    selected = [c for c in expected if not argv or c in set(argv)]
+    policies = load_policies()
+
+    counts = {"expected": len(selected), "executed": 0, "exact": 0, "strict": 0,
+              "near": 0, "defer": 0, "skip": 0, "fail": 0, "missing": 0}
+    unknown_names = sorted(set(argv) - set(expected)) if argv else []
+    if unknown_names:
+        print("UNKNOWN-CASE " + ", ".join(unknown_names))
+
+    # Pass 1 — render port candidates (one blender run per case; a hang costs only
+    # its own NM_CASE_TIMEOUT and the loop continues).
+    ready = []
+    for name in selected:
+        dsl = ROOT / "parity" / "programs" / f"{name}.dsl"
+        if name in skip:
+            counts["skip"] += 1
+            print(f"[ skip] {name}: skipped via NM_SKIP")
+            continue
+        if not dsl.exists():
+            counts["missing"] += 1
+            print(f"[missing] {name}: no fixture DSL parity/programs/{name}.dsl")
+            continue
+        cand = cand_dir / f"{name}.png"
+        if fresh and cand.exists():
+            cand.unlink()
+        if not cand.exists():
+            err = render_candidate(name, dsl, cand, size, time, frames, timeout)
+            if err:
+                counts["fail"] += 1
+                print(f"[  fail] {name}: {err['reason'][:200]}")
+                continue
+        ready.append(name)
+
+    # Pass 2 — authority goldens: generate missing ones when the reference engine
+    # and a browser are available (NM_GOLDEN_AUTO=1 + NM_REFERENCE_ROOT).
+    auto = os.environ.get("NM_GOLDEN_AUTO") and os.environ.get("NM_REFERENCE_ROOT")
+    if auto:
+        missing = [n for n in ready if not (gold_dir / f"{n}.golden.png").exists()]
+        if missing:
+            err = generate_goldens(missing, gold_dir, Path(os.environ["NM_REFERENCE_ROOT"]),
+                                   120 * max(1, len(missing)))
+            if err:
+                print(f"[golden] generation unavailable: {err}")
+
+    # Pass 3 — grade every case that has both sides.
+    for name in ready:
+        gold = gold_dir / f"{name}.golden.png"
+        cand = cand_dir / f"{name}.png"
+        if not gold.exists():
+            counts["missing"] += 1
+            print(f"[missing] {name}: no authority golden in {gold_dir}")
+            continue
+        rec = compare(gold, cand, policies.get(name))
+        cls = rec.pop("cls")
+        counts[cls] += 1
+        counts["executed"] += 1
+        extra = " ".join(f"{k}={v}" for k, v in rec.items() if k != "policy")
+        print(f"[{cls:>5}] {name}: {extra}")
+
+    print("PARITY-SUMMARY " + json.dumps(counts, separators=(",", ":")))
+    return 0 if counts["fail"] == 0 and counts["missing"] == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
