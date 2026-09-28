@@ -1,0 +1,76 @@
+{
+ "verified": {
+  "adjust.golden.png": {
+   "sha256": "b1d9f6eaf374726a50e5e4c8c836891e03e3c4a79e02435b83db55460c5a32e0",
+   "bytes": 222042,
+   "manifest_sha256": "b1d9f6eaf374726a50e5e4c8c836891e03e3c4a79e02435b83db55460c5a32e0",
+   "original_path": "/Users/alex/platform/noisemaker-for-blender/parity/out/adjust.golden.png",
+   "match": true
+  },
+  "adjust.graph.json": {
+   "sha256": "f49d6fa0ee8dd30547c0e65e69e29f176aaed1e645f72016f8cdaa2da7275f0a",
+   "bytes": 3661,
+   "manifest_sha256": "f49d6fa0ee8dd30547c0e65e69e29f176aaed1e645f72016f8cdaa2da7275f0a",
+   "original_path": "/Users/alex/platform/noisemaker-for-blender/parity/out/adjust.graph.json",
+   "match": true
+  },
+  "bloom.golden.png": {
+   "sha256": "03ba153bda5bbb0aee85e5ab8b1f56f4dbabbee8064df1373266ceda822b43f1",
+   "bytes": 216295,
+   "manifest_sha256": "03ba153bda5bbb0aee85e5ab8b1f56f4dbabbee8064df1373266ceda822b43f1",
+   "original_path": "/Users/alex/platform/noisemaker-for-blender/parity/out/bloom.golden.png",
+   "match": true
+  },
+  "bloom.graph.json": {
+   "sha256": "ee2153147eadf76d02e63d4128e4250653791db293929135f7e0d6eaa1bb5c71",
+   "bytes": 6842,
+   "manifest_sha256": "ee2153147eadf76d02e63d4128e4250653791db293929135f7e0d6eaa1bb5c71",
+   "original_path": "/Users/alex/platform/noisemaker-for-blender/parity/out/bloom.graph.json",
+   "match": true
+  },
+  "noise.golden.png": {
+   "sha256": "3598684e11134d9cac187e05e5aea63e917d48f8941aca241b8e3c8c19153242",
+   "bytes": 222040,
+   "manifest_sha256": "3598684e11134d9cac187e05e5aea63e917d48f8941aca241b8e3c8c19153242",
+   "original_path": "/Users/alex/platform/noisemaker-for-blender/parity/out/noise.golden.png",
+   "match": true
+  },
+  "noise.graph.json": {
+   "sha256": "8a48a08463a51f678c87229fba06b9660254c274d907ec2094dccda9bce18b5a",
+   "bytes": 2163,
+   "manifest_sha256": "8a48a08463a51f678c87229fba06b9660254c274d907ec2094dccda9bce18b5a",
+   "original_path": "/Users/alex/platform/noisemaker-for-blender/parity/out/noise.graph.json",
+   "match": true
+  },
+  "_manifest": {
+   "copied_from": "/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/native-input-hashes.json",
+   "note": "read-only audit input; blender-section entries verified above; full manifest re-fetched at grading time"
+  }
+ },
+ "manifest_blender_entries": {
+  "/Users/alex/platform/noisemaker-for-blender/parity/out/noise.golden.png": {
+   "retained_path": "/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/native-inputs/blender/noise.golden.png",
+   "sha256": "3598684e11134d9cac187e05e5aea63e917d48f8941aca241b8e3c8c19153242"
+  },
+  "/Users/alex/platform/noisemaker-for-blender/parity/out/noise.graph.json": {
+   "retained_path": "/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/native-inputs/blender/noise.graph.json",
+   "sha256": "8a48a08463a51f678c87229fba06b9660254c274d907ec2094dccda9bce18b5a"
+  },
+  "/Users/alex/platform/noisemaker-for-blender/parity/out/bloom.golden.png": {
+   "retained_path": "/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/native-inputs/blender/bloom.golden.png",
+   "sha256": "03ba153bda5bbb0aee85e5ab8b1f56f4dbabbee8064df1373266ceda822b43f1"
+  },
+  "/Users/alex/platform/noisemaker-for-blender/parity/out/bloom.graph.json": {
+   "retained_path": "/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/native-inputs/blender/bloom.graph.json",
+   "sha256": "ee2153147eadf76d02e63d4128e4250653791db293929135f7e0d6eaa1bb5c71"
+  },
+  "/Users/alex/platform/noisemaker-for-blender/parity/out/adjust.golden.png": {
+   "retained_path": "/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/native-inputs/blender/adjust.golden.png",
+   "sha256": "b1d9f6eaf374726a50e5e4c8c836891e03e3c4a79e02435b83db55460c5a32e0"
+  },
+  "/Users/alex/platform/noisemaker-for-blender/parity/out/adjust.graph.json": {
+   "retained_path": "/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/native-inputs/blender/adjust.graph.json",
+   "sha256": "f49d6fa0ee8dd30547c0e65e69e29f176aaed1e645f72016f8cdaa2da7275f0a"
+  }
+ }
+}

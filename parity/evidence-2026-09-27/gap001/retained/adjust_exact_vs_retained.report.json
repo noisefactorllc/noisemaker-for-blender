@@ -1,0 +1,14 @@
+{
+ "name": "adjust_exact_vs_retained",
+ "golden": "parity/evidence-2026-09-27/gap001/retained/adjust.golden.png",
+ "candidate": "parity/evidence-2026-09-27/gap001/retained/adjust.candidate.png",
+ "width": 256,
+ "height": 256,
+ "max_abs_diff": 0.0,
+ "mean_abs_diff": 0.0,
+ "ssim": 1.0,
+ "tolerance": 0.0,
+ "ssim_min": 0.98,
+ "passed": true,
+ "grader": "pure-stdlib mirror of parity/compare.py (uint8, 8-bit units)"
+}
