@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+# Engine-free test entrypoint: every suite that runs without Blender or a GPU.
+#
+#   1. parity/test_*.py                 unittest suites, in a numpy + Pillow venv
+#   2. blender/harness/test_pngread.py  stdlib PNG decoder
+#   3. parity/compiler/check_{lex,parse,compile,expanded,graph}.py
+#        DSL compiler parity against goldens that the reference JS compiler
+#        produces at the reference revision recorded in STATUS.md (the last
+#        "to reference `<sha>`" sync entry)
+#
+# Any failure, error or skipped test fails the run. The remaining
+# blender/harness/test_*.py scripts need Blender itself (see
+# .github/workflows/tests.yml); this script never runs or downloads Blender.
+#
+# Needs bash, git, node, python3 >= 3.11 and network access. It prefers a
+# Python 3.13 interpreter (Blender 5.1's) when one is available; set
+# NM_TEST_PYTHON to choose the interpreter explicitly. All scratch data lives
+# in one directory under ${TMPDIR:-/tmp} that is removed on exit; the checkout
+# is not modified (parity/out/ included).
+set -euo pipefail
+
+NUMPY_VERSION=2.4.6
+PILLOW_VERSION=12.3.0
+REFERENCE_URL=https://github.com/noisefactorllc/noisemaker.git
+
+repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+cd "$repo"
+
+started=$(date +%s)
+work="$(mktemp -d "${TMPDIR:-/tmp}/nm-blender-test.XXXXXX")"
+trap 'rm -rf "$work"' EXIT
+trap 'exit 130' INT TERM HUP
+mkdir -p "$work/tmp"
+export TMPDIR="$work/tmp"
+export PYTHONDONTWRITEBYTECODE=1
+export UV_CACHE_DIR="$work/cache/uv"
+export PIP_CACHE_DIR="$work/cache/pip"
+export PIP_DISABLE_PIP_VERSION_CHECK=1
+export PIP_NO_INPUT=1
+export GIT_TERMINAL_PROMPT=0
+
+step() { printf '\n== %s\n' "$*"; }
+fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+pick_python() {
+  if [[ -n "${NM_TEST_PYTHON:-}" ]]; then
+    printf '%s\n' "$NM_TEST_PYTHON"
+  elif have python3.13; then
+    command -v python3.13
+  elif have uv && (cd "$work" && uv python find 3.13 >/dev/null 2>&1); then
+    (cd "$work" && uv python find 3.13)
+  else
+    command -v python3 || fail "python3 not found"
+  fi
+}
+
+# --- toolchain ---------------------------------------------------------------
+step "toolchain"
+have git || fail "git not found"
+have node || fail "node not found"
+py="$(pick_python)"
+"$py" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' \
+  || fail "Python >= 3.11 required: $py"
+printf 'python: %s (%s)\nnode:   %s\ngit:    %s\n' \
+  "$py" "$("$py" -c 'import platform; print(platform.python_version())')" \
+  "$(node --version)" "$(git --version)"
+
+venv="$work/venv"
+if have uv; then
+  uv venv --quiet --python "$py" "$venv"
+  uv pip install --quiet --python "$venv/bin/python" --only-binary :all: \
+    "numpy==$NUMPY_VERSION" "pillow==$PILLOW_VERSION"
+else
+  "$py" -m venv "$venv" || fail "cannot create a venv with $py (install its venv module or uv)"
+  "$venv/bin/python" -m pip install --quiet --only-binary :all: \
+    "numpy==$NUMPY_VERSION" "pillow==$PILLOW_VERSION"
+fi
+vpy="$venv/bin/python"
+"$vpy" -c 'import numpy, PIL; print("venv:   numpy %s, Pillow %s" % (numpy.__version__, PIL.__version__))'
+
+# --- 1. unittest suites --------------------------------------------------------
+# Every suite runs even after an earlier one fails; the exit status reflects all.
+failed=()
+summary=()
+
+step "parity/test_*.py (unittest)"
+if ! "$vpy" - "$repo/parity" "$work/unit.summary" <<'PY'
+import collections
+import pathlib
+import sys
+import unittest
+
+start = pathlib.Path(sys.argv[1])
+suite = unittest.defaultTestLoader.discover(str(start), pattern="test_*.py")
+
+
+def flatten(s):
+    for t in s:
+        if isinstance(t, unittest.TestSuite):
+            yield from flatten(t)
+        else:
+            yield t
+
+
+def ids(items):
+    """Distinct test ids; a failing subtest counts against its parent test."""
+    return {getattr(t, "test_case", t).id() for t in items}
+
+
+per_module = collections.Counter(type(t).__module__ for t in flatten(suite))
+expected = sorted(p.stem for p in start.glob("test_*.py"))
+empty = [m for m in expected if per_module.get(m, 0) == 0]
+
+result = unittest.TextTestRunner(stream=sys.stdout, verbosity=1).run(suite)
+
+failed = ids(t for t, _ in result.failures)
+errors = ids(t for t, _ in result.errors)
+skipped = ids(t for t, _ in result.skipped)
+xfail = ids(t for t, _ in result.expectedFailures)
+xpass = ids(result.unexpectedSuccesses)
+not_passed = failed | errors | skipped | xfail | xpass
+
+for module in expected:
+    print("  %-32s %3d tests" % (module, per_module.get(module, 0)))
+line = ("unit: suites=%d ran=%d passed=%d failed=%d errors=%d skipped=%d "
+        "expected-failures=%d unexpected-successes=%d"
+        % (len(expected), result.testsRun, result.testsRun - len(not_passed),
+           len(failed), len(errors), len(skipped), len(xfail), len(xpass)))
+print(line)
+pathlib.Path(sys.argv[2]).write_text(line + "\n")
+if empty:
+    print("suites that loaded no tests: %s" % ", ".join(empty))
+if result.testsRun == 0 or not_passed or empty or not result.wasSuccessful():
+    sys.exit(1)
+PY
+then
+  failed+=("parity/test_*.py")
+fi
+summary+=("$(cat "$work/unit.summary" 2>/dev/null || echo 'unit: no result')")
+
+# --- 2. stdlib PNG decoder ---------------------------------------------------
+step "blender/harness/test_pngread.py"
+status=0
+out="$("$vpy" blender/harness/test_pngread.py 2>&1)" || status=$?
+printf '%s\n' "$out"
+if (( status != 0 )) || grep -q 'SKIP' <<<"$out" || ! grep -qx 'PNGREAD PASS' <<<"$out"; then
+  failed+=("blender/harness/test_pngread.py")
+fi
+summary+=("test_pngread: $(grep -c '^  OK ' <<<"$out" || true) OK, $(grep -c '^  FAIL ' <<<"$out" || true) FAIL, $(grep -c 'SKIP' <<<"$out" || true) SKIP")
+
+# --- 3. DSL compiler parity gates --------------------------------------------
+step "parity/compiler/check_*.py against the reference compiler"
+# shellcheck disable=SC2016  # the backticks are literal STATUS.md text
+pin="$(grep -oE 'to reference `[0-9a-f]{7,40}`' STATUS.md | tail -n 1 | grep -oE '[0-9a-f]{7,40}' || true)"
+[[ -n "$pin" ]] || fail "no 'to reference \`<sha>\`' entry in STATUS.md"
+ref="$work/noisemaker"
+git clone --quiet --filter=blob:none --no-checkout "$REFERENCE_URL" "$ref"
+ref_sha="$(git -C "$ref" rev-parse --verify --quiet "$pin^{commit}")" \
+  || fail "reference revision $pin (STATUS.md) not found in $REFERENCE_URL"
+git -C "$ref" -c advice.detachedHead=false checkout --quiet --detach "$ref_sha"
+printf 'reference: %s at %s (STATUS.md pin %s)\n' "$REFERENCE_URL" "$ref_sha" "$pin"
+
+# The goldens are written into a scratch copy so the checkout's parity/out/
+# is left alone.
+gates="$work/gates"
+mkdir -p "$gates/blender" "$gates/parity"
+cp -R blender/noisemaker_blender "$gates/blender/"
+cp -R tools "$gates/"
+cp -R parity/compiler parity/corpus parity/regen-compiler-goldens.sh "$gates/parity/"
+NM_REFERENCE_ROOT="$ref" bash "$gates/parity/regen-compiler-goldens.sh" | tail -n 1
+
+for gate in lex parse compile expanded graph; do
+  status=0
+  out="$("$vpy" "$gates/parity/compiler/check_$gate.py" 2>&1)" || status=$?
+  printf '%s\n' "$out"
+  (( status == 0 )) || failed+=("parity/compiler/check_$gate.py")
+  summary+=("$(tail -n 1 <<<"$out")")
+done
+
+# --- summary -----------------------------------------------------------------
+step "summary"
+printf '%s\n' "${summary[@]}"
+elapsed=$(( $(date +%s) - started ))
+if (( ${#failed[@]} )); then
+  printf 'ENGINE-FREE TESTS FAIL (%ds): %s\n' "$elapsed" "${failed[*]}" >&2
+  exit 1
+fi
+printf 'ENGINE-FREE TESTS PASS (%ds)\n' "$elapsed"

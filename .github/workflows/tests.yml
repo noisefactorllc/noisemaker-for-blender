@@ -1,0 +1,112 @@
+name: Tests
+
+# Runs the test suites on every push to main. GitHub-hosted runners only: this
+# public repository never targets self-hosted runners.
+#
+# Jobs:
+#   engine-free  scripts/test: the parity/test_*.py unittest suites, the stdlib
+#                PNG decoder test, and the DSL compiler gates against the
+#                reference revision recorded in STATUS.md.
+#   blender      blender/harness/test_backend_contract.py in a checksum-pinned
+#                Blender 5.1.2 (the version bl_info targets) with --background.
+#                The contract imports Blender's gpu module but creates no GPU
+#                context. The other blender/harness/test_*.py scripts draw with
+#                the GPU, which needs a GUI session, and refuse to run with
+#                --background.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine-free:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "26"
+
+      # Blender 5.1 bundles Python 3.13.
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: scripts/test
+        run: scripts/test
+
+  blender:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BLENDER_VERSION: "5.1.2"
+      # From Blender's published blender-5.1.2.sha256 manifest.
+      BLENDER_SHA256: aaccb355f50183979b698bcce7467103a76261b5fa59f4972295842662a285fb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Blender's X11 and GL runtime libraries
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends \
+            libx11-6 libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 \
+            libsm6 libice6 libgl1 libegl1
+
+      - name: Download and verify Blender
+        run: |
+          tarball="blender-${BLENDER_VERSION}-linux-x64.tar.xz"
+          series="Blender${BLENDER_VERSION%.*}"
+          dest="$RUNNER_TEMP/$tarball"
+          verified=""
+          # download.blender.org first, then official release mirrors. Every
+          # source is checked against the pinned SHA-256.
+          for base in \
+            https://download.blender.org/release \
+            https://mirrors.ocf.berkeley.edu/blender/release \
+            https://ftp.nluug.nl/pub/graphics/blender/release \
+            https://mirror.clarkson.edu/blender/release; do
+            if curl -fsSL --retry 3 --connect-timeout 20 -o "$dest" "$base/$series/$tarball" \
+              && echo "$BLENDER_SHA256  $dest" | sha256sum --check --strict; then
+              verified="$base"
+              break
+            fi
+            echo "::warning::$base/$series/$tarball unavailable or checksum mismatch"
+            rm -f "$dest"
+          done
+          test -n "$verified" || { echo "::error::no verified Blender ${BLENDER_VERSION} download"; exit 1; }
+          echo "verified $tarball from $verified"
+          tar -xJf "$dest" -C "$RUNNER_TEMP"
+          rm -f "$dest"
+          echo "BLENDER=$RUNNER_TEMP/blender-${BLENDER_VERSION}-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Blender version
+        run: '"$BLENDER" --background --factory-startup --version'
+
+      - name: blender/harness/test_backend_contract.py (--background)
+        run: |
+          set -o pipefail
+          script=blender/harness/test_backend_contract.py
+          log="$RUNNER_TEMP/test_backend_contract.log"
+          "$BLENDER" --background --factory-startup --noaudio --python-exit-code 1 \
+            --python "$script" 2>&1 | tee "$log"
+          # Besides the exit code, require every PASS line the script prints,
+          # so a run that exits 0 without executing the whole script fails.
+          want=$(grep -c 'print("BACKEND CONTRACT PASS' "$script")
+          got=$(grep -c '^BACKEND CONTRACT PASS' "$log" || true)
+          echo "BACKEND CONTRACT PASS lines: $got/$want"
+          test "$want" -gt 0
+          test "$got" -eq "$want"
