@@ -101,7 +101,7 @@ jobs:
           set -o pipefail
           script=blender/harness/test_backend_contract.py
           log="$RUNNER_TEMP/test_backend_contract.log"
-          "$BLENDER" --background --factory-startup --noaudio --python-exit-code 1 \
+          "$BLENDER" --background --factory-startup --python-exit-code 1 \
             --python "$script" 2>&1 | tee "$log"
           # Besides the exit code, require every PASS line the script prints,
           # so a run that exits 0 without executing the whole script fails.
