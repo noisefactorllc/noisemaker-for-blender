@@ -2,11 +2,15 @@
 
 ## 1. Source and authority revisions
 
-Daily review: 2026-09-25. Current inspected source: [`9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`](https://github.com/noisefactorllc/noisemaker-for-blender/commit/9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc).
-Full rendered parity remains **unverified**. No release approval or new closure follows from this review.
-Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
+Daily review: 2026-09-28. Current inspected source: [`c998b7ccc4139497098f4dfe1fbb6836bf7ae0ca`](https://github.com/noisefactorllc/noisemaker-for-blender/commit/c998b7ccc4139497098f4dfe1fbb6836bf7ae0ca).
+Full rendered parity remains **unverified**. No release approval follows from this review.
+Current upstream discovery: `cdb60cfca9e51451809042b9a8edb96c445a026e`. The port pins `73c15be00d68`.
+The delta above the pin is documentation-only. It touches `LEDGER.md` and `llms-full.txt` only.
+Published Noisemaker authority: `1.0.199`, tag `fff519d8ee1020141038f843e7576b6606d630ff`. The CDN `/1.0/` manifest is unchanged. It holds 210 effect IDs.
+Its SHA-256 stays `05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e`.
 The observations below retain their original source and authority identities. They do not qualify later updates.
-Current served kit: `0.1.22`, source `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
+Current served kit: `0.1.34`, source `dffc073cab357d3e995941c3587562a1b36fb010`. This review verified it live. Artifact identity does not establish host qualification.
+Earlier daily review, 2026-09-25, inspected `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`. It recorded upstream `bbdeb56c`, authority `1.0.179` at `fca611fd`, and kit `0.1.22`.
 
 ### Earlier source observations
 
@@ -34,18 +38,29 @@ The matrix below retains the earlier measured scope. A historical verified row i
 
 | Dimension | Status | Measured scope or limit |
 |---|---|---|
-| Source-level checks | unverified | Current native probes: noise and adjust match retained goldens exactly. Bloom differs by one byte. Full qualification remains incomplete. |
-| Actual host rendering | verified | Only the bounded probes in section 3 executed. This is not full host qualification. |
-| Minimum and current host versions | unverified | Declared requirements are not a tested version matrix. |
-| Supported operating systems and backends | unverified | This pass does not establish Windows, Linux, and macOS coverage. |
-| Installed package and first useful result | unverified | Complete isolated installation was not qualified for this source. |
+| Source-level checks | verified | Compiler gates 20/20 and 19/19 at pin `73c15be0`. Unit suites 189/189. `scripts/test` exit 0 at `c998b7c`. Full parameter coverage not measured. |
+| Actual host rendering | verified | Bounded probes on three hosts: llvmpipe, Apple M4 Metal, and Blender 4.2.21 cross-version. Full catalog and interactive GUI not executed. |
+| Minimum and current host versions | unverified | Blender 4.2.21 LTS and 5.1.2 render byte-identically on Apple M4 Metal. Windows and other versions untested. |
+| Supported operating systems and backends | unverified | Linux measured on a software rasterizer only. macOS measured on Metal. Windows untested. |
+| Installed package and first useful result | unverified | Isolated install, quick-start bake, material and compositor use ran on the software-rasterizer host 2026-09-26. No qualified-host run. |
 | Parameters, external inputs, state, and chains | unverified | Full current-authority combinations remain unmeasured. |
 | Invalid input and recovery | unverified | Unit checks do not establish every installed public entry point. |
-| Upgrade, removal, and resource cleanup | unverified | Prior defects and missing workflows remain in the gap register. |
+| Upgrade, removal, and resource cleanup | unverified | Upgrade and removal measured on a bpy 5.2.2 module host. GAP-005 cancellation and ownership checks pass. Declared host pending. |
 | Accessibility of provided controls | unverified | Keyboard, focus, labels, and diagnostics need host observations where applicable. |
-| Release readiness | blocked | Full parity, installation, host, and artifact evidence remain incomplete. |
+| Release readiness | blocked | GAP-008 rendering defects open. Full parity, qualified-host installation, and Windows coverage remain incomplete. |
 
 ## 3. Parity coverage
+
+### Daily review, 2026-09-28
+
+This review re-executed the engine-free suite at `c998b7c`. `scripts/test` exited 0. Unit suites pass 189/189. The PNG reader passes 16/16.
+Compiler gates pass 20/20 lex, parse, compile and 19/19 expand, graph against the reference at `73c15be0`.
+This review re-graded the committed retained inputs of 2026-09-28. The committed grader reproduces all three reports exactly.
+Adjust and noise are byte-identical. Bloom measures max 1, mean 0.13233, SSIM 0.99999.
+Exact-source CI at `c998b7c`: run `36403426149`, both check-runs success.
+Served kit `0.1.34` verified live at source `dffc073`. Its `compat.json` matches its `kit.json` SHA-256 and declares the same 208 IDs as the inventory.
+Full current-authority parity remains unverified. The full case denominator remains not measured.
+[Review evidence](/series/review-20260928-133000/result.json).
 
 ### Daily review, 2026-09-25
 
@@ -77,7 +92,7 @@ They do not qualify the current upstream revision or full catalog. Exact compari
 | `adjust` | [Retained-golden measurement](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-adjust-comparison.json) | verified |
 | `bloom` | [Retained-golden measurement](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-bloom-comparison.json) | failed |
 
-Current served declaration: 208 effect IDs. This inventory is not evidence of execution. The declaration column below reflects kit `0.1.22`.
+Current served declaration: 208 effect IDs. This inventory is not evidence of execution. The declaration column below reflects kit `0.1.34`. This review verified its `compat.json` against the kit inventory hash and against every row below.
 
 ### Effect inventory
 
@@ -443,6 +458,8 @@ Implementation corrections remain with the separate job. This report does not ad
 ## 6. History
 
 2026-09-25 daily review at `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`: source freshness and bounded evidence reviewed. Open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-native-comparisons.json). No new closure claimed.
+
+2026-09-28 daily review at `c998b7ccc4139497098f4dfe1fbb6836bf7ae0ca`: reviewed the implementation range `9631bf6..c998b7c`. Closures GAP-001, GAP-005 and GAP-007 verified by execution. Added GAP-008 for the measured cross-engine rendering defects. `scripts/test` passed at the head. Exact-source CI run `36403426149` passed both check-runs. Served kit `0.1.34` verified live. Full parity remains unverified. [Review evidence](/series/review-20260928-133000/result.json).
 
 | Date | Source | Result | Change |
 |---|---|---|---|

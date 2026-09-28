@@ -4,11 +4,15 @@ Current compatibility matrix: [compatibility report](COMPATIBILITY.md).
 
 ## 1. Scope and source revisions
 
-Daily review: 2026-09-25. Current inspected source: [`9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`](https://github.com/noisefactorllc/noisemaker-for-blender/commit/9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc).
-Full rendered parity remains **unverified**. No release approval or new closure follows from this review.
-Current upstream discovery: `bbdeb56c4b75cf33379766c3e87b0f5a18bcbba8`. Published Noisemaker authority: `1.0.179`, source `fca611fd8f91424661d4e531d39313d24ea21134`, 210 effect IDs.
+Daily review: 2026-09-28. Current inspected source: [`c998b7ccc4139497098f4dfe1fbb6836bf7ae0ca`](https://github.com/noisefactorllc/noisemaker-for-blender/commit/c998b7ccc4139497098f4dfe1fbb6836bf7ae0ca).
+Full rendered parity remains **unverified**. No release approval follows from this review.
+Current upstream discovery: `cdb60cfca9e51451809042b9a8edb96c445a026e`. The port pins `73c15be00d68`.
+The delta above the pin is documentation-only. It touches `LEDGER.md` and `llms-full.txt` only.
+Published Noisemaker authority: `1.0.199`, tag `fff519d8ee1020141038f843e7576b6606d630ff`. The CDN `/1.0/` manifest is unchanged. It holds 210 effect IDs.
+Its SHA-256 stays `05c4d7b7744837ae90a3bb4c89e5403ff09448a74d9d7e824abb3d719ad3314e`.
 The observations below retain their original source and authority identities. They do not qualify later updates.
-Current served kit: `0.1.22`, source `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`. [Retrieved inventory and hashes](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-served-inventories.json). Artifact identity does not establish host qualification.
+Current served kit: `0.1.34`, source `dffc073cab357d3e995941c3587562a1b36fb010`. This review verified it live. Artifact identity does not establish host qualification.
+Earlier daily review, 2026-09-25, inspected `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`. It recorded upstream `bbdeb56c`, authority `1.0.179` at `fca611fd`, and kit `0.1.22`.
 
 ### Earlier source observations
 
@@ -60,6 +64,30 @@ NEAR results and chaos qualification are not byte-exact results. See [STATUS.md]
 ## 3. Methods and evidence
 
 Review CI boundary: Exact-source runs: Export kit. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement. [Exact-source responses and workflows](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/noisemaker-for-blender-remote-evidence.json).
+
+### Daily review, 2026-09-28
+
+No new worker audit ran since the 2026-09-24 report. This review covers the implementation range `9631bf6..c998b7c` and the current documents at `c998b7c`.
+
+Checked by execution on Linux x86_64, Node 26.5.1, Python 3.13.13:
+
+- `scripts/test` at `c998b7c`: exit 0. Unit suites pass 189/189. `test_pngread.py` passes 16/16.
+  Compiler gates pass 20/20 lex, parse, compile and 19/19 expand, graph. They ran against a fresh reference clone at `73c15be0`.
+- Re-graded the committed retained inputs with the committed `pure_grader.py`. All three reports reproduce exactly.
+  Adjust and noise are byte-identical by SHA-256. Bloom measures max 1, mean 0.13233, SSIM 0.99999. It fails tol 0 and passes tol 2.
+- Verified the six retained golden and graph hashes against `native-input-hashes-verify.json`. All match.
+- Verified the four GAP-005 evidence files against `provenance.json`. All SHA-256 values match.
+- Recounted the catalog: 210 effect definitions, 309 shader programs. The namespace split matches GAP-007.
+  No stale `213` or `30 seconds` claim remains in README, the kit templates, or ARCHITECTURE.md.
+- Verified the GAP-001 cross-version claim by hash. The bloom candidate equals both committed Metal renders of 2026-09-27.
+- Exact-source CI at `c998b7c`: run `36403426149`. The `engine-free` and `blender` check-runs both completed success at 2026-09-28T09:25Z.
+- Served kit `0.1.34` verified live. `deployment-meta.json` records source `dffc073`. Export kit run `36353873056` completed success at `dffc073`.
+  `git diff dffc073..c998b7c` touches no export-kit trigger path. The kit's `compat.json` matches its `kit.json` SHA-256 and declares the same 208 effect IDs as the inventory.
+
+Closure verdicts: GAP-001, GAP-005 and GAP-007 are supported by committed evidence. They stay closed.
+This review added GAP-008 for the measured open rendering defects. The lens and chain numbers stand as recorded.
+Full current-authority parity remains unverified. The full case denominator remains not measured.
+[Review evidence](/series/review-20260928-133000/result.json).
 
 ### Daily review, 2026-09-25
 
@@ -174,7 +202,7 @@ Original gap evidence dates to 2026-09-22. Dated review evidence below supplemen
 - Expected: each advertised effect has a consistent supported status backed by executable evidence.
 - Observed: README claims all non-audio effects work. The shipped template says bloom and lens render incorrectly, but compatibility includes both.
 - Evidence: C-003 and the immutable kit README/compatibility files.
-- Next action: None for this contract-reconciliation gap; retain the measured bloom, lens, and chain defects.
+- Next action: None for this contract-reconciliation gap. GAP-008 now tracks the measured bloom, lens and chain defects.
 - Review evidence: kit `0.1.18` retains the contradictory README and compatibility entries. Last checked 2026-09-23.
 - Dependencies: GAP-003 supplies the Blender host. Do not assume either conflicting runtime statement is correct.
 - Required checks: public bake path, unchanged authority images, explicit existing tolerances, and both individual effects and a chain.
@@ -281,22 +309,39 @@ Original gap evidence dates to 2026-09-22. Dated review evidence below supplemen
 - Acceptance: instructions state consistent counts and duration without upgrading historical results to current qualification.
 - Status update 2026-09-27: closed — all three observations reconciled in documentation-only changes, with no historical result upgraded to current qualification. (1) Counts: the checkout's `blender/noisemaker_blender/effects` holds exactly 210 effect definition JSONs (filter 113, synth 29, mixer 15, classicNoisedeck 20, points 11, render 12, synth3d 8, filter3d 2 — matching STATUS.md's coverage table) and `blender/noisemaker_blender/shaders/effects` holds 309 `.frag` programs; README's two stale "213" claims now read 210 (`count-and-time-check.log`). (2) Historical verification labels: STATUS's coverage rows no longer say "not yet Metal-verified" for `points/heightGrid`, `render/renderLandscape3d`, and `synth3d/heightmap3d` below the 2026-09-15 sync section that reports those four fixtures rendered PASS in the real-Metal session; the rows now cite that historical session and state the results are "not re-verified since" — historical results stay historical, and full rendered parity remains unverified per this document's standing scope note. (3) Simulation duration: the runtime loop is `tt = (time + f * timestep) % 1.0` with per-frame delta equal to the timestep (`runtime/pipeline.py`, `FrameStepper.step`), so 1800 frames at timestep 0.00167 (1/600) advance normalized simulation time by 3.006 (3.000 at exactly 1/600) units wrapping at 1 — there is no seconds conversion. README, both exported bake instructions (`export-kit/kit/README.template.md`, `export-kit/kit/bake.template.py`), and ARCHITECTURE.md's validation section now state the normalized-time arithmetic and drop the "30 seconds" equation; the recommended 1800-frame / 1-600 recipe itself is unchanged. Executed check committed as `parity/evidence-2026-09-27/gap007/count-and-time-check.log` (counts derived from current files, loop line quoted from source, arithmetic, and a scan asserting no "213"/"30 seconds" claims remain; exit 0). No source, test, golden, tolerance, or checkpoint changed; GAP-003's dependency is untouched because no fresh runtime qualification is claimed.
 
+### GAP-008: Measured cross-engine rendering defects lack a register entry
+
+- Status: open. Priority: P1. Category: implementation.
+- Scope: `filter/lens`, the `north_star` chain, and `filter/bloom` at exact zero tolerance.
+- Expected: each advertised effect passes the port's strict gate, or a mechanism-bound policy records its divergence.
+- Observed: `filter/lens` renders with a measured 10/255 worst per-channel difference on the qualified Metal host. This exceeds the strict 2-step gate. SSIM is 0.99999.
+- Observed: the `north_star` chain diverges structurally cross-engine. Max difference is 255 and SSIM is −0.15. Its chaotic solvers amplify sub-LSB floating-point differences.
+- Observed: `filter/bloom` passes the strict gate. It fails the retained-golden zero-tolerance comparison by 1/255.
+- Evidence: [Host measurements, 2026-09-27](COMPATIBILITY.md#native-observations-2026-09-27) and the committed reports under `parity/evidence-2026-09-27/gap001/`. The retained-input reports were re-graded 2026-09-28 and reproduce exactly.
+- Next action: on a qualified Metal host, bisect the `lens` divergence pass by pass against the shared reference GLSL. Fix the port defect, or bind the divergence to a measured cross-engine mechanism. Then decide the chain the same way. Author a chaos-gate entry only from measurement, per the `flythrough3d` precedent.
+- Dependencies: GAP-003 supplies the qualified host. Do not change any tolerance or golden while classifying.
+- Required checks: per-pass readbacks of the lens program on both engines. The existing `parity/compare.py` gate at tol 2.0 and SSIM 0.98. The committed 2026-09-27 reports stay the baseline.
+- Acceptance: `lens` passes the strict gate, or a mechanism-bound policy entry records the measured divergence. The chain receives the same treatment. The bloom zero-tolerance defect keeps its recorded status.
+- Added: 2026-09-28 daily review. The defects were measured 2026-09-25 through 2026-09-27 but lacked a register entry after GAP-001 closed.
+
 ## 5. Ordered next actions
 
-Current first action: Identify immutable authority graphs and goldens, then run the existing Blender render_all.py entry point across the full tracked fixture inventory. Count missing graphs and mismatches explicitly. After parity, install the served add-on in an isolated Blender profile and check render, invalid-input recovery, removal, and the declared minimum version.
-Subsequent historical actions remain dependent on that evidence. No implementation is authorized by this audit.
+Current first action: classify and fix GAP-008's `lens` defect on a qualified Metal host. Then run the full tracked fixture sweep for GAP-004. The earlier actions for GAP-001, GAP-005 and GAP-007 are complete. No implementation is authorized by this audit.
 
 These actions describe acceptance work at the existing checkpoint. They do not authorize implementation or an authority upgrade.
 
-1. Record the existing source update under GAP-002. Preserve the old rejection results without describing them as current behavior.
-2. Locate a Blender 5.1 GPU host for GAP-003. Run `blender --factory-startup --python blender/harness/test_integration.py`.
-   Require successful registration, bake, Image readback, comparison, and cleanup. Use isolated preferences and a disposable project.
-3. Render existing bloom and lens DSL fixtures with `NM_JOBS` through `blender/harness/render_all.py`. Compare candidates with `parity/compare.py`.
-   Preserve established dimensions, times, goldens, and tolerances. Record each effect and chain result before reconciling GAP-001.
-4. Establish golden provenance and retain the diagnostic failure until the reviewer records its cause. Complete GAP-004's evidence boundaries.
-5. Test long bakes and Image name collisions in a disposable project. Record GAP-005's user-visible recovery behavior.
-6. Qualify notices, version mapping, upgrade, and removal for the actual ZIP. Apply GAP-006's acceptance checks.
-7. Correct the identified documentation inconsistencies under separate maintenance scope. Apply GAP-007's count and timing checks.
+1. On a GAP-003-qualified host, bisect the `lens` 10/255 divergence pass by pass against the reference engine.
+   Fix the port defect, or author a mechanism-bound policy entry from measurement.
+   Pass condition: `lens` passes `parity/compare.py` at tol 2.0, or a policy entry records the measured mechanism. This serves GAP-008.
+2. Decide the `north_star` chain divergence the same way. Author a chaos-gate entry per the `flythrough3d` precedent, or record a port defect.
+   Pass condition: a policy entry or a defect record exists with measured per-pass evidence. This serves GAP-008.
+3. Export immutable authority graphs for all 227 tracked programs. Run them through `blender/harness/render_all.py`.
+   Count missing graphs, mismatches, errors and timeouts per case. Keep every result explicit.
+   Pass condition: every case executes with a recorded result. This serves GAP-004.
+4. Exercise the interactive-GUI items and the Windows host of the GAP-003 matrix. Record host and GPU versions for each step.
+   Pass condition: each workflow passes on the recorded host. This serves GAP-003.
+5. Install, upgrade and remove kit `0.1.34` on the declared Blender 5.1 host. Use the public entry points only.
+   Pass condition: each step passes and the archive identifies its source. This serves GAP-006.
 
 Affected files and objective pass conditions appear in each gap above.
 Implementation remains with the separate job. No additional effect port is part of this audit.
@@ -304,6 +349,8 @@ Implementation remains with the separate job. No additional effect port is part 
 ## 6. Pass history
 
 2026-09-25 daily review at `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`: source freshness and bounded evidence reviewed. Open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-native-comparisons.json). No new closure claimed.
+
+2026-09-28 daily review at `c998b7ccc4139497098f4dfe1fbb6836bf7ae0ca`: reviewed the implementation range `9631bf6..c998b7c`. Closures GAP-001, GAP-005 and GAP-007 verified by execution and retained. Added GAP-008 for the measured cross-engine rendering defects. `scripts/test` passed at the head. Exact-source CI run `36403426149` passed both check-runs. Served kit `0.1.34` verified live. GAP-002, GAP-003, GAP-004, GAP-006 and GAP-008 stay open. Full parity remains unverified. [Review evidence](/series/review-20260928-133000/result.json).
 
 | Date | Source | Changes and tested scope | Remaining limits |
 | --- | --- | --- | --- |
