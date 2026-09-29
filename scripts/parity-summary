@@ -24,14 +24,19 @@ Environment:
   NM_CASE_TIMEOUT  per-case blender render timeout seconds (default 300)
   NM_SIZE/NM_TIME/NM_FRAMES  capture parameters (defaults 256 / 0.25 / 8)
   NM_SKIP          comma-separated case ids to count as skip (never rendered)
-  NM_GOLDEN_AUTO   when set, generate missing goldens from NM_REFERENCE_ROOT
+  NM_GOLDEN_AUTO   when set, generate missing/stale goldens from NM_REFERENCE_ROOT
   NM_REFERENCE_ROOT, NM_CHROME (default `chromium`), NM_CDP_PORT (9222),
   NM_SERVE_PORT (8777)  — golden generation
-  --fresh          re-render candidates even if a PNG already exists
+  --reuse          reuse existing candidate PNGs and provenance-verified goldens
+                   (resumable sweeps); the default renders EVERY case fresh and
+                   refuses goldens without a matching provenance.json entry, so
+                   stale work directories can never be counted as executed
+  --fresh          accepted no-op (fresh rendering is already the default)
 
 Exit code 0 only when fail == missing == 0. Never fabricates: every count names
 a measured comparison or an explicitly absent side.
 """
+import hashlib
 import json
 import os
 import shutil
@@ -117,6 +122,14 @@ def compare(gold_path, cand_path, policy):
     return {"cls": cls, "max_abs_diff": mad, "mean_abs_diff": round(mean, 4), "ssim": round(ssim, 5)}
 
 
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 def render_candidate(name, dsl, out_png, size, time, frames, timeout):
     jobs = json.dumps([{"dsl": str(dsl), "out": str(out_png)}])
     env = dict(os.environ, NM_JOBS=jobs, NM_SIZE=str(size), NM_TIME=str(time), NM_FRAMES=str(frames))
@@ -126,6 +139,9 @@ def render_candidate(name, dsl, out_png, size, time, frames, timeout):
                               env=env, cwd=str(ROOT), capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         return {"cls": "fail", "reason": "render timeout after %ss" % timeout}
+    if proc.returncode != 0:
+        tail = (proc.stdout + proc.stderr).strip().splitlines()
+        return {"cls": "fail", "reason": "blender exit %d; tail: %s" % (proc.returncode, " | ".join(tail[-2:]))}
     if not out_png.exists():
         tail = (proc.stdout + proc.stderr).strip().splitlines()
         return {"cls": "fail", "reason": "no candidate PNG; blender tail: " + " | ".join(tail[-2:])}
@@ -180,10 +196,16 @@ def generate_goldens(missing, gold_dir, ref_root, timeout):
     if not node or not shutil.which(chrome):
         return "node or chromium not available"
     pairs = [f"{n}={ROOT / 'parity' / 'programs' / f'{n}.dsl'}" for n in missing]
+    try:
+        ref_rev = subprocess.run(["git", "-C", str(ref_root), "rev-parse", "HEAD"],
+                                 capture_output=True, text=True, timeout=30).stdout.strip() or None
+    except Exception:
+        ref_rev = None
     procs = ensure_golden_infra(ref_root, serve_port, cdp_port, chrome)
     try:
         env = dict(os.environ, NM_GOLDEN_OUT=str(gold_dir), NM_CDP_PORT=str(cdp_port),
-                   NM_SERVE_PORT=serve_port, NM_GOLDEN_SIZE=os.environ.get("NM_SIZE", "256"),
+                   NM_SERVE_PORT=serve_port, NM_GOLDEN_REF_REV=ref_rev or "",
+                   NM_GOLDEN_SIZE=os.environ.get("NM_SIZE", "256"),
                    NM_GOLDEN_TIME=os.environ.get("NM_TIME", "0.25"),
                    NM_GOLDEN_FRAMES=os.environ.get("NM_FRAMES", "8"))
         try:
@@ -198,8 +220,8 @@ def generate_goldens(missing, gold_dir, ref_root, timeout):
 
 
 def main():
-    argv = [a for a in sys.argv[1:] if a != "--fresh"]
-    fresh = "--fresh" in sys.argv
+    argv = [a for a in sys.argv[1:] if a not in ("--fresh", "--reuse")]
+    reuse = "--reuse" in sys.argv
     size = int(os.environ.get("NM_SIZE", "256"))
     time = float(os.environ.get("NM_TIME", "0.25"))
     frames = int(os.environ.get("NM_FRAMES", "8"))
@@ -235,7 +257,7 @@ def main():
             print(f"[missing] {name}: no fixture DSL parity/programs/{name}.dsl")
             continue
         cand = cand_dir / f"{name}.png"
-        if fresh and cand.exists():
+        if not reuse and cand.exists():
             cand.unlink()
         if not cand.exists():
             err = render_candidate(name, dsl, cand, size, time, frames, timeout)
@@ -245,24 +267,40 @@ def main():
                 continue
         ready.append(name)
 
-    # Pass 2 — authority goldens: generate missing ones when the reference engine
-    # and a browser are available (NM_GOLDEN_AUTO=1 + NM_REFERENCE_ROOT).
+    # Pass 2 — authority goldens: goldens are trusted only with a provenance.json
+    # entry matching the file's sha256 (written by parity/golden-cdp.mjs), so a
+    # stale or foreign golden in a reused work directory cannot be graded.
     auto = os.environ.get("NM_GOLDEN_AUTO") and os.environ.get("NM_REFERENCE_ROOT")
+
+    def golden_state(gold):
+        if not gold.exists():
+            return "missing"
+        try:
+            pv = json.loads((gold_dir / "provenance.json").read_text())
+        except (OSError, ValueError):
+            return "stale"
+        entry = pv.get("files", {}).get(gold.name[:-len(".golden.png")])
+        if not entry or entry.get("sha256") != sha256(gold):
+            return "stale"
+        return "ok"
+
     if auto:
-        missing = [n for n in ready if not (gold_dir / f"{n}.golden.png").exists()]
-        if missing:
-            err = generate_goldens(missing, gold_dir, Path(os.environ["NM_REFERENCE_ROOT"]),
-                                   120 * max(1, len(missing)))
+        need = [n for n in ready if golden_state(gold_dir / f"{n}.golden.png") != "ok"]
+        if need:
+            err = generate_goldens(need, gold_dir, Path(os.environ["NM_REFERENCE_ROOT"]),
+                                   120 * max(1, len(need)))
             if err:
                 print(f"[golden] generation unavailable: {err}")
 
-    # Pass 3 — grade every case that has both sides.
+    # Pass 3 — grade every case that has a verified golden and a candidate.
     for name in ready:
         gold = gold_dir / f"{name}.golden.png"
         cand = cand_dir / f"{name}.png"
-        if not gold.exists():
+        state = golden_state(gold)
+        if state != "ok":
             counts["missing"] += 1
-            print(f"[missing] {name}: no authority golden in {gold_dir}")
+            why = "no authority golden" if state == "missing" else "golden present but unprovenanced/sha256-mismatched (stale); regenerate with NM_GOLDEN_AUTO=1"
+            print(f"[missing] {name}: {why}")
             continue
         rec = compare(gold, cand, policies.get(name))
         cls = rec.pop("cls")

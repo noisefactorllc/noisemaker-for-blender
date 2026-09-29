@@ -22,6 +22,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
+import crypto from 'node:crypto'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const OUT = process.env.NM_GOLDEN_OUT
@@ -175,6 +176,16 @@ async function main () {
       topDown[d] = pixels[s]; topDown[d + 1] = pixels[s + 1]; topDown[d + 2] = pixels[s + 2]; topDown[d + 3] = pixels[s + 3]
     }
     fs.writeFileSync(path.join(OUT, `${it.name}.golden.png`), encodePng(width, height, topDown))
+    // Provenance manifest: binds every generated golden to its sha256 and the
+    // reference revision the golden was rendered from, so a stale or foreign
+    // golden in a reused work directory cannot pass as the authority image.
+    const pvPath = path.join(OUT, 'provenance.json')
+    let pv = {}
+    try { pv = JSON.parse(fs.readFileSync(pvPath, 'utf8')) } catch (e) { pv = { files: {} } }
+    pv.reference_revision = process.env.NM_GOLDEN_REF_REV || null
+    pv.files = pv.files || {}
+    pv.files[it.name] = { sha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(OUT, `${it.name}.golden.png`))).digest('hex'), bytes: fs.statSync(path.join(OUT, `${it.name}.golden.png`)).size }
+    fs.writeFileSync(pvPath, JSON.stringify(pv, null, 2) + '\n')
     console.log('OK', it.name, width + 'x' + height)
   }
   console.log('DONE')
