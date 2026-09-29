@@ -25,11 +25,7 @@ from . import shader_build, std140
 from ..runtime.pipeline import resolve_dimension, build_texture_pooling_plan
 
 _FS_TRI = {"pos": [(-1.0, -1.0), (3.0, -1.0), (-1.0, 3.0)]}
-# Very tall viewports (>2048) drop their leftmost pixel column on the Metal
-# backend (measured: a 64x4096 atlas draw skips x=0 entirely; a 2048-tall
-# viewport covers every column). FS passes draw in vertical slabs of this
-# height — see GpuBackend._render.
-_MAX_DRAW_SLAB = 2048
+from .slab import _MAX_DRAW_SLAB, slab_ranges  # noqa: E402  (GPU-free helper)
 _BLIT_FRAG = ("#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2(textureSize((s),0)))),"
               " ivec2(0), textureSize((s),0)-ivec2(1)), 0))\n"
               "void main(){ fragColor = nmTex(src, gl_FragCoord.xy / resolution); }\n")
@@ -432,12 +428,9 @@ class GpuBackend:
             # single-target offscreens; a <=2048-tall viewport covers every
             # column). Draw in vertical slabs: gl_FragCoord stays window-space,
             # so slabbed draws are semantically identical to the single draw.
-            offset = 0
-            while offset < vh:
-                slab = min(_MAX_DRAW_SLAB, vh - offset)
-                gpu.state.viewport_set(vx, vy + offset, vw, slab)
+            for slab_y, slab_h in slab_ranges(vy, vh):
+                gpu.state.viewport_set(vx, slab_y, vw, slab_h)
                 self._fs_batch(shader).draw(shader)
-                offset += slab
             gpu.state.blend_set('NONE')
 
     def _render_points(self, compiled, merged, inputs, p, graph, per_particle=1, tris=False):

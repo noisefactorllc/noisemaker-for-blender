@@ -1,4 +1,7 @@
-"""Run under Blender to verify capability contracts exposed by GpuBackend."""
+"""Run under Blender to verify capability contracts exposed by GpuBackend.
+
+The slab-tiling asserts are also covered engine-free by parity/test_slab_tiling.py.
+"""
 
 import os
 import sys
@@ -167,5 +170,18 @@ assert surface4.read.width == 128
 assert surface3.read.freed
 assert surface3.write.freed
 assert "vel" not in backend.frame_read
+
+# Slab tiling for the Metal tall-viewport workaround: slabs must tile the full
+# height exactly, in order, with no gaps or overlap, and respect the cap.
+for vy, vh in [(0, 4096), (0, 2048), (0, 2049), (37, 4097), (0, 1), (512, 63)]:
+    ranges = _gb.slab_ranges(vy, vh)
+    assert ranges[0][0] == vy
+    assert all(h <= _gb._MAX_DRAW_SLAB for _, h in ranges), ranges
+    assert ranges[-1][0] + ranges[-1][1] == vy + vh, ranges
+    for (y0, h0), (y1, _h1) in zip(ranges, ranges[1:]):
+        assert y1 == y0 + h0, ranges  # contiguous, ordered, no overlap
+assert _gb.slab_ranges(0, 2048) == [(0, 2048)]  # small passes: single draw
+assert _gb.slab_ranges(0, 4096) == [(0, 2048), (2048, 2048)]
+assert _gb.slab_ranges(100, 3000, cap=1000) == [(100, 1000), (1100, 1000), (2100, 1000)]
 
 print("BACKEND CONTRACT PASS — global surface refreshed when format or dimensions change")
