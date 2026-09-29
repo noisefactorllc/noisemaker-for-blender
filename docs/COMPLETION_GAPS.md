@@ -214,7 +214,8 @@ Original gap evidence dates to 2026-09-22. Dated review evidence below supplemen
 
 ### GAP-002: Updated landscape authority lacks host qualification
 
-- Status: open. Priority: P2. Category: authority.
+- Status: blocked. Priority: P2. Category: authority.
+- Blocked (reason, 2026-09-29): every automatable part of the acceptance is exhausted and recorded above — compiler tests and packed-kit graphs pass for source `e9299fd8` and archive kit `0.1.18`; all three filtering choices are rendered from source on both the llvmpipe host and the Apple M4/Metal physical-GPU-class host and from the published kit `0.1.26`, graded through the unchanged gate (every landscape comparison NEAR, never strict); both source revisions and unchanged tolerances recorded; the earlier rejection evidence preserved; whole-port and gap-case PARITY-SUMMARY counts measured by the published `scripts/parity-summary` (whole port 110 executed, 33 strict, 8 near, 72 fail; GAP-002's two listed cases 2/2 executed, both NEAR — recorded provenance, uncredited since no supervisor-computed parity-summary check is triggered for a non-closing candidate). What remains is NOT automatable: the strict rendered-parity contract cannot close on measured cross-engine FP divergence (near>0, exact+strict<expected), and the host-qualification dependency resolves only through GAP-003's interactive-GUI-only remainder — a person must exercise the addon's GUI in Blender; no harness capability can substitute. Resume condition: GAP-003's interactive-GUI host qualification completed by a human, at which point GAP-002's render halves stand re-evaluated against it (and closure additionally requires strict parity, which the measured NEAR divergence currently blocks).
 - Scope: landscape parameter coverage and authority descriptions.
 - Expected: developers can distinguish the recorded checkpoint from current upstream behavior.
 - Historical observation: the audited source rejected both filtering choices.
