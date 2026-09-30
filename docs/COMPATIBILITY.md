@@ -64,7 +64,7 @@ Full current-authority parity remains unverified. The full case denominator rema
 
 ### Daily review, 2026-09-25
 
-136 harness tests pass. Actual Blender rendering of the current runtime produced noise with zero byte differences and bloom with maximum difference 1 in 34,690 channels. Both used retained historical goldens. Current-authority full parity remains unverified. [Raw evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-native-comparisons.json).
+136 harness tests pass. Actual Blender rendering of the current runtime produced noise with zero byte differences and bloom with maximum difference 1 in 34,690 channels. Both used retained historical goldens. Current-authority full parity remains unverified. Raw evidence (audit evidence `review-20260925-053200/current-native-comparisons.json`).
 
 The current full case denominator remains incomplete. Missing parameters, hosts, external inputs, and stateful sequences remain qualification gaps. No skip or tolerated difference counts as exact parity.
 
@@ -88,9 +88,9 @@ They do not qualify the current upstream revision or full catalog. Exact compari
 
 | Probe | Evidence | Exact comparison |
 |---|---|---|
-| `noise` | [Retained-golden measurement](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-noise-comparison.json) | verified |
-| `adjust` | [Retained-golden measurement](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-adjust-comparison.json) | verified |
-| `bloom` | [Retained-golden measurement](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-bloom-comparison.json) | failed |
+| `noise` | Retained-golden measurement (audit evidence `evidence-20260924-remaining-gap-documents/blender-noise-comparison.json`) | verified |
+| `adjust` | Retained-golden measurement (audit evidence `evidence-20260924-remaining-gap-documents/blender-adjust-comparison.json`) | verified |
+| `bloom` | Retained-golden measurement (audit evidence `evidence-20260924-remaining-gap-documents/blender-bloom-comparison.json`) | failed |
 
 Current served declaration: 208 effect IDs. This inventory is not evidence of execution. The declaration column below reflects kit `0.1.34`. This review verified its `compat.json` against the kit inventory hash and against every row below.
 
@@ -320,14 +320,14 @@ Existing tolerance-based acceptance remains separate. No tolerance or golden cha
 |---|---|---|---|---|---|---|
 | Tracked program files | 227 | 3 | 2 | 1 | 224 | unverified |
 
-Every unexecuted fixture remains visible in the [fixture inventory](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-fixture-inventory.json).
+Every unexecuted fixture remains visible in the fixture inventory (audit evidence `evidence-20260924-remaining-gap-documents/blender-fixture-inventory.json`).
 Fixture counts do not prove coverage of every current effect, parameter, or stateful workflow.
 
 | Case | Exact result | Measurement | Evidence |
 |---|---|---|---|
-| `adjust` | verified | [PASS] adjust: max-abs-diff=0.000 mean-abs-diff=0.0000 ssim=1.00000 (tol=0.0, ssim_min=0.98) | [Raw command](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-adjust-comparison-command.json) |
-| `bloom` | failed | [FAIL] bloom: max-abs-diff=1.000 mean-abs-diff=0.1323 ssim=0.99999 (tol=0.0, ssim_min=0.98) | [Raw command](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-bloom-comparison-command.json) |
-| `noise` | verified | [PASS] noise: max-abs-diff=0.000 mean-abs-diff=0.0000 ssim=1.00000 (tol=0.0, ssim_min=0.98) | [Raw command](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents/blender-noise-comparison-command.json) |
+| `adjust` | verified | [PASS] adjust: max-abs-diff=0.000 mean-abs-diff=0.0000 ssim=1.00000 (tol=0.0, ssim_min=0.98) | Raw command (audit evidence `evidence-20260924-remaining-gap-documents/blender-adjust-comparison-command.json`) |
+| `bloom` | failed | [FAIL] bloom: max-abs-diff=1.000 mean-abs-diff=0.1323 ssim=0.99999 (tol=0.0, ssim_min=0.98) | Raw command (audit evidence `evidence-20260924-remaining-gap-documents/blender-bloom-comparison-command.json`) |
+| `noise` | verified | [PASS] noise: max-abs-diff=0.000 mean-abs-diff=0.0000 ssim=1.00000 (tol=0.0, ssim_min=0.98) | Raw command (audit evidence `evidence-20260924-remaining-gap-documents/blender-noise-comparison-command.json`) |
 
 ### Native observations, 2026-09-25
 
@@ -368,7 +368,7 @@ The 2026-09-24 retained-golden `bloom` exact-comparison difference (max-abs-diff
 
 Re-verification after integration: remote advanced to the GAP-005 sync commit `8245369` (gpu_backend pass-field propagation, viewport resolution, 3D effect definitions); this record's candidate was rebased onto it and the whole evidence set re-executed on the new sources — bloom, lens, `north_star` chain, and adjust candidates re-rendered via `blender/harness/render_all.py` and re-graded against the same reference-engine authority goldens: identical PASS results (bloom 0.004, lens 0.039, north_star 1.000/ssim 0.99610, adjust 0.004); `test_integration.py` INTEGRATION PASS again (INVARIANT A max-abs-diff=0); `parity/test_compiler.py` 41/41 OK at the integrated revision (log committed as `parity/evidence-2026-09-25/test_compiler.reverify.log`).
 
-Unresolved items beyond this environment's reach, recorded as handoff requirements rather than satisfied criteria: (1) the retained 2026-09-24 authority goldens (macOS-local store `/Users/alex/.codex/automations/noisemaker-port-completion-audit/`, not in the repository and not reachable from this session) — the unchanged-authority comparison against those exact files was not executed; the cross-engine comparison above used freshly rendered output of the unchanged reference engine instead; (2) a GAP-003-qualified GPU host (the historical evidence host is Apple Silicon/Metal; this session's Linux host runs only Mesa llvmpipe) — GAP-003 stays open and its install/panels/persistence checks were not executed here.
+Unresolved items beyond this environment's reach, recorded as handoff requirements rather than satisfied criteria: (1) the retained 2026-09-24 authority goldens (macOS-local store `~/.codex/automations/noisemaker-port-completion-audit/`, not in the repository and not reachable from this session) — the unchanged-authority comparison against those exact files was not executed; the cross-engine comparison above used freshly rendered output of the unchanged reference engine instead; (2) a GAP-003-qualified GPU host (the historical evidence host is Apple Silicon/Metal; this session's Linux host runs only Mesa llvmpipe) — GAP-003 stays open and its install/panels/persistence checks were not executed here.
 
 ### Native observations, 2026-09-26
 
@@ -426,16 +426,16 @@ Determinism: a second full render pass on the same host produced byte-identical 
 
 Re-grade of the committed 2026-09-25 llvmpipe candidates with the current integer-exact grader (`regrade-0925-integer.log`): bloom 1.000/0.1460/0.99998 PASS; lens 10.000/0.0498/0.99999 FAIL; north_star 255.000/53.9232/-0.10900 FAIL. The 2026-09-25 record's cross-engine numbers (0.004/0.039/1.000 with ssim 0.99610) were produced by the pre-`74bd4ca` float32 grader and DO NOT reproduce on the committed PNGs under the current integer-exact grader; that historical text stands unchanged above, and this section records the current measurements. Consequence for GAP-001's descriptions: `lens` is no longer described as matching within tolerance — it renders with a recorded open defect (10/255 at the strict gate); `bloom` is confirmed within tolerance on the qualified host; the `north_star` chain carries the recorded chain divergence. The kit export README template was updated to the same statements (this commit).
 
-Earlier retained-golden access failure (resolved by the follow-up below): a probe run in the host sandbox (`retained-goldens-reachability.json`) shows `/Users/alex` raises `PermissionError(1, 'Operation not permitted')` and both `.codex` paths do not exist in the sandbox; the unchanged-authority comparison against those exact files cannot be executed by automation and is recorded as blocked in GAP-001.
+Earlier retained-golden access failure (resolved by the follow-up below): a probe run in the host sandbox (`retained-goldens-reachability.json`) shows `~` raises `PermissionError(1, 'Operation not permitted')` and both `.codex` paths do not exist in the sandbox; the unchanged-authority comparison against those exact files cannot be executed by automation and is recorded as blocked in GAP-001.
 
 Raw evidence for this run is committed under `parity/evidence-2026-09-27/gap001/` (candidate PNGs, rerun PNGs, lens.dsl, gpuinfo.json, compare reports, regrade and compare logs, render_all and rerun logs, integration log, baked PNG, reachability probe). The kit deliverable is verified: Export kit workflow run `36353873056` completed success at `dffc073` (the push that delivered the template change), and the served kit `0.1.34` (git_hash `dffc073…`) byte-checks — `README.template.md` identical to the committed source including the lens-defect statement, `compat.json` containing `filter/bloom`/`filter/lens`/`filter/adjust`, and the engine zip and `LICENSES/noisemaker-MIT.txt` matching their `kit.json` SHA-256s.
 
 ## 4. Evidence
 
-Review CI boundary: Exact-source runs: Export kit. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement. [Exact-source responses and workflows](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/noisemaker-for-blender-remote-evidence.json).
+Review CI boundary: Exact-source runs: Export kit. A passing export dispatch does not qualify rendered parity. Current complete-render enforcement remains an open verification requirement. Exact-source responses and workflows (audit evidence `review-20260925-053200/noisemaker-for-blender-remote-evidence.json`).
 
 [Earlier audit and review evidence](COMPLETION_GAPS.md#3-methods-and-evidence). [Exact-source Actions](https://github.com/noisefactorllc/noisemaker-for-blender/actions?query=head_sha%3Ae7e62a8155793f39e906e75617770d92464069b5).
-[This run evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/evidence-20260924-remaining-gap-documents) retains commands, exit codes, source identities, and distribution metadata.
+This run evidence (audit evidence `evidence-20260924-remaining-gap-documents`) retains commands, exit codes, source identities, and distribution metadata.
 Official host references and historical environment limits remain in the linked gap register.
 Source CI, export dispatch, artifact delivery, and rendered parity are separate evidence dimensions.
 A successful dispatch or unit-test summary does not establish a full rendered gate.
@@ -457,7 +457,7 @@ Implementation corrections remain with the separate job. This report does not ad
 
 ## 6. History
 
-2026-09-25 daily review at `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`: source freshness and bounded evidence reviewed. Open qualification limits retained. [Retained review evidence](/Users/alex/.codex/automations/noisemaker-port-completion-audit/review-20260925-053200/current-native-comparisons.json). No new closure claimed.
+2026-09-25 daily review at `9631bf6fc44578b29ba4c2eb6aab6ab1704d98bc`: source freshness and bounded evidence reviewed. Open qualification limits retained. Retained review evidence (audit evidence `review-20260925-053200/current-native-comparisons.json`). No new closure claimed.
 
 2026-09-28 daily review at `c998b7ccc4139497098f4dfe1fbb6836bf7ae0ca`: reviewed the implementation range `9631bf6..c998b7c`. Closures GAP-001, GAP-005 and GAP-007 verified by execution. Added GAP-008 for the measured cross-engine rendering defects. `scripts/test` passed at the head. Exact-source CI run `36403426149` passed both check-runs. Served kit `0.1.34` verified live. Full parity remains unverified. [Review evidence](/series/review-20260928-133000/result.json).
 

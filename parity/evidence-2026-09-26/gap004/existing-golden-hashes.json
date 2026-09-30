@@ -39,7 +39,7 @@
    "reference_head": "643b2be1e28b62e3282a4009c2ea65c583ed6ccc",
    "note": "an earlier same-day regeneration from the older checkpoint clone was replaced by the declared-authority regeneration above; the committed 2026-09-26 gate logs (parity/evidence-2026-09-26/check_*.log) were produced against declared-authority goldens and reproduce exactly after the restoration (see gate logs in this directory)"
   },
-  "audit_time_golden_set": "the 2026-09-22..25 audit's own golden capture resides in the unreachable automation store (/Users/alex/.codex/automations/...); its bytes are not reproducible from this session, which is exactly why hashes are now recorded for the working set",
+  "audit_time_golden_set": "the 2026-09-22..25 audit's own golden capture resides in the unreachable automation store (~/.codex/automations/...); its bytes are not reproducible from this session, which is exactly why hashes are now recorded for the working set",
   "regeneration_history": [
    {
     "utc": "2026-09-26T13:47:52Z",
