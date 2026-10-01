@@ -18,6 +18,21 @@ backend = GpuBackend.__new__(GpuBackend)
 assert backend.create_frame_export_queue(slots=3) is None
 print("BACKEND CONTRACT PASS — asynchronous frame export is explicitly unsupported")
 
+# __init__-constructed backends keep their diagnostic-state identity: the lazy
+# _diagnostic_state() triple must seed from the __init__-created collector and
+# dedup sets (review finding on 048f8ac: the original lazy-init discarded them).
+backend_real = GpuBackend(REPO, 256)
+_diag = backend_real.diagnostics
+_dim = backend_real._warned_dimension_fallbacks
+_fmt = backend_real._warned_format_fallbacks
+state = backend_real._diagnostic_state()
+assert state[0] is _diag and state[1] is _dim and state[2] is _fmt, (
+    "_diagnostic_state must seed from the __init__-created triple")
+backend_real.resolve_dim("screen", {})
+assert backend_real._diagnostic_state()[0] is _diag, (
+    "collector identity must survive the first resolver call")
+print("BACKEND CONTRACT PASS — __init__-built backends keep their diagnostic-state identity")
+
 
 class MockShader:
     """Records uniform_float values without a GPU context."""

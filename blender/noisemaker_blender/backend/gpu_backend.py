@@ -114,7 +114,14 @@ class GpuBackend:
         AttributeError)."""
         state = getattr(self, "_diag_state", None)
         if state is None:
-            state = self._diag_state = (DiagnosticCollector(), set(), set())
+            # Seed from __init__ state when present so the collector identity
+            # stays stable for real backends; __new__-built instances get a
+            # fresh triple here.
+            state = self._diag_state = (
+                self.diagnostics if getattr(self, "diagnostics", None) is not None else DiagnosticCollector(),
+                self._warned_dimension_fallbacks if getattr(self, "_warned_dimension_fallbacks", None) is not None else set(),
+                self._warned_format_fallbacks if getattr(self, "_warned_format_fallbacks", None) is not None else set(),
+            )
             self.diagnostics = state[0]
         return state
 
