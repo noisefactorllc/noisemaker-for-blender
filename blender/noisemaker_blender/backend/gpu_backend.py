@@ -104,6 +104,20 @@ class GpuBackend:
         self._warned_dimension_fallbacks = set()
         self._warned_format_fallbacks = set()
 
+    def _diagnostic_state(self):
+        """Lazily-create the diagnostic state triple (collector, dimension
+        dedup set, format dedup set). ``GpuBackend.__new__``-constructed
+        backends skip ``__init__`` by design — blender/harness/
+        test_backend_contract.py is deliberately GPU-free — so the resolvers
+        must not assume ``__init__`` ran (review finding on aa3c53b: the
+        harness's ``setup()`` hit resolve_dim first and raised
+        AttributeError)."""
+        state = getattr(self, "_diag_state", None)
+        if state is None:
+            state = self._diag_state = (DiagnosticCollector(), set(), set())
+            self.diagnostics = state[0]
+        return state
+
     def create_frame_export_queue(self, **_options):
         """Return no queue until Blender exposes non-blocking GPU readback primitives.
 
@@ -119,14 +133,16 @@ class GpuBackend:
 
     # ---- dimension resolution (reference/04 §resolveDimension) -------------
     def resolve_dim(self, spec, uniforms):
+        _, warned_dim, _ = self._diagnostic_state()
         return resolve_dimension(spec, self.size, uniforms,
                                  diagnostics=self.diagnostics,
-                                 warned=self._warned_dimension_fallbacks)
+                                 warned=warned_dim)
 
     def _fmt(self, spec):
+        diag, _, warned_fmt = self._diagnostic_state()
         return resolve_surface_format(spec,
-                                      diagnostics=self.diagnostics,
-                                      warned=self._warned_format_fallbacks)
+                                      diagnostics=diag,
+                                      warned=warned_fmt)
 
     def _new_off(self, w, h, fmt):
         off = GPUOffScreen(w, h, format=fmt)
