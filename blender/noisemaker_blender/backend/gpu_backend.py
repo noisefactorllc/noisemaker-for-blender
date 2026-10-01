@@ -437,10 +437,26 @@ class GpuBackend:
         vp = p.get("viewportResolved") or p.get("viewport")
         if not isinstance(vp, dict):
             return 0, 0, default_w, default_h
-        vx = self.resolve_dim(vp.get("x", 0), merged) if vp.get("x") is not None else 0
-        vy = self.resolve_dim(vp.get("y", 0), merged) if vp.get("y") is not None else 0
+        vx_spec = vp.get("x", 0)
+        vy_spec = vp.get("y", 0)
         w_spec = vp.get("w", vp.get("width"))
         h_spec = vp.get("h", vp.get("height"))
+        # A viewportResolved box (set by runtime resolve_pass_viewport) already
+        # holds concrete pixel ints — consume it directly. Re-resolving it here
+        # clamped an authored 0 through resolve_dimension's max(1, ...) floor
+        # and drew every viewport-spec pass at (1, 1) instead of (0, 0): the
+        # leftmost column and the bottom GPU row of the 64x4096 volume-cache
+        # atlas were silently unwritten (measured on the M4 host: box=(1,1,64,4096)).
+        numeric = (isinstance(vx_spec, (int, float)) and not isinstance(vx_spec, bool) and
+                   isinstance(vy_spec, (int, float)) and not isinstance(vy_spec, bool))
+        if numeric:
+            vx, vy = int(vx_spec), int(vy_spec)
+        else:
+            vx = self.resolve_dim(vx_spec, merged) if vp.get("x") is not None else 0
+            vy = self.resolve_dim(vy_spec, merged) if vp.get("y") is not None else 0
+        if isinstance(w_spec, (int, float)) and not isinstance(w_spec, bool) \
+                and isinstance(h_spec, (int, float)) and not isinstance(h_spec, bool):
+            return vx, vy, int(w_spec), int(h_spec)
         vw = self.resolve_dim(w_spec, merged) if w_spec is not None else default_w
         vh = self.resolve_dim(h_spec, merged) if h_spec is not None else default_h
         return int(vx), int(vy), int(vw), int(vh)

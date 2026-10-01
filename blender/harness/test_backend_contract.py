@@ -199,4 +199,28 @@ assert _gb.slab_ranges(0, 2048) == [(0, 2048)]  # small passes: single draw
 assert _gb.slab_ranges(0, 4096) == [(0, 2048), (2048, 2048)]
 assert _gb.slab_ranges(100, 3000, cap=1000) == [(100, 1000), (1100, 1000), (2100, 1000)]
 
+# The pass viewport box must consume an already-resolved viewportResolved box's
+# concrete pixel ints directly. Re-resolving it clamped an authored 0 through
+# resolve_dimension's max(1, ...) floor and drew viewport-spec passes at (1, 1)
+# instead of (0, 0) — the volume-cache atlas's leftmost column and bottom GPU
+# row were silently unwritten (measured on the M4 host: box=(1,1,64,4096)).
+_backend2 = GpuBackend.__new__(GpuBackend)
+_backend2.size = 256
+_p = {"viewportResolved": {"x": 0, "y": 0, "w": 64, "h": 4096}}
+_box = _backend2._resolve_pass_viewport_box(_p, {}, 64, 4096)
+assert _box == (0, 0, 64, 4096), _box
+_box = _backend2._resolve_pass_viewport_box({"viewportResolved": {"x": 3, "y": 7, "w": 16, "h": 32}}, {}, 64, 4096)
+assert _box == (3, 7, 16, 32), _box
+# An authored raw numeric viewport (no viewportResolved) is consumed directly too.
+_box = _backend2._resolve_pass_viewport_box({"viewport": {"x": 0, "y": 0, "w": 8, "h": 8}}, {}, 64, 4096)
+assert _box == (0, 0, 8, 8), _box
+# Expression-form specs still resolve against the merged uniforms.
+_box = _backend2._resolve_pass_viewport_box(
+    {"viewportResolved": {"x": 0, "y": 0, "w": {"param": "volumeSize", "default": 64},
+                          "h": {"param": "volumeSize", "power": 2, "default": 4096}}},
+    {"volumeSize": 64}, 64, 4096)
+assert _box == (0, 0, 64, 4096), _box
+
+print("BACKEND CONTRACT PASS — pass viewport box consumes resolved pixel ints")
+
 print("BACKEND CONTRACT PASS — global surface refreshed when format or dimensions change")
