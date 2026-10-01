@@ -24,8 +24,16 @@ open, in a live windowed Blender session (GUI mode under an X display — not -b
       against the interactively typed DSL. Measured outcome on this host: the
       operator is registered (bpy.ops.noisemaker.bake) but the search popup does
       not list it (builtin control 4a passes; report "Failed to find 'Bake
-      Noisemaker'" with the exact label). Recorded verbatim as an open
-      interactive-GUI item in GAP-003, not as a session fail.
+      Noisemaker'" with the exact label). Diagnosed mechanism (measured in this
+      session): F3 is bound to wm.search_menu, which searches MENU contents —
+      the addon registers no menu entry, so its operator is not listed while
+      menu builtins are. Recorded verbatim as an open interactive-GUI item in
+      GAP-003, not as a session fail.
+  4d. INVOKE_DEFAULT dispatch: bpy.ops.noisemaker.bake('INVOKE_DEFAULT') is
+      called inside the windowed session's event loop — the dispatch path a
+      panel button click uses (full context, modal dispatch) — with the scene
+      group bound to the interactively typed DSL; the bake is judged by the
+      appearance of a non-flat Image datablock.
 
 Implementation notes (measured on the recorded host; delivery probes are in the
 job evidence, not the repository):
@@ -44,10 +52,16 @@ test_host_workflows.py); the keystrokes here are standard Blender bindings.
 Panel-click attempt (4c): the sidebar's Bake control has no introspectable
 widget geometry, so the click point is estimated from the drawn layout
 (source_mode, text, size, time, frames, timestep, image_name rows, then the
-Bake button) inside the UI region, and a vertical sweep of real XTEST clicks
-is attempted with Escape between clicks to dismiss any menu a stray click
-opens. Every click point and the resulting scene state is recorded; the bake
-is judged by the appearance of a non-flat Image datablock.
+Bake button) inside the UI region. The N-panel tab icons are a narrow strip at
+the sidebar's right edge: a first real-XTEST sweep clicks down the tab strip
+until a Noisemaker panel actually draws — proven Blender-side by wrapping the
+panel draw methods with counters (a panel's draw runs only when its tab is
+active; this also explains why earlier sidebar captures were byte-identical:
+the default Item tab was active and no Noisemaker panel was drawn). Then a
+vertical sweep of real XTEST clicks over the panel rows is attempted with
+Escape between clicks to dismiss any menu a stray click opens. Every click
+point and the resulting scene state is recorded; the bake is judged by the
+appearance of a non-flat Image datablock.
 
 Coordination: the companion driver script performs the real input events and
 handshakes through marker files in NM_GUI_DIR (state.json written here, m_* marker
@@ -356,10 +370,16 @@ def flow():
     yield 0.5
     screenshot("sidebar_addon_disabled.png")
     disabled_w = ui_region_width(na)
+    # Blender-side ground truth for the control: with the addon module disabled
+    # its panel classes are unregistered, so the Noisemaker panels are no longer
+    # present in bpy.types at all (the sidebar strip itself stays).
+    _present = [c for c in ("NOISEMAKER_PT_compositor", "NOISEMAKER_PT_image_editor")
+                if hasattr(bpy.types, c)]
     addon_utils.enable("noisemaker_blender")
     assert addon_utils.check("noisemaker_blender")[1]
-    log("control OK  UI width addon-disabled=%r (panel content removed; sidebar kept open)"
-        % disabled_w)
+    log("control OK  UI width addon-disabled=%r; panel classes present while "
+        "disabled: %r (empty means the panels were unregistered from bpy.types)"
+        % (disabled_w, _present))
     set_state("snap_disabled")
     yield from wait_marker("snap_disabled")
 
@@ -387,6 +407,16 @@ def flow():
 
     # --- 4b: keyboard-invoked addon operator (recorded observation) -------------
     st = bpy.context.scene.noisemaker
+    # Diagnosed mechanism (measured in this session): F3 is bound to
+    # wm.search_menu, whose popup searches MENU contents, not the operator pool.
+    # The addon registers no menu entry, so its registered bake operator is not
+    # listed, while menu builtins such as Select All are.
+    f3 = [{"keymap": km.name, "idname": it.idname}
+          for km in bpy.context.window_manager.keyconfigs.active.keymaps
+          for it in km.keymap_items if it.type == 'F3']
+    notes.append("F3 binding in the session keymap: %r; the search popup is "
+                 "wm.search_menu (menu search) and the addon registers no menu "
+                 "entry, so noisemaker.bake is not listed while menu builtins are" % (f3,))
     # Scripted (recorded): bind the interactively typed Text datablock and a
     # distinctive Image name — the panel's pointer/identifier rows are not
     # keyboard-reachable, so the scene group is populated from the session script.
@@ -450,6 +480,42 @@ def flow():
             % (got["name"], got["size"], got["std"]))
         screenshot("after_bake.png")
 
+    # --- 4d: INVOKE_DEFAULT dispatch through the windowed session's event loop --
+    # The dispatch path a panel button click uses: the operator is invoked with
+    # its modal dispatch into the windowed session (context complete: window,
+    # screen, area, region), not a scripted EXEC_DEFAULT override. The scene
+    # group was bound above (source Text datablock typed in leg 2). The outcome
+    # is judged by the appearance of a non-flat Image datablock.
+    pre_ok, pre_info = bake_image_check()
+    if pre_ok:
+        notes.append("4d skipped: image already produced by the search path (%r)" % (pre_info,))
+    else:
+        ret = None
+        try:
+            ret = bpy.ops.noisemaker.bake('INVOKE_DEFAULT')
+        except Exception as e:
+            ret = 'EXC: %r' % (e,)
+        deadline = time.time() + 240.0
+        while time.time() < deadline:
+            ok, info = bake_image_check()
+            if ok:
+                break
+            yield 1.0
+        ok, info = bake_image_check()
+        notes.append("INVOKE_DEFAULT dispatch (button-click path, windowed session) "
+                     "returned %r; non-flat %r produced: %s %s"
+                     % (ret, IMAGE_NAME, ok, info if ok else ""))
+        if ok:
+            img = bpy.data.images.get(IMAGE_NAME)
+            try:
+                img.save_render(os.path.join(EVID, "baked_image_invoked.png"))
+            except Exception as e:
+                notes.append("save_render failed: %s" % e)
+            log("INVOKE_DEFAULT OK  baked %r %s std=%.4f (ret=%r)"
+                % (info["name"], info["size"], info["std"], ret))
+        else:
+            log("INVOKE_DEFAULT produced no image (ret=%r) (recorded)" % ret)
+
     # --- 4c: real XTEST click on the sidebar's Bake control ----------------------
     # The panel's rows have no introspectable widget geometry, so the click
     # point is estimated from the drawn layout (source_mode, text, size, time,
@@ -472,13 +538,70 @@ def flow():
     props = ("source_mode", "size", "time", "frames", "timestep", "image_name")
     st0 = {p: getattr(st, p) for p in props}
 
+    # Blender-side ground truth for tab visibility: wrap the panel draw methods
+    # with counters. A panel's draw runs only when its tab is active and the
+    # panel is drawn, so any draw after a tab-strip click proves the Noisemaker
+    # panel became visible. This also explains the earlier capture trio: the
+    # after_n/sidebar_open/addon_disabled captures were byte-identical because
+    # the default Item tab was active and no Noisemaker panel was ever drawn.
+    counters = {}
+    originals = {}
+    for cls_name in ("NOISEMAKER_PT_compositor", "NOISEMAKER_PT_image_editor"):
+        cls = getattr(bpy.types, cls_name, None)
+        if cls is None:
+            continue
+        originals[cls_name] = cls.draw
+
+        def make_draw(name, orig):
+            def wrapped(self, context):
+                counters[name] = counters.get(name, 0) + 1
+                orig(self, context)
+            return wrapped
+
+        cls.draw = make_draw(cls_name, cls.draw)
+    yield 2.0
+    notes.append("panel draw counters before the tab strip: %r (absent/0 for a "
+                 "class means its tab was not active)" % (counters,))
+
+    # Tab-strip phase: the N-panel tab icons are a narrow vertical strip at the
+    # sidebar's right edge; click down the strip until a Noisemaker panel draws
+    # (counters are absolute: any draw of a wrapped panel class after the strip
+    # clicks means that panel's tab became active).
+    tab_y = None
+    tx = na.x + na.width - 12
+    tab_idx = 0
+    for i in range(20):
+        y = top_y - 6 - 12 * i
+        set_state("ws_click", idx=tab_idx + i, marker="click_tab_%d" % i, x=tx, y=y, y_from_top=False)
+        yield from wait_marker("click_tab_%d" % i, timeout=600.0)
+        yield 0.6
+        if any(v > 0 for v in counters.values()):
+            tab_y = y
+            break
+    clicked_tabs = tab_idx + i + 1
+    if tab_y is not None:
+        notes.append("tab-strip click selected the Noisemaker tab at window y=%r "
+                     "(window x=%d); draw counters now %r" % (tab_y, tx, counters))
+        log("tab strip: Noisemaker panel drew after %d clicks (y=%r, counters %r)"
+            % (clicked_tabs, tab_y, counters))
+    else:
+        notes.append("tab-strip sweep: %d clicks at window x=%d, y=%s produced no "
+                     "Noisemaker panel draw (counters %r)" % (clicked_tabs, tx,
+                     [top_y - 6 - 12 * j for j in range(clicked_tabs)], counters))
+        log("tab strip: no Noisemaker panel draw after %d clicks" % clicked_tabs)
+
     def st_changed():
         return {p: (getattr(st, p), st0[p]) for p in props if getattr(st, p) != st0[p]}
 
     clicked = []
     got = None
+    # The 4d dispatch may already have produced the Image; judge the sweep only
+    # by a bake that happens DURING it, so remove the existing datablock first.
+    _pre = bpy.data.images.get(IMAGE_NAME)
+    if _pre is not None:
+        bpy.data.images.remove(_pre)
     for i, y in enumerate(ys):
-        set_state("ws_click", idx=i, x=bx, y=y, y_from_top=False)
+        set_state("ws_click", idx=i, marker="click_%d" % i, x=bx, y=y, y_from_top=False)
         yield from wait_marker("click_%d" % i, timeout=600.0)
         clicked.append(y)
         ok, info = bake_image_check()
