@@ -38,11 +38,16 @@ job evidence, not the repository):
     assignment does not take), so the session re-purposes the Layout workspace's
     single editor area in place between steps (scripted layout setup, recorded).
 
-No mouse-driven widget clicks inside the panel are attempted (widget coordinates
-are not scriptable); the text-pointer assignment into ``scene.noisemaker`` (the
-panel's datablock dropdown row) is done from this script and is recorded as
-scripted. The addon registers no custom keymaps (verified in
+The addon registers no custom keymaps (verified in
 test_host_workflows.py); the keystrokes here are standard Blender bindings.
+
+Panel-click attempt (4c): the sidebar's Bake control has no introspectable
+widget geometry, so the click point is estimated from the drawn layout
+(source_mode, text, size, time, frames, timestep, image_name rows, then the
+Bake button) inside the UI region, and a vertical sweep of real XTEST clicks
+is attempted with Escape between clicks to dismiss any menu a stray click
+opens. Every click point and the resulting scene state is recorded; the bake
+is judged by the appearance of a non-flat Image datablock.
 
 Coordination: the companion driver script performs the real input events and
 handshakes through marker files in NM_GUI_DIR (state.json written here, m_* marker
@@ -425,26 +430,81 @@ def flow():
         # Recorded observation (measured on this host, repeated): the addon's
         # bake operator is registered (bpy.ops.noisemaker.bake -> NOISEMAKER_OT_bake)
         # but is not found by the operator-search popup, while builtin operators
-        # are (4a). Mouse widget clicks are not scriptable, so the panel button
-        # cannot be exercised from a session either. This stays an open
-        # interactive-GUI item in GAP-003; it is not counted as a session fail.
+        # are (4a). This stays an open interactive-GUI item in GAP-003; it is
+        # not counted as a session fail. The panel-click path (4c) is still
+        # attempted below before the session ends.
         notes.append("keyboard-invoked bake via the operator search popup produced "
                      "no %r; queries tried: %s (search pool works for builtins, "
                      "see 4a); the operator itself is exercised via the documented "
                      "API entry points in test_integration.py / test_host_workflows.py"
                      % (IMAGE_NAME, ["Bake Noisemaker", "bake"]))
         log("bake-by-search NOT REACHABLE (recorded observation; GAP-003 stays open)")
-        finish()
-        return
-    # Save the produced Image as a PNG artifact (source-bound output).
-    img = bpy.data.images.get(IMAGE_NAME)
-    try:
-        img.save_render(os.path.join(EVID, "baked_image.png"))
-    except Exception as e:
-        notes.append("save_render failed: %s" % e)
-    log("bake OK  baked %r %s std=%.4f (operator invoked via real F3/typing/Return)"
-        % (got["name"], got["size"], got["std"]))
-    screenshot("after_bake.png")
+    else:
+        # Save the produced Image as a PNG artifact (source-bound output).
+        img = bpy.data.images.get(IMAGE_NAME)
+        try:
+            img.save_render(os.path.join(EVID, "baked_image.png"))
+        except Exception as e:
+            notes.append("save_render failed: %s" % e)
+        log("bake OK  baked %r %s std=%.4f (operator invoked via real F3/typing/Return)"
+            % (got["name"], got["size"], got["std"]))
+        screenshot("after_bake.png")
+
+    # --- 4c: real XTEST click on the sidebar's Bake control ----------------------
+    # The panel's rows have no introspectable widget geometry, so the click
+    # point is estimated from the drawn layout (source_mode, text, size, time,
+    # frames, timestep, image_name rows, then the Bake button) inside the UI
+    # region, and a small vertical sweep of real clicks is attempted with
+    # Escape between clicks to dismiss any menu a stray click opens. Every
+    # click and the resulting scene state is recorded; the bake is judged by
+    # the appearance of a non-flat Image datablock.
+    na = yield from repurpose_area('NODE_EDITOR', tree_type='CompositorNodeTree')
+    sp = na.spaces.active
+    if getattr(sp, "show_region_ui", True) is False:
+        sp.show_region_ui = True
+        yield 0.5
+    uiw = ui_region_width(na)
+    assert uiw > 1, "sidebar not open for the panel-click sweep"
+    bx = na.x + na.width - uiw // 2          # window coords: sidebar center x
+    top_y = na.y + na.height                  # window coords: sidebar top (y up)
+    est = top_y - (24 + 22 + 7 * 21) - 10     # tabs + header + 7 rows + half row
+    ys = list(range(est + 80, est - 560, -12))  # wide sweep over the sidebar column
+    props = ("source_mode", "size", "time", "frames", "timestep", "image_name")
+    st0 = {p: getattr(st, p) for p in props}
+
+    def st_changed():
+        return {p: (getattr(st, p), st0[p]) for p in props if getattr(st, p) != st0[p]}
+
+    clicked = []
+    got = None
+    for i, y in enumerate(ys):
+        set_state("ws_click", idx=i, x=bx, y=y, y_from_top=False)
+        yield from wait_marker("click_%d" % i, timeout=600.0)
+        clicked.append(y)
+        ok, info = bake_image_check()
+        if ok:
+            got = info
+            break
+        yield 0.4
+    screenshot("panel_click_sweep.png")
+    ch = st_changed()
+    if ch:
+        notes.append("panel-click sweep changed scene props (recorded): %s" % ch)
+    if got is not None:
+        img = bpy.data.images.get(IMAGE_NAME)
+        try:
+            img.save_render(os.path.join(EVID, "baked_image_panelclick.png"))
+        except Exception as e:
+            notes.append("save_render failed: %s" % e)
+        notes.append("panel-click bake OK after %d clicks (last window-y %r): %s"
+                     % (len(clicked), clicked[-1], got))
+        log("panel-click OK  baked %r %s std=%.4f at click %d/%d (y=%r)"
+            % (got["name"], got["size"], got["std"], len(clicked), len(ys), clicked[-1]))
+    else:
+        notes.append("panel-click sweep: %d real clicks at window-y %s produced no "
+                     "non-flat %r (coords are layout-estimated; result recorded "
+                     "verbatim as the exhausted automated path)" % (len(clicked), clicked, IMAGE_NAME))
+        log("panel-click sweep done (%d clicks), no bake (recorded)" % len(clicked))
     finish()
 
 
