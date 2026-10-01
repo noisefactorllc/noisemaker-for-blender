@@ -11,7 +11,7 @@
       "max_abs_diff": 260.0,
       "mean_abs_diff": 0.35,
       "ssim_min": 0.992,
-      "mechanism": "sub-ULP cross-GPU divergence flips the landscape raymarch's discrete voxel-presence test (663/262144 volume-atlas voxels appear or drop; single terrain-edge pixels flip; both engines deterministic per host pair, but bounds carry headroom over the measured 242.0/0.1403/0.99756 for cross-host variation)"
+      "mechanism": "sub-ULP cross-GPU divergence flips the landscape raymarch's discrete voxel-presence test (649/262144 volume-atlas occupancy flips — 589 in the since-fixed unwritten x=0 column plus 60 scattered, per the regenerated atlas-occupancy-corrected receipt in the job evidence archive; single terrain-edge pixels flip; both engines deterministic per host pair, but bounds carry headroom over the measured 242.0/0.1403/0.99756 for cross-host variation)"
     },
     "heightmap3d_landscape_isosurface": {
       "max_abs_diff": 260.0,
