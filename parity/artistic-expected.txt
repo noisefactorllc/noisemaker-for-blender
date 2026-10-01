@@ -1,3 +1,6 @@
+adjust
+alphaMask
+bitwise
 chrome
 craquelure
 directionalBlur

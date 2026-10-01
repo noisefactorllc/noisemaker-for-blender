@@ -4,14 +4,18 @@ Per frame: reset frame surface bindings, run each pass (honoring repeat-count an
 skip conditions), ping-pong global outputs after each execution, persist state at
 end of frame. Supports multi-frame settle and sampling for stateful effects.
 """
+import json
 import math
 import os
 import time as clock
 
+from .diagnostics import DIAGNOSTIC_CODES
 from .preflight import preflight_effect
 
 
 _TAU = math.pi * 2
+# graph texture format string -> GPUOffScreen format token.
+_FORMAT = {"rgba8": "RGBA8", "rgba16f": "RGBA16F", "rgba32f": "RGBA32F"}
 _AUTOMATION_FIELD_RANGES = {
     "unit": {"min": 0, "max": 1},
     "oscillatorSpeed": {"min": -20, "max": 20},
@@ -574,17 +578,53 @@ def should_skip(p, lookup):
     return False
 
 
-def resolve_dimension(spec, screen_size, uniforms=None):
-    """Resolve an authored dimension expression against screen size and uniforms."""
+def _record_dimension_fallback(spec, screen_size, diagnostics, warned):
+    """Record a structured ERR_DIMENSION_FALLBACK diagnostic (GAP-007) for an
+    unknown dimension form. The historical screen-size fallback is unchanged
+    (no new rejection of previously accepted input); the record is deduplicated
+    per serialized spec so per-frame resolution cannot grow it unboundedly,
+    while the warning still fires on every occurrence (mirroring the
+    reference's console.warn / diagnostics.add split)."""
+    if warned is None or diagnostics is None:
+        return
+    if isinstance(spec, dict):
+        try:
+            key = json.dumps(spec, sort_keys=True)
+        except (TypeError, ValueError):
+            key = "[unserializable]"
+    else:
+        key = str(spec)
+    print("NMR WARN dimension %s — falling back to screen size (%d)" % (key, screen_size))
+    if key in warned:
+        return
+    warned.add(key)
+    diagnostics.add({
+        "code": DIAGNOSTIC_CODES["DIMENSION_FALLBACK"],
+        "backend": "blender",
+        "stage": "dimension",
+        "spec": key,
+        "fallback": "screen",
+    })
+
+
+def resolve_dimension(spec, screen_size, uniforms=None, diagnostics=None, warned=None):
+    """Resolve an authored dimension expression against screen size and uniforms.
+
+    ``'input'`` and ``'resolution'`` are validator-accepted dimension keywords
+    (DIM_KEYWORDS in the reference effect-validator) whose historical
+    resolution is the screen dimension; they are recognized forms, not unknown
+    fallbacks, so they add no diagnostic (GAP-007).
+    """
     if uniforms is None:
         uniforms = {}
     if isinstance(spec, (int, float)) and not isinstance(spec, bool):
         return max(1, int(math.floor(spec)))
     if isinstance(spec, str):
-        if spec in ("screen", "auto"):
+        if spec in ("screen", "auto", "input", "resolution"):
             return screen_size
         if spec.endswith("%"):
             return max(1, int(math.floor(screen_size * float(spec[:-1]) / 100.0)))
+        _record_dimension_fallback(spec, screen_size, diagnostics, warned)
         return screen_size
     if isinstance(spec, dict):
         if spec.get("param") is not None:
@@ -604,7 +644,40 @@ def resolve_dimension(spec, screen_size, uniforms=None):
             return max(1, int(round(screen_size / div)))
         if spec.get("scale") is not None:
             return max(1, int(math.floor(screen_size * spec["scale"])))
+    # An unknown object form (no param/screenDivide/scale key) keeps the
+    # historical screen-size fallback but records it (GAP-007); an absent spec
+    # (None) is a default, not an unknown form, and adds no diagnostic.
+    if spec is not None:
+        _record_dimension_fallback(spec, screen_size, diagnostics, warned)
     return screen_size
+
+
+def resolve_surface_format(spec, diagnostics=None, warned=None):
+    """Resolve a graph texture format string to the GPUOffScreen format token.
+
+    The historical silent rgba16f fallback is unchanged (no new rejection of
+    previously accepted input), but an explicitly authored unknown format now
+    surfaces a structured ERR_UNKNOWN_FORMAT_FALLBACK diagnostic (GAP-007)
+    instead of pure silence; the record is deduplicated per format string while
+    the warning still fires on every occurrence. An absent format is the
+    default, not a fallback, and adds no diagnostic.
+    """
+    fmt = str(spec.get("format", "rgba16f")).lower() if isinstance(spec, dict) else str(spec)
+    token = _FORMAT.get(fmt)
+    if token is not None:
+        return token
+    if warned is not None and diagnostics is not None:
+        print("NMR WARN texture format '%s' — falling back to rgba16f" % fmt)
+        if fmt not in warned:
+            warned.add(fmt)
+            diagnostics.add({
+                "code": DIAGNOSTIC_CODES["UNKNOWN_FORMAT_FALLBACK"],
+                "backend": "blender",
+                "stage": "texture-create",
+                "format": fmt,
+                "fallback": "rgba16f",
+            })
+    return "RGBA16F"
 
 
 def resolve_pass_viewport(pass_obj, width, height, cache_holder=None):

@@ -22,7 +22,9 @@ from gpu.types import (GPUOffScreen, GPUFrameBuffer, GPUVertFormat, GPUVertBuf, 
 from gpu_extras.batch import batch_for_shader
 
 from . import shader_build, std140
-from ..runtime.pipeline import resolve_dimension, build_texture_pooling_plan
+from ..runtime.diagnostics import DiagnosticCollector
+from ..runtime.pipeline import (resolve_dimension, resolve_surface_format,
+                                build_texture_pooling_plan)
 
 _FS_TRI = {"pos": [(-1.0, -1.0), (3.0, -1.0), (-1.0, 3.0)]}
 from .slab import _MAX_DRAW_SLAB, slab_ranges  # noqa: E402  (GPU-free helper)
@@ -32,8 +34,8 @@ _BLIT_FRAG = ("#define nmTex(s, uv) (texelFetch((s), clamp(ivec2(floor((uv)*vec2
 _BLIT_DESC = {"pushConstants": [["VEC2", "resolution"]], "samplers": [[0, "FLOAT_2D", "src"]],
               "fragmentOut": [[0, "VEC4", "fragColor"]], "uniformAliases": {}}
 
-# graph texture format string -> GPUOffScreen format token.
-_FORMAT = {"rgba8": "RGBA8", "rgba16f": "RGBA16F", "rgba32f": "RGBA32F"}
+# (graph texture format map lives in runtime.pipeline — shared with the
+# structured-format-fallback resolver; GPU-free)
 # Precision rank: a pooled slot shared by mixed formats must hold the most demanding one.
 _FMT_RANK = {"RGBA8": 1, "RGBA16F": 2, "RGBA32F": 3}
 
@@ -96,6 +98,11 @@ class GpuBackend:
         self._batch_cache = {}
         self._fb_cache = {}       # tuple(id(off)..) -> GPUFrameBuffer (MRT)
         self._vbuf_cache = {}     # count -> GPUVertBuf (attribute-less points draw)
+        # Queryable structured diagnostics for the historically-silent
+        # unknown-dimension-form and unknown-format fallbacks (GAP-007).
+        self.diagnostics = DiagnosticCollector()
+        self._warned_dimension_fallbacks = set()
+        self._warned_format_fallbacks = set()
 
     def create_frame_export_queue(self, **_options):
         """Return no queue until Blender exposes non-blocking GPU readback primitives.
@@ -112,10 +119,14 @@ class GpuBackend:
 
     # ---- dimension resolution (reference/04 §resolveDimension) -------------
     def resolve_dim(self, spec, uniforms):
-        return resolve_dimension(spec, self.size, uniforms)
+        return resolve_dimension(spec, self.size, uniforms,
+                                 diagnostics=self.diagnostics,
+                                 warned=self._warned_dimension_fallbacks)
 
     def _fmt(self, spec):
-        return _FORMAT.get(str(spec.get("format", "rgba16f")).lower(), "RGBA16F")
+        return resolve_surface_format(spec,
+                                      diagnostics=self.diagnostics,
+                                      warned=self._warned_format_fallbacks)
 
     def _new_off(self, w, h, fmt):
         off = GPUOffScreen(w, h, format=fmt)
