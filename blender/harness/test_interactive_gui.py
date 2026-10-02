@@ -589,6 +589,34 @@ def flow():
                      "Noisemaker panel draw (counters %r)" % (clicked_tabs, tx,
                      [top_y - 6 - 12 * j for j in range(clicked_tabs)], counters))
         log("tab strip: no Noisemaker panel draw after %d clicks" % clicked_tabs)
+        # Measured fallback (macOS host campaign): when the synthetic strip
+        # clicks cannot select the Noisemaker tab, the panel is still reachable
+        # deterministically — with tree_type='CompositorNodeTree'
+        # NOISEMAKER_PT_compositor.poll passes, region.active_panel_category
+        # accepts 'Noisemaker', and a wm.redraw_timer(DRAW_WIN_SWAP) forces the
+        # sidebar relayout that refreshes the category enum before it is set
+        # (without the forced redraw the enum still lists only the default
+        # category and the assignment raises TypeError).
+        try:
+            ui = next(r for r in na.regions if r.type == 'UI')
+            prev = getattr(ui, "active_panel_category", None)
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=2)
+            ui.active_panel_category = "Noisemaker"
+            for _ in range(6):
+                na.tag_redraw()
+                yield 0.3
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=3)
+            yield 0.6
+            drew = any(v > 0 for v in counters.values())
+            notes.append("category-selection fallback: active_panel_category "
+                         "%r -> %r; panel drew: %s (counters %r)"
+                         % (prev, getattr(ui, "active_panel_category", None),
+                            drew, counters))
+            log("category fallback: panel drew %s (counters %r)"
+                % (drew, counters))
+        except Exception as e:
+            notes.append("category-selection fallback failed: %r" % e)
+            log("category fallback failed: %r" % e)
 
     def st_changed():
         return {p: (getattr(st, p), st0[p]) for p in props if getattr(st, p) != st0[p]}
