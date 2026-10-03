@@ -29,6 +29,7 @@ from .transform import (
     predict_replacement,
 )
 from .expander import expand
+from .ops import merge_enums, register_portable_effect, PortableEffectError
 from .palette_expansion import expand_palette
 from .resources import allocate_resources, analyze_liveness
 from .compiler import (
@@ -50,6 +51,9 @@ __all__ = [
     "get_compatible_replacements",
     "predict_replacement",
     "expand",
+    "merge_enums",
+    "register_portable_effect",
+    "PortableEffectError",
     "expand_palette",
     "allocate_resources",
     "analyze_liveness",

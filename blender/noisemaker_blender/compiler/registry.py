@@ -114,6 +114,27 @@ def _ensure_loaded() -> None:
         load()
 
 
+def register_portable(definition: dict) -> None:
+    """Register a validated Portable (``user.*``) definition.
+
+    Mirrors ``registerPortableEffect``'s registry writes: the definition lands
+    under ``user.<func>`` and ``user/<func>`` only -- a built-in's bare-name
+    lookup is preserved (upstream restores the previous bare entry), and an
+    absent bare name stays absent. The definition joins ``_DEFINITIONS`` so a
+    forced rebuild re-registers it identically.
+    """
+    namespace = definition.get("namespace")
+    func = definition.get("func")
+    if namespace != "user" or not func:
+        raise ValueError("register_portable: definition must be a user effect with a func")
+    with _LOCK:
+        for key in ("user.%s" % func, "user/%s" % func):
+            if key in _REGISTRY:
+                raise ValueError("register_portable: %s is already registered" % key)
+            _REGISTRY[key] = definition
+        _DEFINITIONS.append(definition)
+
+
 def get_effect(key: str):
     """Look up an effect definition by any registered key form.
 

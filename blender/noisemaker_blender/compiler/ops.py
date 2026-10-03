@@ -30,6 +30,7 @@ stdlib-only and self-contained: imports only sibling compiler modules + stdlib.
 
 from __future__ import annotations
 
+import math
 import threading
 
 from . import registry
@@ -201,13 +202,28 @@ def _register_effect(definition: dict) -> None:
     # (canvas.js DOES register both at runtime, but that path did not produce the
     # goldens.) Populating ``_PARAM_ALIASES``/``_EFFECT_ALIASES`` here would make
     # ``resolve_param_aliases``/``check_effect_alias`` diverge from the contract,
-    # so they are deliberately left empty. The defs' ``paramAliases`` /
-    # ``deprecatedBy`` fields are still read by the expander stage separately.
+    # so they are deliberately left empty for the built-in catalog. Portable
+    # (``user.*``) registrations are the one exception: upstream's
+    # ``registerPortableEffect`` goes through ``registerEffectWithRuntime`` and
+    # therefore DOES register the definition's ``paramAliases`` (upstream
+    # cb22a05e); no golden exercises ``user.*`` ops, so the Stage-1 contract is
+    # untouched.
+    if namespace == "user" and isinstance(definition.get("paramAliases"), dict):
+        _PARAM_ALIASES[op_key] = dict(definition["paramAliases"])
 
     # --- starter ops ----------------------------------------------------------
-    if _is_starter_effect(definition):
-        _STARTER_OPS.add(func)
+    # An explicit boolean ``starter`` on the definition wins (portable
+    # registrations store the resolved flag there); otherwise infer via
+    # isStarterEffect. Builtins register the bare ``func`` starter name too;
+    # portable registrations register ONLY the dotted ``ns.func`` (upstream
+    # registerPortableEffect calls registerStarterOps(['user.<func>']) alone).
+    starter = definition.get("starter")
+    if not isinstance(starter, bool):
+        starter = _is_starter_effect(definition)
+    if starter:
         _STARTER_OPS.add(op_key)
+        if namespace != "user":
+            _STARTER_OPS.add(func)
 
 
 def _build(force: bool = False) -> None:
@@ -332,3 +348,181 @@ def check_effect_alias(op_name: str):
 def rebuild() -> None:
     """Force a rebuild (mainly for tests / registry reloads)."""
     _build(force=True)
+
+
+# --- Portable effect registration (upstream cb22a05e, canvas.js
+#     registerPortableEffect) ---------------------------------------------------
+#
+# The reference's renderer accepts user-supplied Portable definitions (raw JSON
+# plus loaded shader sources) and registers them into the shared effect/op/enum
+# registries as ``user.<func>``. The port's equivalent surface is this module:
+# the same validation contract, the same registry keys (``user.func`` /
+# ``user/func``, with a built-in bare-name lookup preserved), the same op/arg/
+# enum/starter registration, and the same paramAliases registration. As upstream
+# documents, this checks registration inputs only -- not shader compilation or
+# backend support; the Blender backend still needs the referenced programs
+# installed under the addon's shaders/ tree to actually draw.
+
+# JS Object.getOwnPropertyNames(Object.prototype) plus the literal 'prototype'
+# that upstream adds to the list: JSON keys controlling object prototypes must
+# never reach the shared registration paths.
+_RESERVED_KEYS = frozenset([
+    "__proto__", "constructor", "hasOwnProperty", "isPrototypeOf",
+    "propertyIsEnumerable", "toLocaleString", "toString", "valueOf",
+    "__defineGetter__", "__defineSetter__", "__lookupGetter__",
+    "__lookupSetter__", "prototype",
+])
+
+# The wider pipeline-input set registerPortableEffect uses for starter
+# inference (canvas.js's isStarterEffect set, not the golden oracle's).
+_PORTABLE_PIPELINE_INPUTS = frozenset(
+    ["inputTex", "inputTex3d", "inputGeo", "inputXyz", "inputVel", "inputRgba",
+     "src", "o0", "o1", "o2", "o3", "o4", "o5", "o6", "o7"]
+)
+
+
+class PortableEffectError(ValueError):
+    """A Portable definition failed registration inputs validation."""
+
+
+def _fail(message: str) -> None:
+    raise PortableEffectError("Portable effect: %s" % message)
+
+
+def _is_record(value) -> bool:
+    """Port of ``isRecord``: non-null object, not an array."""
+    return isinstance(value, dict)
+
+
+def _has_source(source) -> bool:
+    """Port of ``hasSource``: nonempty string content."""
+    return isinstance(source, str) and bool(source.strip())
+
+
+def _validate_portable(definition) -> str:
+    """Port of registerPortableEffect's validation, verbatim in order."""
+    if not _is_record(definition):
+        _fail("expected a definition object")
+    func = definition.get("func")
+    if func is None:
+        func = definition.get("name")
+    if not _is_valid_identifier(func):
+        _fail("func must be a DSL identifier")
+    if func in _RESERVED_KEYS:
+        _fail("reserved func %s" % func)
+    # The shared operator/enum registries use object trees. JSON keys that
+    # control their prototypes must never reach those registration paths.
+    pending = [definition]
+    visited = set()
+    while pending:
+        value = pending.pop()
+        if not isinstance(value, (dict, list)) or id(value) in visited:
+            continue
+        visited.add(id(value))
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key in _RESERVED_KEYS:
+                    _fail("reserved metadata key %s" % key)
+                if isinstance(child, (dict, list)):
+                    pending.append(child)
+        else:
+            pending.extend(value)
+    # JS distinguishes absent (undefined) from null: an explicit null fails.
+    namespace = definition.get("namespace")
+    if "namespace" in definition and definition["namespace"] != "user":
+        _fail("namespace must be user")
+    if "starter" in definition and not isinstance(definition["starter"], bool):
+        _fail("starter must be boolean")
+    passes = definition.get("passes")
+    if not isinstance(passes, list) or len(passes) == 0:
+        _fail("passes must be a nonempty array")
+    shaders = definition.get("shaders")
+    if not _is_record(shaders):
+        _fail("loaded shaders are required")
+    for pass_ in passes:
+        if not _is_record(pass_) or not isinstance(pass_.get("program"), str) or not pass_["program"]:
+            _fail("each pass must name a program")
+        for field in ("inputs", "outputs"):
+            if field in pass_:
+                mapping = pass_[field]
+                if not _is_record(mapping) or not all(
+                    _has_source(v) for v in mapping.values()
+                ):
+                    _fail("pass %s must map names to nonempty texture references" % field)
+        source = shaders.get(pass_["program"])
+        if not _is_record(source) or not (_has_source(source.get("glsl")) or _has_source(source.get("wgsl"))):
+            _fail("missing shader source for %s" % pass_["program"])
+    for language in ("glsl", "wgsl"):
+        if any(_has_source(shaders.get(p["program"], {}).get(language)) for p in passes):
+            for p in passes:
+                if not _has_source(shaders[p["program"]].get(language)):
+                    _fail("missing %s shader source for %s" % (language, p["program"]))
+    globals_ = definition.get("globals")
+    if "globals" in definition:
+        if not _is_record(globals_) or not all(_is_record(spec) for spec in globals_.values()):
+            _fail("globals must contain parameter objects")
+        for key, spec in globals_.items():
+            choices = spec.get("choices")
+            if "choices" in spec:
+                if not _is_record(choices) or any(
+                    v is not None and (
+                        (not isinstance(v, str)) if spec.get("type") == "string"
+                        else not (isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v))
+                    )
+                    for v in choices.values()
+                ):
+                    _fail("choices for %s must map names to %s or null" % (
+                        key, "strings" if spec.get("type") == "string" else "numbers"))
+    param_aliases = definition.get("paramAliases")
+    if "paramAliases" in definition:
+        if not _is_record(param_aliases) or not all(
+            isinstance(target, str) and target in (globals_ or {})
+            for target in param_aliases.values()
+        ):
+            _fail("paramAliases must map names to declared globals")
+    if registry.get_effect("user.%s" % func) or registry.get_effect("user/%s" % func):
+        _fail("user.%s is already registered" % func)
+    return func
+
+
+def register_portable_effect(definition) -> dict:
+    """Port of ``CanvasRenderer.registerPortableEffect`` (upstream cb22a05e).
+
+    Validates a user-supplied Portable definition (registration inputs only --
+    not shader compilation or backend support), registers it into the effect
+    registry under ``user.<func>`` and ``user/<func>`` while preserving any
+    built-in's bare-name lookup, and registers the op/args/choice-enums/starter
+    (and ``paramAliases``) exactly as ``registerEffectWithRuntime`` would.
+
+    Returns the registered definition dict (namespace normalized to ``user``).
+    Raises :class:`PortableEffectError` without registering anything on invalid
+    input, leaving the name available.
+    """
+    func = _validate_portable(definition)
+    registered = dict(definition)
+    registered["namespace"] = "user"
+    registered["func"] = func
+    if registered.get("starter") is None:
+        # Explicit starter wins; otherwise infer from the passes with the
+        # wider portable pipeline-input set (upstream registerPortableEffect).
+        registered["starter"] = not any(
+            v in _PORTABLE_PIPELINE_INPUTS
+            for pass_ in registered["passes"]
+            for v in (pass_.get("inputs") or {}).values()
+        )
+    registry.register_portable(registered)
+    _ensure_built()
+    _register_effect(registered)
+    return registered
+
+
+def merge_enums(tree: dict) -> None:
+    """Port of ``mergeIntoEnums`` for caller-supplied enum trees.
+
+    Portable definitions may reference explicit enum paths via
+    ``enumPath``/``enum``; the caller registers those trees here before
+    compiling (mirroring the reference host merging ``portableExplicit``).
+    """
+    _ensure_built()
+    with _LOCK:
+        _merge_choice_tree(_ENUMS, _deepcopy_tree(tree))
