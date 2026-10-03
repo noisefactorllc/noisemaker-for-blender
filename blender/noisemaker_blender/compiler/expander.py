@@ -745,6 +745,14 @@ def expand(compilation_result, options=None):
                         if isinstance(global_ref, (int, float)) and not isinstance(global_ref, bool):
                             pass_obj["uniforms"][uniform_name] = global_ref
                             continue
+                        # global_ref is the name of the global parameter.
+                        # Record a renamed mapping so runtime parameter
+                        # updates reach this shader uniform too
+                        # (upstream 29e76468/bd773801, runtime/uniform-aliases.js).
+                        if global_ref != uniform_name:
+                            if not isinstance(pass_obj.get("uniformAliases"), dict):
+                                pass_obj["uniformAliases"] = {}
+                            pass_obj["uniformAliases"][uniform_name] = global_ref
                         if pipeline_uniforms.get(uniform_name, _UNDEFINED) is not _UNDEFINED:
                             pass_obj["uniforms"][uniform_name] = pipeline_uniforms[uniform_name]
                         elif pipeline_uniforms.get(global_ref, _UNDEFINED) is not _UNDEFINED:

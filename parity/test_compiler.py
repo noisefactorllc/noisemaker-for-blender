@@ -14,6 +14,7 @@ from noisemaker_blender.compiler import (  # noqa: E402
     lex,
     parse,
     validate,
+    expand,
 )
 
 
@@ -26,6 +27,67 @@ def source_position(source, line, column):
     assert len(matches) == 1, f"Expected 1 match for line {line}, col {column}, got {len(matches)}"
     pos = matches[0].position
     return {"start": pos["start"], "end": pos["end"]}
+
+
+class ChoiceNameShadowingTests(unittest.TestCase):
+    """A parameter's own choice names win over the DSL's state values
+    (upstream 29e76468, test_reserved_choice_names.mjs). The unparser writes
+    choices by bare name, so `geometry: seed` and `channel: a` must compile
+    back to the choice, not to the `seed` / `a` state value."""
+
+    def test_inline_choice_named_seed_selects_the_choice(self):
+        result = compile("search synth\nsacredGeometry(geometry: seed).write(o0)\nrender(o0)")
+        self.assertEqual(result.get("diagnostics"), [])
+        args = result["plans"][0]["chain"][0]["args"]
+        self.assertEqual(args["geometry"], 4)
+
+    def test_enum_member_named_a_selects_the_member(self):
+        result = compile("search synth, filter\nsacredGeometry().channel(channel: a).write(o0)\nrender(o0)")
+        self.assertEqual(result.get("diagnostics"), [])
+        args = result["plans"][0]["chain"][1]["args"]
+        self.assertEqual(args["channel"], 3)
+
+    def test_state_value_still_binds_a_parameter_with_no_such_choice(self):
+        result = compile("search synth\nsacredGeometry(scale: seed).write(o0)\nrender(o0)")
+        self.assertEqual(result.get("diagnostics"), [])
+        value = result["plans"][0]["chain"][0]["args"]["scale"]
+        self.assertIsInstance(value, dict)
+        self.assertEqual(value.get("fn"), {"_state": "seed"})
+
+    def test_member_enum_parameter_state_shadowing_is_broken_by_own_enum_member(self):
+        # member-typed parameters: an Ident that names the param's own enum
+        # member resolves as that member even where it shadows a state value.
+        result = compile("search synth, filter\nsacredGeometry().channel(channel: a).write(o0)\nrender(o0)")
+        self.assertEqual(result["plans"][0]["chain"][1]["args"]["channel"], 3)
+
+
+class UniformAliasExpansionTests(unittest.TestCase):
+    """The expander records a renamed pass-level uniform mapping on the pass
+    (upstream bd773801, runtime/uniform-aliases.js) so runtime parameter
+    updates can reach the shader uniform (pointsEmit's
+    ``uniforms: { layoutMode: "layout" }``)."""
+
+    def test_expander_records_the_renamed_uniform_on_the_pass(self):
+        graph = expand(compile(
+            "search points, synth, render\nnoise().pointsEmit().pointsRender().write(o0)\nrender(o0)"
+        ))
+        init = next(
+            p for p in graph["passes"]
+            if p.get("effectKey") == "render.pointsEmit" and "layoutMode" in p["uniforms"]
+        )
+        self.assertEqual(init["uniformAliases"], {"layoutMode": "layout"})
+        self.assertEqual(init["uniforms"]["layoutMode"], 0)
+
+    def test_passes_without_renamed_mappings_carry_no_uniform_aliases(self):
+        graph = expand(compile(
+            "search points, synth, render\nnoise().pointsEmit().pointsRender().write(o0)\nrender(o0)"
+        ))
+        for p in graph["passes"]:
+            if p.get("effectKey") == "render.pointsRender":
+                self.assertNotIn("uniformAliases", p)
+            if p.get("id") == "node_1_pass_1":
+                # pointsEmit's second pass has no pass-level uniforms mapping.
+                self.assertNotIn("uniformAliases", p)
 
 
 class CompilerTests(unittest.TestCase):

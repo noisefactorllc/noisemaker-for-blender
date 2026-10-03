@@ -1080,7 +1080,8 @@ def _resolve_member(def_, node, args, arg_key, call, push_diag, resolve_enum):
     elif node and node.get("type") in ("Number", "Boolean"):
         args[arg_key] = (1 if node["value"] else 0) if node.get("type") == "Boolean" else node["value"]
         return
-    elif node and node.get("type") == "Ident" and node.get("name") in _STATE_VALUES:
+    elif (node and node.get("type") == "Ident" and node.get("name") in _STATE_VALUES
+            and not _is_own_choice(def_, node["name"], resolve_enum)):
         args[arg_key] = {"fn": {"_state": node["name"]}}
         return
     elif node and node.get("type") == "Ident":
@@ -1107,6 +1108,22 @@ def _resolve_member(def_, node, args, arg_key, call, push_diag, resolve_enum):
     args[arg_key] = resolved
     if node and node.get("type") == "Member" and path:
         node["path"] = list(path)
+
+
+def _is_own_choice(def_, name, resolve_enum):
+    """A bare name the parameter defines itself, as an inline choice or a
+    member of its enum, means that value even where it shadows a state value
+    such as ``seed`` or ``a`` (upstream 29e76468). The unparser writes choices
+    by bare name, so ``geometry: seed`` and ``channel: a`` must read back as
+    written."""
+    choices = def_.get("choices")
+    if isinstance(choices, dict) and _is_number(choices.get(name)):
+        return True
+    enum_path = def_.get("enumPath") or def_.get("enum")
+    if not enum_path:
+        return False
+    resolved = resolve_enum(apply_enum_prefix([name], normalize_member_path(enum_path)))
+    return _is_number(resolved)
 
 
 def _coerce_enum_scalar(resolved):
@@ -1238,7 +1255,8 @@ def _resolve_numeric(spec, def_, node, args, arg_key, call, push_diag, resolve_e
         else:
             push_diag("S001", node, "Cannot resolve enum value for '%s': '%s'" % (def_["name"], (".".join(node["path"]) if node.get("path") else (node.get("name") or "unknown"))))
             value = default
-    elif node and node.get("type") == "Ident" and node.get("name") in _STATE_VALUES:
+    elif (node and node.get("type") == "Ident" and node.get("name") in _STATE_VALUES
+            and not _is_own_choice(def_, node["name"], resolve_enum)):
         value = {"fn": {"_state": node["name"]}, "min": def_.get("min"), "max": def_.get("max")}
     elif node and node.get("type") == "Ident" and def_.get("enum"):
         prefix = normalize_member_path(def_["enum"])
