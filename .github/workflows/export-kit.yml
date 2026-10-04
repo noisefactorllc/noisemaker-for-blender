@@ -16,6 +16,8 @@ on:
       - "LICENSE"
       - "blender/noisemaker_blender/**"
 
+permissions: {}
+
 concurrency:
   group: export-kit-${{ github.ref }}
   cancel-in-progress: false
