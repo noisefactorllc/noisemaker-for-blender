@@ -24,12 +24,12 @@ module, bake into an Image datablock, and let the stock compositor Image node co
 # Bump the patch component in the same change that alters the distributed add-on.
 # NOTE: bl_info must stay a LITERAL dict (Blender ast.literal_evals it at install
 # time); keep it in lockstep with VERSION below.
-VERSION = (0, 1, 9)
+VERSION = (0, 1, 10)
 
 bl_info = {
     "name": "Noisemaker for Blender",
     "author": "Noise Factory LLC",
-    "version": (0, 1, 9),
+    "version": (0, 1, 10),
     "blender": (5, 1, 0),
     "location": "Compositor / Image Editor > Sidebar > Noisemaker; Noisemaker node editor",
     "description": "Noisemaker for Blender: Polymorphic-DSL procedural texture engine that bakes to an Image",

@@ -181,6 +181,27 @@ def _osc_noise(value, seed):
     return (first + second) / 2
 
 
+def _osc_noise2d(time, speed, seed):
+    # Two-stage periodic noise (noise2d, kind 6) - mirrors the osc2d effect:
+    #   scaledTime = periodicValue(time, timeNoise) * speed
+    #   value      = periodicValue(scaledTime, valueNoise)
+    # ``time`` is the normalized loop time plus the phase offset; speed is
+    # applied once, after the first periodic wrap, exactly as in the osc2d
+    # shader. osc() has no spatial position, so both noise stages are sampled
+    # at a fixed position derived from the seed (the osc2d shader salts the
+    # second stage with +12345). periodicValue() has period 1 in time, so
+    # whole-number speeds loop seamlessly.
+    def periodic(value, noise):
+        return (math.sin((value - noise) * _TAU) + 1) * 0.5
+
+    px = (abs(_js_remainder(seed, 16)) + 0.5) / 16
+    py = (abs(_js_remainder(math.floor(seed / 16), 16)) + 0.5) / 16
+    time_noise = _noise2d(px, py, seed + 12345)
+    value_noise = _noise2d(px, py, seed)
+    scaled_time = periodic(time, time_noise) * speed
+    return periodic(scaled_time, value_noise)
+
+
 def _osc_primitive(osc_type, value):
     whole = math.floor(value)
     fraction = value - whole
@@ -298,6 +319,21 @@ def _evaluate_oscillator(
         raw = _osc_square(value)
     elif osc_type == 5:
         raw = _osc_noise(value, seed)
+    elif osc_type == 6:
+        # noise2d (upstream eabb537e/5e68552a): speed is resolved as a plain
+        # automation field (evaluated, not integrated) and applied exactly
+        # once inside _osc_noise2d, on the normalized loop time plus the
+        # phase offset — not on top of the phase, which already includes it.
+        raw_speed = _resolve_automation_field(
+            config.get("speed"), normalized_time,
+            _AUTOMATION_FIELD_RANGES["oscillatorSpeed"], external_state,
+            depth, stack, 1, wall_time_ms,
+        )
+        raw = _osc_noise2d(
+            normalized_time + offset,
+            raw_speed if _finite_number(raw_speed) else 1,
+            seed,
+        )
     else:
         raw = 0
     return minimum + raw * (maximum - minimum)

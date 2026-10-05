@@ -1451,7 +1451,7 @@ def _compile_automation_descriptor(node, resolve_enum, push_diag, depth=0):
         value = {
             "type": "Oscillator",
             "oscType": _resolve_automation_enum(
-                node.get("oscType"), "oscKind", 0, set(range(6)), "osc", "type",
+                node.get("oscType"), "oscKind", 0, set(range(7)), "osc", "type",
                 resolve_enum, push_diag,
             ),
             "min": _resolve_automation_number(
