@@ -187,8 +187,9 @@ NM_BLENDER=<blender> NM_GRADE_PY=<blender-python> bash parity/integration.sh
 ```
 
 Full gate commands (compiler, effects, integration) and how to add an effect: **[STATUS.md](STATUS.md)**
-and **[PORTING-GUIDE.md](PORTING-GUIDE.md)**. Please also read the
-**[Code of Conduct](CODE_OF_CONDUCT.md)**.
+and **[PORTING-GUIDE.md](PORTING-GUIDE.md)**. Contributions follow the Noise Factor
+**[contributing policy](https://github.com/noisefactorllc/.github/blob/main/CONTRIBUTING.md)** and
+**[Code of Conduct](https://github.com/noisefactorllc/.github/blob/main/CODE_OF_CONDUCT.md)**.
 
 ## Repo layout
 
