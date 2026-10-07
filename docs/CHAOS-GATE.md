@@ -1,69 +1,45 @@
 # The chaos gate
 
-**TL;DR.** Every deterministic effect in this port matches the reference to within the parity gate
-(single-pass: byte-identical or ±1; navierStokes *in isolation*: SSIM ≥ 0.999). One class does
-**not** pixel-match: **chaotic agent flows fed into navierStokes** (`points/flow` + the agent sims
-that ride the same path — life/flock/attractor/hydraulic — and the continuous CAs lenia/mnca). They
-render correctly, deterministically, and stay bounded, but they are a *different instance* of the
-chaos, not a pixel match (full-chain SSIM ~0.0–0.7 over 30 s / 5 s sampling). This is **engine-level
-floating-point divergence, not a port bug**, and it is not reachable through Blender's `gpu` module.
+Some programs cannot match the reference engine pixel for pixel on any second shader toolchain:
+chaotic agent flows that feed the fluid solver (`points/flow` with `behavior: chaotic`, and the agent
+sims that ride the same path) and continuous cellular automata such as lenia and mnca, evolved over
+hundreds of frames. They render deterministically and stay bounded in this port, but each engine
+produces a different instance of the same chaos. `parity/programs/north_star.dsl` is the flagship
+example. These programs are not in the graded parity manifest.
 
 ## Why
 
-Blender's `gpu`-module shader path lowers GLSL → Metal differently from the reference's WebGL2/ANGLE
-path. The specs do **not** require correctly-rounded transcendentals (`pow`/`exp2`/`log2`/`sin`),
-so the two toolchains legally differ by ~1 ULP (~1e-8). For single-pass effects this is invisible
-(byte-identical). For an iterated/feedback sim it is amplified:
+Blender lowers its GLSL to Metal through its own toolchain; the reference engine runs WebGL2 through
+ANGLE. The GLSL specification does not require correctly rounded transcendentals (`pow`, `exp2`,
+`log2`, `sin`), so the two toolchains legally differ by about one ULP. A single pass hides that
+difference. An iterated or feedback simulation amplifies it:
 
-- The `points/flow` agent steers each agent by the **OKLab lightness** of the sampled colour
-  (`oklab_l` → `srgb_to_linear` uses `pow(x, 2.4)`, `cube_root` uses `pow(x, 1/3)`), exactly the
-  spot the sibling ports pinned. The ~1-ULP `pow` delta is multiplied into the steering angle
-  (×`TAU·kink`), then forced through two per-frame discontinuities — `fract()` position wrap and
-  integer `texelFetch` texel boundaries — so over ~300 frames the agent field diverges visibly.
-- navierStokes then **amplifies** that: a slightly different dye/velocity input, advected for 1800
-  frames at speed 145, is the textbook butterfly effect — a different-but-equally-valid outcome.
+- The `points/flow` agent steers each agent by the OKLab lightness of the colour it samples
+  (`pow(x, 2.4)` in the sRGB-to-linear step, `pow(x, 1/3)` in the cube root). A one-ULP `pow`
+  difference is multiplied into the steering angle (×`TAU·kink`) and then forced through two
+  per-frame discontinuities, the `fract()` position wrap and the integer `texelFetch` texel
+  boundary, so the agent field diverges within a few hundred frames.
+- navierStokes then advects the slightly different dye and velocity for the rest of the run: a
+  different, equally valid outcome.
 
-It is the project's existing **"continuous solvers diverge cross-backend"** principle (already true
-for reactionDiffusion / mnca) confirmed for the chaotic *agent flow*.
+## What was tried on Blender
 
-## Evidence it is NOT a port bug
+The sibling ports' stabilization mitigations were ported, measured and reverted, because they are
+specific to those toolchains:
 
-- **Post-process is byte-exact.** adjust (max-diff 0), chromaticAberration (max-diff 0), bloom
-  (max-diff 1), and the lighting/palette used by the byte-identical corpus programs all match. So
-  the brightness/hue differences seen in chaotic programs (GyzQxg, u_8aBg, awB68w, …) come from the
-  *upstream* agent→nav field, not the colour/lighting stages.
-- **navierStokes in isolation is SSIM ≥ 0.999** (smooth static input, the target's exact params).
-- **The deposit / diffuse / blend / agent-spawn / single-pass paths are byte-identical** (incl. the
-  point/billboard scatter at default stateSize — 256² ≈ 64K agents — and verified byte-identical
-  even at the ~1M-agent `x1024` stress size).
-- The divergent set is *exactly* the flow/agent→navierStokes programs (and lenia/mnca); nothing
-  else.
+- The density-cull hi/lo split (`fract(float(id)·φ)` split by radix 4096) fixes a `fract`
+  bucketization other toolchains show at about one million agents. Blender's codegen does not have
+  that bucketization, so the split moved the result away from the reference instead of toward it.
+- Clamping the navierStokes input to [0, 1] made no measured difference.
+- The `precise` qualifier is rejected by Blender's shader compiler.
+- Rewriting `pow(x, y)` as `exp2(y·log2(x))` cannot change how a toolchain lowers `pow`.
 
-## What was tried (and did not work on Blender)
+Closing the difference would need a change to Blender's transcendental lowering, which is outside
+this port.
 
-The two stabilization mitigations the sibling ports use were ported and **measured**, then reverted
-— they are toolchain-specific and do not transfer to Blender's `gpu` codegen:
+## How these programs are checked
 
-- **Density-cull hi/lo split** (`fract(float(id)·φ)` split by radix 4096): fixes a *catastrophic*
-  fract bucketization the sibling toolchains hit at ~1M agents. Blender's codegen does **not** have
-  that bucketization, so the split's different arithmetic instead moves *away* from ANGLE's direct
-  `fract` (which Blender already matches) — it **regressed** the integration target (0.50 → 0.38)
-  with no benefit on the over-bloom targets. Reverted.
-- **navierStokes input clamp to [0,1]**: a no-op here (no measured benefit). Reverted.
-- `precise` qualifier: rejected by Blender's `gpu` shader compiler.
-- Rewriting `pow(x,y)` → `exp2(y·log2(x))`: the sibling analysis showed this is a no-op (their
-  `pow` already lowers to exp2/log2); it cannot make Blender's `pow` *more* like ANGLE's.
-
-Closing the gap would require an engine-level change to Blender's transcendental lowering (out of
-port scope).
-
-## The gate
-
-- **Deterministic effects** (single/multi-pass synth/filter/mixer, 3D, navierStokes in isolation):
-  byte-identical or ±1, SSIM ≥ 0.98. These are the bar.
-- **Chaotic agent-flow → navierStokes** (and lenia/mnca continuous CAs): **SSIM-divergent by
-  design.** Accepted as faithful/stable/bounded but not a pixel match — the same class as
-  reactionDiffusion. They are run with the stateful recipe (1800 frames @ 1/600, 30 s / 5 s
-  sampling) and graded for *stability and character*, not pixel parity.
-
-See `parity/CORPUS-SCORECARD.txt` for the per-program numbers and `README.md` → "Platform note".
+The graded manifest (`scripts/parity-summary`) holds deterministic cases, including short stateful
+runs of 8 frames. Chaotic programs are checked for stability and character instead: they must
+compile, render without NaN or Inf in any pass, stay bounded over the long evolution recipe
+(1800 frames at a 1/600 timestep), and show the same structures as the reference.

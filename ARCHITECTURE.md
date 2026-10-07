@@ -1,110 +1,89 @@
 # Noisemaker for Blender — Architecture
 
-A Blender port of the Noisemaker procedural shader engine (`../noisemaker/shaders`): Polymorphic
-DSL compiler, render-graph executor, and effects collection. Sibling to `noisemaker-for-unity` (Unity),
-`noisemaker-for-godot`, `noisemaker-for-touchdesigner` (TouchDesigner), `noisemaker-for-threejs`, `noisemaker-for-babylonjs`.
-
-Blender's host language is **Python**, and the GPU surface is the **`gpu` module** (GLSL→Metal).
-The closest analog is **`noisemaker-for-touchdesigner`**: Python host, node-based, OpenGL-family GLSL, and a
-GUI-launched parity harness (Blender, like TouchDesigner, cannot render GPU headless on macOS).
+A Blender port of the Noisemaker shader engine (`noisemaker/shaders`): the DSL compiler, the
+render-graph executor and the effect catalog. Blender's host language is **Python** and its GPU
+surface is the **`gpu` module**, which Blender lowers to Metal on Apple Silicon. Sibling ports:
+`noisemaker-for-unity`, `noisemaker-for-godot`, `noisemaker-for-touchdesigner`,
+`noisemaker-for-threejs`, `noisemaker-for-babylonjs`.
 
 ## The seam
 
-All ports share one contract: the **normalized Render Graph JSON** (`docs/GRAPH-JSON-SCHEMA.md`),
-produced **verbatim** by the reference compiler (`tools/export-graph.mjs`, literally the reference
-JS — zero graph-construction parity risk) and consumed by a host-specific executor.
+Every port consumes the same contract: the **normalized render graph JSON**
+(`docs/GRAPH-JSON-SCHEMA.md`). This port builds it two ways:
+
+- the add-on's own Python compiler (`compiler/`), which the add-on uses at bake time, and
+- the reference JavaScript compiler run verbatim under Node (`tools/export-graph.mjs`), which the
+  compiler gates use as the golden.
+
+`parity/compiler/check_{lex,parse,compile,expanded,graph}.py` require the two to agree byte for
+byte on the corpus in `parity/corpus/`. The shipped add-on needs no Node and no reference engine.
 
 ```
-        reference JS (reused verbatim, via Node @ build time)        new Python code (in Blender)
-  ┌──────────────────────────────────────────────────────────┐   ┌──────────────────────────────┐
-  DSL ─► lex/parse/validate/expand ─► compileGraph ─► graph.json ─► GraphLoader ─► Pipeline ─► GpuBackend
-         (lang/, runtime/expander)   (runtime/compiler.js)           (runtime/)    (runtime/)   (backend/)
-  GLSL effects ──► convert-shaders-blender ──► <prog>.frag + .createinfo.json ──────────────────┘
-  └──────────────────────────────────────────────────────────┘            exposes ► Image datablock
-                                                                                    + CUSTOM node tree
+  DSL ─► compiler/ (lex, parse, validate, expand, graph) ─► graph ─► runtime/pipeline.py ─► backend/gpu_backend.py ─► Image datablock
+  reference GLSL ─► tools/convert-shaders-blender.mjs ─► shaders/effects/<ns>/<name>/<prog>.frag + .createinfo.json ──┘
+  reference definition.js ─► tools/convert-defs-blender.mjs ─► effects/<ns>/<func>.json ─► compiler/
 ```
 
-Effect GLSL is transpiled to `.frag` + `.createinfo.json` at build time (Node), but the **graph
-is built in two equivalent ways**: the reference compiler (`tools/export-graph.mjs`, the golden)
-**and** the addon's own **in-Blender Python compiler** (`compiler/`), which is byte-identical to
-the reference (`compile_graph` == `export-graph.mjs`, gated by `parity/compiler/check_graph.py`).
-So the shipped addon authors and compiles DSL with **no external engine** — Node is only needed to
-(re)generate the transpiled shaders and to mint goldens.
+The converters run at development time against a reference checkout (`NM_REFERENCE_ROOT`). The
+reference revision this checkout is synchronized to is pinned in `parity/reference-revision`.
 
-## Components (new code)
+## Components
 
-- **`blender/noisemaker_blender/backend/gpu_backend.py`** — the executor on the `gpu` module.
-  Implements the reference `Backend` contract: `createTexture` (RGBA16F linear offscreen FBO;
-  NEAREST/CLAMP is enforced in *shader source* via the `nmTex` texelFetch macro, since the `gpu`
-  module exposes no sampler filter/wrap state), `compileProgram` (build `GPUShaderCreateInfo` from
-  `.createinfo.json` + prepend `#define`s, cache per define-set), `executePass` (bind offscreen,
-  set push-constants + samplers, fullscreen-triangle draw), `copyTexture`/`clearTexture`,
-  `readPixels` (FLOAT readback → `dimensions` flatten → row-flip → `round(v*255)`). See
-  `docs/BLENDER-PLATFORM-NOTES.md` §3–5. Helpers: `backend/shader_build.py` (the
-  `compileProgram` core — builds the `GPUShaderCreateInfo`, shared with the compile-check
-  harness) and `backend/std140.py` (since Metal push constants cap at **128 bytes**, over-cap
-  effects and remap's explicit zone-config block are bound as a **std140 UBO** instead — see
-  `docs/BLENDER-PLATFORM-NOTES.md` §5b).
-- **`blender/noisemaker_blender/runtime/`** — `graph_loader.py` (load `graph.json` + `phys`/`spec`/
-  `output_tex_id` helpers), `pipeline.py` (ordered pass loop, per-frame engine uniforms via
-  `default_engine`/`collect_default_uniforms`, repeat/skip, frame stepping), `pngio.py`
-  (dependency-free raw-linear PNG writer for the harness). This is the foreign-language
-  re-implementation of the reference `pipeline.js` (parity risk lives here — kept faithful to
-  `reference/04-resources-pipeline.md`). The double-buffered surfaces + three-tier ping-pong /
-  end-of-frame swap live in `backend/gpu_backend.py`, driven per pass by the pipeline.
-- **`blender/noisemaker_blender/shaders/effects/<ns>/<name>/<prog>.frag` + `.createinfo.json`** —
-  transpiled from reference GLSL (verbatim body; declarations lifted). See `PORTING-GUIDE.md`.
-- **`blender/noisemaker_blender/effects/<ns>/<func>.json`** — effect definitions, generated by
-  `tools/convert-defs-blender.mjs`. (The sibling `tools/convert-definitions.mjs` is the Unity/HLSL
-  generator — do **not** run it against this dir.)
-- **`blender/noisemaker_blender/{props,ops,nodes,ui}.py`** — the integration surface (built,
-  gated by `parity/integration.sh`): `NOISEMAKER_OT_bake` compiles a DSL program and bakes it
-  into an Image datablock; a `CUSTOM` NodeTree (`NoisemakerProgramNode`) and Compositor/Image-Editor
-  N-panels drive it. Output Images feed the real compositor via stock Image nodes
-  ("compositor-feeding", per `docs/BLENDER-PLATFORM-NOTES.md` §1). The package `__init__.py` stays
-  bpy-free at import time (lazy registration) so the stdlib compiler gates keep working.
-- **`blender/noisemaker_blender/compiler/`** — in-Blender Python DSL frontend (built): lexer →
-  parser → validate → expand → graph, byte-identical to the reference (`compile_graph` ==
-  `tools/export-graph.mjs`). The addon authors and compiles DSL with no external engine.
+- **`backend/gpu_backend.py`** — the executor on the `gpu` module, implementing the reference
+  `Backend` contract: texture creation (linear offscreens in the format each texture declares;
+  WebGL2 and WebGPU spellings resolve to the same format, as in the reference WebGL2 backend),
+  program compilation from the `.createinfo.json` descriptor with per-define-set caching, pass
+  execution (fullscreen triangle, points and billboards draw modes, MRT), copies, clears and
+  readback. Nearest/clamp sampling is enforced in shader source by the `nmTex` `texelFetch` macro,
+  because the `gpu` module exposes no sampler state. `backend/shader_build.py` builds the
+  `GPUShaderCreateInfo`; `backend/std140.py` packs uniforms that exceed Metal's 128-byte push
+  constant limit into a std140 UBO and applies the GLSL→MSL load-time fix-ups.
+- **`runtime/`** — `pipeline.py` is the port of the reference `pipeline.js`: per-frame engine
+  uniforms, pass conditions and repeats, viewport resolution, the texture pooling plan, oscillator
+  and MIDI/audio automation values, double-buffered global surfaces with the end-of-frame swap, and
+  the `FrameStepper` the bake operator drives from a modal timer. `preflight.py`,
+  `diagnostics.py`, `sink.py` and `frame_export.py` port the reference's preflight, structured
+  diagnostics, output sinks and frame export queue. `graph_loader.py` loads graphs; `pngio.py`
+  writes PNGs without dependencies.
+- **`compiler/`** — the Python port of the reference DSL frontend, validator, expander and graph
+  compiler, plus `transform.py` (program mutation and replacement preflight) and `registry.py`
+  (built-in and portable effect registration).
+- **`shaders/effects/`** — the transpiled effect programs (see `PORTING-GUIDE.md`).
+- **`effects/`** — the effect definitions, generated by `tools/convert-defs-blender.mjs`, which also
+  validates each definition with the reference `validateEffectDefinition`.
+- **`props.py`, `ops/`, `nodes/`, `ui/`** — the Blender integration: `NOISEMAKER_OT_bake` compiles a
+  program and bakes it into an Image datablock, a custom node tree carries Program nodes, and
+  Compositor and Image Editor sidebar panels drive the bake. The compositor consumes the Image
+  through its stock Image node. The package `__init__.py` imports no `bpy` at module load, so the
+  compiler and runtime tests run under plain Python.
 
 ## Out of scope
 
-- **Media plugin (MIDI/audio external inputs)** — skipped by request (oscillator time-automation
-  still comes free via the reused pipeline); `scope`/`spectrum` are the only effects this excludes.
+- Audio and MIDI device input. The `scope` and `spectrum` programs read audio arrays and are not
+  compiled. Oscillator automation works; MIDI and audio automation values come from the caller.
+- Single-channel texture formats (`r8`, `r16f`, `r32f`): `GPUOffScreen` offers RGBA formats only,
+  so these fall back to RGBA16F and record `ERR_UNKNOWN_FORMAT_FALLBACK`. No catalog effect
+  declares one.
+- Non-square output and baking without a window on macOS (see `docs/BLENDER-PLATFORM-NOTES.md`).
 
-(MRT, `drawMode:points` agents, 3D volumes/raymarch, and the live in-Blender compiler — listed as
-"staged" in earlier drafts — are all **implemented and gated**: MRT drives 21 programs, the points
-namespace ships 10 sims, `synth3d` + `render3d`/`renderLit3d`/`renderCubemap3d` are byte-exact, and
-`compiler/` is byte-identical to the reference.)
+## Validation
 
-## Validation (`parity/`)
+| Check | What it compares | Command |
+|---|---|---|
+| Engine-free suite | unit tests, PNG decoder, compiler gates at the pinned reference | `scripts/test` |
+| Backend contract | uniform normalization, viewport boxes, surface refresh and diagnostics under Blender's `gpu` module, without a GPU context | `blender --background --python blender/harness/test_backend_contract.py` |
+| Rendered parity | the 116 cases in `parity/3d-expected.txt` and `parity/artistic-expected.txt`, port render vs reference WebGL2 golden | `scripts/parity-summary` |
+| Integration | DSL → bake operator → Image datablock | `parity/integration.sh` |
 
-Goldens: reference WebGL2 (`parity/export-and-render.mjs`, Playwright + ANGLE/Metal), 256×256,
-linear 8-bit. Candidate: Blender GUI harness (`blender/harness/render_all.py`, timer→render→quit).
-Graded by `parity/compare.py` (max-abs-diff + SSIM). Two modes:
-- **default** — single deterministic frame / short settle (synth/filter/mixer): `render_all.py`
-  with `NM_FRAMES=1`, `NM_TIMESTEP=0` (the defaults).
-- **stateful** — env-driven evolution (navierStokes, reactionDiffusion, cellularAutomata, agents):
-  `NM_FRAMES=1800 NM_TIMESTEP=0.0016667` (1/600; 1800 frames ≈ 3.0 normalized time units, the
-  runtime wraps time at 1), snapshot every `NM_SAMPLE_EVERY` frames.
-  Cracks the multi-frame-feedback class the sibling ports deferred.
+CI runs the engine-free suite and the backend contract on every push. Rendered parity needs a GPU
+and a window, so it runs on a GUI host.
 
-Expect relaxed tolerance (±1–2, SSIM ≥ 0.98) — Blender GLSL→MSL vs ANGLE→Metal, per the
-Metal-backed godot/td precedent. Byte-tight parity is not expected.
-
-## Status
-
-The port is end-to-end and self-contained (Blender 5.1 / Py 3.13 / Metal): whole catalog
-transpiled (309/309), **307/309 compile** on Metal (only `scope`/`spectrum` = audio, out of
-scope; the program total is 309 after upstream's `filter/median` pass collapse and the
-2026-09-21 removal of expired `bc`/`hs`/`colorspace`); the in-Blender DSL compiler is **byte-identical** to the reference
-(`parity/compiler/check_graph.py`); the P5 integration surface is built and **gated byte-exact**
-(`parity/integration.sh`); single-pass / agents / 3D-volume / navierStokes are byte-exact or
-1-ULP; chaotic iteration is chaos-gated (`docs/CHAOS-GATE.md`). A crystallization pass re-verified
-the 33-effect artistic-filter batch content-pinned against reference commit 75507112 (that commit
-is rebased/amended upstream, so treat the SHA as unstable): 97 (effect, mode) goldens minted fresh,
-85 PASS / 12 NEAR / 0 FAIL, every NEAR mechanism-traced to a ~1-ULP transcendental difference
-crossing a hard threshold/specular/argmin discontinuity in the reused-verbatim GLSL — see
-STATUS.md. Pushed to the private remote `noisefactorllc/noisemaker-for-blender`. See
-[`README.md`](README.md) for the capability matrix; the genuinely-open item is a Linux headless-CI
-path. Commits omit the `Co-Authored-By` trailer.
+Rendered parity uses one protocol on both engines: 256×256, normalized time 0.25, 8 frames from a
+zeroed state. The authority goldens come from the reference engine at the pinned revision, rendered
+by headless Chromium with ANGLE on SwiftShader. A case is **exact** when the images are identical,
+**strict** when every channel is within 2/255 and SSIM is at least 0.98, and **near** when a
+measured, mechanism-bound entry in `parity/3d-near-policy.json` or
+`parity/artistic-near-policy.json` bounds it. Everything else fails. The manifest's stateful cases
+(`flow3d`, `reactionDiffusion3d`, `cellularAutomata3d`) are graded over the same 8 frames. Long
+chaotic evolutions such as `parity/programs/north_star.dsl` are not graded;
+`docs/CHAOS-GATE.md` explains why they cannot match pixel for pixel.

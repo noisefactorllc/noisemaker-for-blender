@@ -1,2 +1,0 @@
-heightmap3d_landscape
-heightmap3d_landscape_isosurface

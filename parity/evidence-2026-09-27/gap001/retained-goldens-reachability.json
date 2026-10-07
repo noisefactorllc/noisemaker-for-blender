@@ -1,9 +1,0 @@
-{
- "machine": "arm64",
- "mac": "26.5",
- "python": "3.14.5",
- "probe": "~/.codex/automations/noisemaker-port-completion-audit",
- "~/.codex/automations/noisemaker-port-completion-audit": false,
- "~/.codex": false,
- "~": "PermissionError(1, 'Operation not permitted')"
-}

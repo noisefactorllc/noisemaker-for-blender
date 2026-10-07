@@ -21,13 +21,18 @@ Usage (isolated preferences):
   BLENDER_USER_RESOURCES=<fresh dir> blender --factory-startup \
       --python blender/harness/test_host_workflows.py --python-expr \
       "import bpy; bpy.ops.wm.quit_blender()"
-  NM_ARCHIVE_ZIP points at the distribution archive zip to install.
+  NM_ARCHIVE_ZIP points at the distribution archive zip to install; without it,
+  session 1 zips this checkout's blender/noisemaker_blender the way the README's
+  install step does and installs that.
   NM_SAVE_BLEND / NM_HASH_FILE point at scratch files shared by both sessions.
 """
 import hashlib
 import os
+import shutil
 import sys
+import tempfile
 import traceback
+import zipfile
 
 import bpy
 
@@ -35,8 +40,7 @@ STAGE = os.environ.get("NM_HOSTWORKFLOWS", "1")
 HARNESS = os.path.dirname(os.path.abspath(__file__))
 BLENDER_DIR = os.path.dirname(HARNESS)                       # .../blender
 REPO = os.path.dirname(BLENDER_DIR)
-ARCHIVE = os.environ.get("NM_ARCHIVE_ZIP", os.path.join(
-    REPO, "parity", "evidence-2026-09-26", "archive-from-fixed-source.zip"))
+ARCHIVE = os.environ.get("NM_ARCHIVE_ZIP")
 SAVE_BLEND = os.environ.get("NM_SAVE_BLEND", "/tmp/nm_hostworkflows.blend")
 HASH_FILE = os.environ.get("NM_HASH_FILE", "/tmp/nm_hostworkflows.hash")
 
@@ -73,19 +77,34 @@ def image_hash(img):
     return hashlib.sha256(image_digest(img).tobytes()).hexdigest()
 
 
+def build_archive():
+    """Zip blender/noisemaker_blender as the README's install step does."""
+    out = os.path.join(tempfile.mkdtemp(prefix="nm-hostworkflows-"), "noisemaker_blender.zip")
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
+        for root, dirs, files in os.walk(os.path.join(BLENDER_DIR, "noisemaker_blender")):
+            dirs[:] = sorted(d for d in dirs if d != "__pycache__")
+            for name in sorted(files):
+                path = os.path.join(root, name)
+                zf.write(path, os.path.relpath(path, BLENDER_DIR))
+    return out
+
+
 def session1():
     record_versions()
 
     # --- install/enable from the distribution archive zip ----------------------
     import addon_utils
+    archive = ARCHIVE or build_archive()
     r = bpy.ops.preferences.addon_install(
-        'EXEC_DEFAULT', filepath=ARCHIVE, overwrite=True)
+        'EXEC_DEFAULT', filepath=archive, overwrite=True)
+    if not ARCHIVE:
+        shutil.rmtree(os.path.dirname(archive))
     assert r == {'FINISHED'}, "addon_install returned %r" % (r,)
     mod = addon_utils.enable("noisemaker_blender", default_set=True)
     assert mod is not None, "addon_enable failed"
     assert addon_utils.check("noisemaker_blender")[1], "addon not enabled"
     bpy.ops.wm.save_userpref()
-    print("  install OK  %s enabled (preferences saved)" % os.path.basename(ARCHIVE))
+    print("  install OK  %s enabled (preferences saved)" % archive)
 
     # --- quick start: operator bakes a DSL into an Image ------------------------
     r = bpy.ops.noisemaker.bake(
@@ -177,7 +196,6 @@ def session2():
     # addon_remove needs a UI area (tag_redraw); in a scripted session remove
     # the installed module directory directly, the same thing the operator does.
     import importlib
-    import shutil
     mod = sys.modules.get("noisemaker_blender")
     mod_dir = os.path.dirname(mod.__file__) if mod else None
     if mod_dir and os.path.isdir(mod_dir):

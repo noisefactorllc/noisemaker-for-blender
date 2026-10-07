@@ -15,8 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import pngread  # noqa: E402
 
-REPO = os.path.dirname(os.path.dirname(HERE))  # repo root (HERE = blender/harness)
-GOLDEN = os.path.join(REPO, "parity", "evidence-2026-09-25", "adjust.golden.png")
+GOLDEN = os.path.join(HERE, "fixtures", "adjust.golden.png")
 
 fails = []
 

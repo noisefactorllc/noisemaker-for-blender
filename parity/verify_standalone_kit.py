@@ -16,11 +16,6 @@ checkout:
 
 Usage: python3 parity/verify_standalone_kit.py <kit-version> [out-report.json]
 Requires network access; stdlib only.
-
-Kit 0.1.30 was built from source 81ca79e5ea32c87dd273257c04d2e91da48ea078; the
-later docs/evidence-only commit 4435f2c767c7ef7e0055b4e21743c49c3cf9558a changes
-no engine file (git diff --stat: docs/COMPLETION_GAPS.md + two evidence files),
-so 0.1.30 is the current served engine artifact for the published tip.
 """
 
 import hashlib

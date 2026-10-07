@@ -1,9 +1,0 @@
-checkout: dbff31e9ab7667a39e1f51cdf934013947da276e (working tree at GAP-007 closure)
-effect definition files: 210
-shader program files: 309
-per-namespace definitions: {'classicNoisedeck': 20, 'filter': 113, 'filter3d': 2, 'mixer': 15, 'points': 11, 'render': 12, 'synth': 29, 'synth3d': 8}
-filter: 113 | synth: 29 | mixer: 15 | classicNoisedeck: 20 | points: 11 | render: 12 | synth3d: 8 | filter3d: 2
-1800 frames x timestep 0.00167 = 3.0060 normalized time units (runtime wraps at 1)
-1800 frames x 1/600 = 3.0000 normalized time units
-runtime loop line: tt = (self.time + f * self.timestep) % 1.0 if self.timestep else self.time
-stale claims remaining: none

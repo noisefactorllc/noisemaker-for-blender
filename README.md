@@ -5,9 +5,8 @@
 
 # Noisemaker for Blender
 
-Current measured support: [compatibility report](docs/COMPATIBILITY.md).
-
-Current audit findings and acceptance criteria: [completion gaps](docs/COMPLETION_GAPS.md).
+Measured support is recorded on the [compatibility report](https://github.com/noisefactorllc/noisemaker-for-blender/issues/7);
+open gaps are the [issues labelled `gap`](https://github.com/noisefactorllc/noisemaker-for-blender/issues?q=is%3Aissue+label%3Agap).
 
 > Run **Noisemaker**'s procedural visuals inside **Blender**.
 
@@ -29,8 +28,8 @@ render(o0)
 That little language is Noisemaker's **DSL** (a domain-specific language for visuals). The original
 engine runs in the browser at [noisedeck.app](https://noisedeck.app).
 
-**Noisemaker for Blender** runs that same engine *inside Blender* — the same programs and the same
-210 effects, rendered on Blender's GPU. Use it to make textures, materials, and animated backgrounds
+**Noisemaker for Blender** runs that same engine *inside Blender*: the same programs and the same
+effects (all but the two audio-input ones), rendered on Blender's GPU. Use it to make textures, materials, and animated backgrounds
 from code, with no image files.
 
 Blender's compositor cannot run custom shader code. Instead of adding new effect nodes, this addon
@@ -56,7 +55,7 @@ internet, no Node.js, no separate engine to install.
 - **Blender 5.1** (uses its bundled **Python 3.13**).
 - A **GPU and an open window.** Baking uses Blender's `gpu` module, which needs a real graphics
   context — so it runs in an interactive session, not `--background` (see [Good to know](#good-to-know)).
-- Verified on **Apple Silicon / Metal**.
+- Verified on **Apple Silicon / Metal**. Windows is not supported yet.
 
 ## Install
 
@@ -107,10 +106,10 @@ patch version in the same change that alters the distributed add-on; never reuse
 - Select a surface to show (`render(o0)`).
 
 Ready-to-bake examples live in [`parity/programs/`](parity/programs). The flagship is
-[`parity/programs/north_star.dsl`](parity/programs/north_star.dsl) — a 33-pass program (3D noise →
-chaotic particle flow → fluid → color, lighting, and lens). Its chaotic flow → fluid chain renders
-faithfully but, like all chaos-gated programs, does not reproduce the reference engine
-pixel-for-pixel across engines (recorded as an open divergence in the compatibility record).
+[`parity/programs/north_star.dsl`](parity/programs/north_star.dsl): 3D noise → chaotic particle
+flow → fluid → color, lighting, bloom and lens. Its chaotic flow → fluid chain is a different
+instance of the same chaos on each engine, so it does not match the reference pixel for pixel (see
+[docs/CHAOS-GATE.md](docs/CHAOS-GATE.md)).
 
 ## Good to know
 
@@ -134,31 +133,30 @@ A bake produces an ordinary Blender **Image** datablock, so it works anywhere a 
 - an **Image Texture** node in a material or shader,
 - any panel that takes an image.
 
-It's stored as **Non-Color** data (raw linear values), so it matches the original engine's output
-and isn't double-corrected by color management. Re-bake to refresh it. Raise **Frames** to capture an
+It's stored as **Non-Color** data (raw linear values), so it holds the engine's output values
+unchanged and isn't double-corrected by color management. Re-bake to refresh it. Raise **Frames** to capture an
 evolved or animated result.
 
 ## What works today
 
-- The **2D single-pass catalog plus agent-deposit** is **pixel-identical to the web reference**
-  (byte-exact / ±1) — with the recorded exception of `filter/lens`, which renders with a measured
-  worst per-channel difference of 10/255 against the reference (above the strict 2-step tolerance;
-  structural similarity 0.99999) and carries an open defect. Chaotic continuous sims are
-  chaos-gated (below). In all, **210 effect definitions** span 8 namespaces (including the 3D
-  `synth3d` / `filter3d`) — see STATUS.md and the compatibility record for the measured
-  status of each effect.
-- **Particle/agent sims, fluid (navier–stokes), and the 3D volume renderer** all render and match the
-  reference.
-- **Chaotic** programs (chaotic agent flows feeding fluid, continuous cellular automata) render
-  faithfully and stay stable, but as a *different instance* of the same chaos — they match in look
-  and behavior, not pixel-for-pixel.
-- **Authoring is end-to-end inside Blender** — the DSL compiler is ported to Python and produces the
-  exact same render graph as the reference, so the addon needs no external engine.
-- **Audio effects (`scope`, `spectrum`) are out of scope.**
+- **Catalog.** 210 effect definitions in 8 namespaces, transpiled into 309 shader programs. The two
+  audio programs, `scope` and `spectrum`, are out of scope; every other program is built.
+- **Compiler.** The add-on's Python compiler produces the same render graph as the reference
+  compiler for every program in `parity/corpus/` (the compiler gates in `scripts/test`; `B5oBsA`, a
+  program that must fail to compile, is excluded from the expand and graph gates).
+- **Rendered parity.** `scripts/parity-summary` renders the 116 cases listed in
+  `parity/3d-expected.txt` and `parity/artistic-expected.txt` with this add-on and with the
+  reference WebGL2 engine at the pinned revision (headless Chromium, ANGLE on SwiftShader), at
+  256×256, time 0.25, 8 frames. Each case grades exact (identical), strict (every channel within
+  2/255, SSIM ≥ 0.98), near (inside a measured entry of the near policies in `parity/`), or fail.
+  The latest counts and per-case results are on the compatibility report; this README carries no
+  copy of them.
+- **Chaotic programs.** Chaotic agent flows that feed the fluid solver, and continuous cellular
+  automata, render deterministically and stay bounded, but they are not graded for pixel parity
+  ([docs/CHAOS-GATE.md](docs/CHAOS-GATE.md)).
+- **Authoring.** Programs are compiled and baked entirely inside Blender.
 
-Coverage table, parity numbers, and the full "chaos" explanation: **[STATUS.md](STATUS.md)**,
-**[docs/CHAOS-GATE.md](docs/CHAOS-GATE.md)**, and
-**[docs/BLENDER-PLATFORM-NOTES.md](docs/BLENDER-PLATFORM-NOTES.md)**.
+Platform details: **[docs/BLENDER-PLATFORM-NOTES.md](docs/BLENDER-PLATFORM-NOTES.md)**.
 
 ## How it works
 
@@ -175,32 +173,32 @@ material nodes consume it.
 
 ## Contributing
 
-The addon needs nothing external. The **dev/parity tooling**, however, compares Blender's output
-against the reference engine, so it needs a checkout of it via `NM_REFERENCE_ROOT` (default
-`../noisemaker`, never vendored):
+The add-on needs nothing external. The development tools compare it with the reference engine, so
+they need `NM_REFERENCE_ROOT` set to a `noisemaker` checkout at the revision pinned in
+`parity/reference-revision` (never vendored; `scripts/test` clones its own).
 
 ```sh
-NM_BLENDER=<blender> NM_GRADE_PY=<blender-python> bash parity/integration.sh
-#   -> end-to-end: DSL → bake → Image datablock, graded byte-exact
-#   (first seed parity/out/ goldens — see STATUS.md "Running the parity gates";
-#    on a fresh clone parity/out/ is git-ignored and empty)
+scripts/test                       # unit tests, PNG decoder, compiler gates (no Blender, no GPU)
+NM_BLENDER=<blender> NM_GOLDEN_AUTO=1 NM_REFERENCE_ROOT=<reference at the pin> \
+  NM_CHROME=<chromium> scripts/parity-summary [case ...]    # rendered parity (GPU + window)
+NM_BLENDER=<blender> NM_GRADE_PY=<blender-python> bash parity/integration.sh   # DSL → bake → Image
 ```
 
-Full gate commands (compiler, effects, integration) and how to add an effect: **[STATUS.md](STATUS.md)**
-and **[PORTING-GUIDE.md](PORTING-GUIDE.md)**. Contributions follow the Noise Factor
+Porting rules and how to add an effect or move the pin: **[PORTING-GUIDE.md](PORTING-GUIDE.md)**.
+Contributions follow the Noise Factor
 **[contributing policy](https://github.com/noisefactorllc/.github/blob/main/CONTRIBUTING.md)** and
 **[Code of Conduct](https://github.com/noisefactorllc/.github/blob/main/CODE_OF_CONDUCT.md)**.
 
 ## Repo layout
 
 ```
-blender/noisemaker_blender/   the addon — zip + install this (backend, runtime, shaders, effects, compiler, node tree, UI)
-blender/harness/              dev scripts for rendering and compile checks
-parity/                       golden-image test harness + DSL programs
-tools/                        Node dev tooling (reference graph export, shader/definition conversion)
-reference/                    engine specs shared across all Noisemaker ports
-ARCHITECTURE.md  PORTING-GUIDE.md  docs/   design, porting rules, platform notes
-STATUS.md                     coverage table, parity results, known limits
+blender/noisemaker_blender/   the add-on — zip and install this (backend, runtime, shaders, effects, compiler, node tree, UI)
+blender/harness/              Blender-side render, test and diagnostic scripts
+parity/                       parity manifests, near policies, fixtures, compiler gates, unit tests, reference pin
+scripts/                      test and parity-summary entry points
+tools/                        Node tooling: reference graph export, shader and definition conversion
+reference/                    engine specs shared by all Noisemaker ports
+docs/                         platform notes, chaos gate, graph schema
 ```
 
 ## License

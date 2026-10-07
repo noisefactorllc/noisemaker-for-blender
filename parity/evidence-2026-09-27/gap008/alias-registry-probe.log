@@ -1,6 +1,0 @@
-# param-alias registry probe (this repo, python3)
-ops registered: 210
-_PARAM_ALIASES: {}
-_EFFECT_ALIASES: {}
-get_param_aliases('filter.grain'): {}
-get_param_aliases('synth.noise'): {}

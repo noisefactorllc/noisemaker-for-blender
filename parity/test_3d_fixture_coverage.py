@@ -63,7 +63,7 @@ class FixtureCoverage3dTests(unittest.TestCase):
         self.assertEqual(0.999, flythrough["ssim_min"])
         self.assertIn("raymarch surface-boundary", flythrough["mechanism"])
         # GAP-002 landscape filtering choices (voxel/default class and isosurface):
-        # bounds sit above the measured values (parity/evidence-2026-09-26:
+        # bounds sit above the measured values (2026-09-26:
         # 242.0/0.1403/0.99756 and 244.0/0.2583/0.99407) with explicit headroom
         # for cross-host variation, and far below any structural failure mode
         # (an all-black render measures mad~254, mean~21.5); kept exact here so

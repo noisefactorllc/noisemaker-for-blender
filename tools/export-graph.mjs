@@ -16,10 +16,10 @@
 //   node export-graph.mjs "<dsl>"            # prints JSON to stdout
 //
 // Env:
-//   NM_REFERENCE_ROOT   override the reference repo root (default: ../.. of this file)
+//   NM_REFERENCE_ROOT   the reference repo root (required)
 //
-// Requires the sibling reference engine at <root>/shaders/src/index.js. No build
-// step — the reference is plain ESM. See tools/package.json.
+// Requires the reference engine at <root>/shaders/src/index.js. No build step —
+// the reference is plain ESM. See tools/package.json.
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve, basename } from 'node:path'
@@ -27,8 +27,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// Reference engine lives in the sibling `noisemaker` repo (this repo was split
-// out of noisemaker/noisemaker-for-unity/). Override with NM_REFERENCE_ROOT.
+// The reference engine lives in the `noisemaker` repo, named by NM_REFERENCE_ROOT.
 if (!process.env.NM_REFERENCE_ROOT) {
   console.error('NM_REFERENCE_ROOT must point at the Noisemaker reference engine source root')
   process.exit(1)

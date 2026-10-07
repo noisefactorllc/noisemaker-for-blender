@@ -145,35 +145,24 @@ crystallization: `filter/median` went from 3 programs to 1, net -2 vs the prior 
 
 ## 6. Parity expectation
 
-Candidate (Blender GLSL→**MSL**) vs golden (reference WebGL2 → ANGLE→**Metal**): both land on
-Metal but via different translators, so expect **±1–2/255** half-float divergence. Use the
-**relaxed-tolerance table** the Metal-backed godot/td ports already established
-(strict max-diff ≤ 1 where possible; relaxed ≤ 2–4 + SSIM ≥ 0.98 for discontinuity-heavy
-effects). Byte-tight parity is *not* expected and not required.
+The port's shaders are the reference GLSL bodies, so a case that differs from the reference does so
+through one of three causes: a port defect (wrong uniform, format, binding or pass), a different
+shader toolchain (Blender GLSL→MSL here, ANGLE in the browser), or a different GPU.
 
-**Sub-case — sparse single-pixel discontinuity flips can exceed the ≤2–4 band on `max-abs-diff`
-alone while staying well inside tolerance structurally.** A handful of the artistic-filter batch
-(non-chaotic, single/few-pass, no feedback) put a hard `step()`, an `fwidth()`-derived antialiasing
-width, a high-exponent `pow()` specular term, a multi-cycle `sin()` tone curve, or an argmin/argmax
-discrete pick directly in the per-pixel path. None of those are byte-stable across two different
-GLSL→Metal translators at the ~1-ULP level, so at a SPARSE, contour-tracing set of pixels (never a
-solid region) the two backends land on opposite sides of the discontinuity and that pixel jumps to
-the far side of the value range — `max-abs-diff` can read >100 on one pixel even though SSIM stays
-≥0.994 and every neighboring pixel matches tightly. This is graded **NEAR**, not FAIL (SSIM is the
-gate that matters here), and is not fixable without deviating from the reused-verbatim reference
-GLSL. Per-effect mechanism list and the (effect, mode) ledger from the artistic-batch
-crystallization: see STATUS.md's Parity section.
+`scripts/parity-summary` mints its authority goldens with the reference engine in headless Chromium
+on ANGLE over **SwiftShader**, a CPU rasterizer, so that any host can reproduce them. The port
+renders on the host GPU. Most single-pass effects then agree within 1/255. Effects that put a hard
+discontinuity in the per-pixel path — a `step()` threshold, an `fwidth()` antialiasing width, a
+high-exponent `pow()` specular term, an oscillating `sin()` tone curve, an argmin or argmax pick, a
+raymarch hit test — can land on opposite sides of it at a sparse set of pixels, so `max-abs-diff`
+reads high on those pixels while SSIM stays near 1. Grading the same candidates against goldens that
+the reference renders on the same GPU (ANGLE over Metal) separates that class from port defects.
 
-**Exception — the chaos class.** Chaotic agent→navierStokes chains and continuous CAs
-(`flow:chaotic`, lenia, mnca, reactionDiffusion) are **SSIM-divergent by design** (full-chain
-~0.0–0.7; flow3d ≈ 0.44, the 32-pass integration target ≈ 0.50). The ~1-ULP transcendental
-difference between Blender's Metal codegen and the reference's ANGLE path is amplified by 100s–1000s
-of feedback iterations (butterfly effect) — a different-but-valid instance of the same chaos, **not
-a port bug**. Single-pass / 3D / agent-deposit paths stay byte-identical. These are graded for
-stability and character, not pixel parity. See [`CHAOS-GATE.md`](CHAOS-GATE.md).
+**Exception — the chaos class.** Chaotic agent→navierStokes chains and continuous CAs diverge by
+design over long evolutions; see [`CHAOS-GATE.md`](CHAOS-GATE.md).
 
 ## Sources (Blender 4.x/5.x docs; confirmed on 5.1.2)
 gpu / gpu.types / gpu.shader API; GPUShaderCreateInfo + create_from_info; GLSL cross-compilation
 (BSL→MSL); Metal-only backend on Apple Silicon (OpenGL deprecated 4.0); legacy ctor removal;
 EEVEE/gpu headless unsupported on macOS; CompositorNodeTree fixed node set; Python 3.11 (4.x) /
-3.13 (5.1). Full URL list in the Phase-0 research log.
+3.13 (5.1).
