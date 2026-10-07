@@ -743,7 +743,9 @@ def register():
     ):
         if callback not in collection:
             collection.append(callback)
-    ensure_unique_ids(bpy.data.scenes)
+    # addon_utils.enable runs register() under Blender's _RestrictData. Repair
+    # duplicated IDs on the first unrestricted timer tick after registration.
+    registry.pending_rebuild = True
     if not bpy.app.timers.is_registered(_timer):
         bpy.app.timers.register(_timer, first_interval=0.25, persistent=True)
 

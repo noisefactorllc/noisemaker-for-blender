@@ -443,6 +443,44 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(registry.scheduler.status(registry._key(scene, "b")).dirty, {"time"})
         registry.shutdown()
 
+    def test_registration_defers_scene_scan_outside_restricted_blender_data(self):
+        import types
+        from noisemaker_blender.integration import lifecycle
+        handlers = types.ModuleType("bpy.app.handlers")
+        handlers.persistent = lambda callback: callback
+        for name in ("frame_change_post", "load_pre", "undo_pre", "redo_pre",
+                     "load_post", "undo_post", "redo_post", "save_pre",
+                     "render_init", "render_complete", "render_cancel"):
+            setattr(handlers, name, [])
+        registered = set()
+        timers = SimpleNamespace(
+            is_registered=lambda callback: callback in registered,
+            register=lambda callback, **kwargs: registered.add(callback),
+            unregister=lambda callback: registered.remove(callback))
+        app = types.ModuleType("bpy.app")
+        app.handlers = handlers
+        app.timers = timers
+        restricted = types.ModuleType("bpy")
+        class RestrictedData:
+            def __getattr__(self, name):
+                raise AttributeError("_RestrictData has no %s" % name)
+        restricted.data = RestrictedData()
+        restricted.app = app
+        isolated = LiveRegistry()
+        scene = Scene()
+        repaired = []
+        with patch.dict(sys.modules, {"bpy": restricted, "bpy.app": app,
+                                      "bpy.app.handlers": handlers}), \
+             patch.object(lifecycle, "registry", isolated), \
+             patch.object(lifecycle, "ensure_unique_ids",
+                          side_effect=lambda scenes: repaired.append(tuple(scenes))):
+            lifecycle.register()
+            self.assertTrue(isolated.pending_rebuild)
+            self.assertEqual(repaired, [])
+            isolated.tick([scene], now=0, allowed=False)
+            self.assertEqual(repaired, [(scene,)])
+            lifecycle.unregister()
+
     def test_render_enumerates_paused_consumers_and_ignores_unconnected_instances(self):
         scene = Scene(config("off"), config("visible", enabled=True, paused=True),
                       config("linked", image=object(), paused=True))
