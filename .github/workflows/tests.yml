@@ -76,8 +76,16 @@ jobs:
 
       - name: Install Blender's X11 and GL runtime libraries
         run: |
-          sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends \
+          # A stalled mirror connection can hold apt-get with no output until the job
+          # timeout; bound each attempt and retry instead.
+          apt_opts=(-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+          updated=""
+          for attempt in 1 2 3; do
+            if sudo timeout 180 apt-get "${apt_opts[@]}" update -q; then updated=1; break; fi
+            echo "::warning::apt-get update attempt $attempt failed or stalled"
+          done
+          test -n "$updated" || { echo "::error::apt-get update failed after 3 attempts"; exit 1; }
+          sudo timeout 300 apt-get "${apt_opts[@]}" install -y -q --no-install-recommends \
             libx11-6 libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 \
             libsm6 libice6 libgl1 libegl1
 
