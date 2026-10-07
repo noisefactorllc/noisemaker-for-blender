@@ -32,9 +32,15 @@ engine runs in the browser at [noisedeck.app](https://noisedeck.app).
 effects (all but the two audio-input ones), rendered on Blender's GPU. Use it to make textures, materials, and animated backgrounds
 from code, with no image files.
 
-Blender's compositor cannot run custom shader code. Instead of adding new effect nodes, this addon
-**bakes** a Noisemaker program into a regular Blender **Image** (an Image datablock).
-The compositor, any material, or any texture slot can use the datablock like any other picture.
+The add-on evaluates programs in persistent GPU sessions and publishes floating-point Blender
+**Images**. The **Live** panel updates an Image while you edit a Text datablock or typed parameters;
+stock material, world, compositor and Geometry Nodes image consumers use that Image. The original
+square **Bake** workflow remains available.
+
+**Automatic final rendering is not qualified.** F12 and Blender's built-in animation operator do
+not refresh live output. Use the explicit scripted rendering API described below. See the
+[implementation status](docs/REALTIME-INTEGRATION-PLAN.md#9-implementation-status) for measured
+results and remaining acceptance gates.
 
 It is **self-contained**: the addon compiles the DSL and renders it entirely in Blender — no
 internet, no Node.js, no separate engine to install.
@@ -47,7 +53,7 @@ internet, no Node.js, no separate engine to install.
   fluid (navier–stokes), and 3D volume renders.
 - **Use the result anywhere an Image goes** — materials, shader nodes, texture slots, and the
   compositor.
-- **Author and bake without leaving Blender** — from the sidebar of the Compositor / Image Editor,
+- **Author, preview and bake without leaving Blender** — from the sidebar of the Compositor / Image Editor,
   or from a node in the Noisemaker node editor.
 
 ## Requirements
@@ -62,7 +68,7 @@ internet, no Node.js, no separate engine to install.
 The addon is a classic single-folder addon, so install it as a zip:
 
 ```sh
-cd blender && zip -r noisemaker_blender.zip noisemaker_blender
+cd blender && zip -r noisemaker_blender.zip noisemaker_blender -x '*/__pycache__/*' '*.pyc'
 ```
 
 Then in Blender:
@@ -71,8 +77,8 @@ Then in Blender:
 2. Select `noisemaker_blender.zip`.
 3. Enable **"Noisemaker for Blender"**.
 
-(Prefer a live checkout? Symlink `blender/noisemaker_blender` into your Blender `scripts/addons/`
-instead.)
+For development, add the checkout's `blender/` directory to Python's import path in a disposable
+Blender session and call `noisemaker_blender.register()`.
 
 ### Versions and notices
 
@@ -94,7 +100,9 @@ patch version in the same change that alters the distributed add-on; never reuse
 2. **Open the Noisemaker panel.** Press `N` in the **Compositor** or **Image Editor**.
    Open the **Noisemaker** tab. Select your text block.
    Alternatively, add a *Program* node in the **Noisemaker** node editor with Shift+A. Set its DSL there.
-3. **Click Bake.** The result appears in an Image datablock named `Noisemaker`.
+3. For interactive editing, add an instance with **+** in the **Live** panel, select the Text
+   datablock and enable **Live**. Choose its output Image in the Image Editor. **Pause** retains
+   the last frame; **Reset** restarts simulation state. **Bake** remains a separate one-shot path.
 4. **Use it** — add an **Image node** in the compositor pointing at that datablock, or drop the Image
    into any material or texture.
 
@@ -114,16 +122,24 @@ instance of the same chaos on each engine, so it does not match the reference pi
 ## Good to know
 
 - **Baking is GUI-only on macOS.** Blender can't draw on the GPU under `--background` on macOS, so a
-  window has to be open while baking (it may flash briefly). Headless rendering would need Linux.
-- **Output is square** (`size × size`) for now.
+  window has to be open for fresh GPU evaluation. Background Blender can consume an already
+  prepared binary float cache; it is not a fresh Noisemaker GPU rendering path. Other platforms
+  require independent qualification.
+- **Live/session output can be rectangular.** Set independent preview width and height; final
+  rendering uses the scene resolution or explicit instance render dimensions. Legacy Bake keeps
+  its square `size × size` API.
 - **Audio effects are out of scope** — `scope` and `spectrum` (MIDI / audio input) aren't ported.
-  Everything else is. Time-based animation still works.
+  Other effects retain their existing port contracts and parity scope. Time-based animation still works.
 - **Simulations need time to evolve.** Fluid, agent sims, reaction-diffusion, and cellular automata
   start from nothing, so a single frame looks empty. Raise **Frames** to ~**1800** and set
   **Timestep** ≈ **`0.00167`** (1/600). The runtime advances normalized simulation time by one
   timestep per frame and wraps it at 1, so 1800 frames step the simulation by ≈ 3.0 normalized
   time units — there is no seconds conversion. Plain still effects want the
-  defaults (Frames = 1, Timestep = 0). A long bake takes real time and holds the window.
+  defaults (Frames = 1, Timestep = 0). Long GUI bakes run modally and can be canceled.
+  Live sessions use scene seconds and fixed simulation steps instead of the legacy bake timestep.
+  Stateful seeks replay from the origin in bounded preview batches and retain the last complete
+  Image until replay finishes. Animated stateful parameter histories require explicit snapshots;
+  unsupported histories fail rather than reuse target-frame values.
 
 ## Use it in your own Blender project
 
@@ -133,9 +149,53 @@ A bake produces an ordinary Blender **Image** datablock, so it works anywhere a 
 - an **Image Texture** node in a material or shader,
 - any panel that takes an image.
 
-It's stored as **Non-Color** data (raw linear values), so it holds the engine's output values
-unchanged and isn't double-corrected by color management. Re-bake to refresh it. Raise **Frames** to capture an
-evolved or animated result.
+Legacy Bake retains its quantized **Non-Color** Image output for compatibility. Live/session
+publication preserves floating-point values, including HDR and negative values: color output uses
+**Linear Rec.709**, data/normal output uses **Non-Color**, and the default alpha mode is
+**Premultiplied**. Display transforms belong to Blender's display/output boundary.
+
+### Python sessions and final rendering
+
+The public facade imports without an active editor. GPU evaluation still needs a real Blender
+window context; the live timer and explicit preparation path provide the tested execution points.
+
+```python
+from noisemaker_blender import api as nm
+
+program = nm.compile("search synth\nnoise(seed: 1).write(o0)\nrender(o0)")
+instance = nm.create_instance(scene, program, name="Clouds")
+nm.set_parameter(instance, "noise#0.seed", 7)
+with nm.open_session(instance, width=1024, height=512) as session:
+    output = session.evaluate(nm.FrameRequest(frame=scene.frame_current,
+                                              subframe=scene.frame_subframe,
+                                              fps=scene.render.fps,
+                                              fps_base=scene.render.fps_base))
+    image = session.publish_image(output, name="Clouds")
+    texture = nm.attach_material(instance, material, image)
+```
+
+A borrowed `OutputHandle` expires on the next evaluation or session replacement/close. Use
+`session.read_float(output)` for an owned top-down float array. Consumer helpers create/reuse
+stock Image nodes; connect their sockets to the intended shader/compositor/geometry output.
+Instance sessions require the request frame/subframe/FPS to match the current Scene and refresh
+evaluated parameters on every evaluation. Use a plain Program session for explicit independent
+time requests and exact-frame snapshot providers.
+
+`nm.render_animation(scene, first, last)` prepares and publishes each exact frame before the
+scene renderer runs. Cycles Persistent Data uses prepared float EXR sequences during that render
+scope and restores the original Image nodes afterward. Prepared rendering currently rejects
+same-scene dependent live instances; those use the fresh scripted path with Persistent Data off. `nm.prepare_render(scene, frames,
+policy=nm.RenderPolicy(cache_directory=directory))` returns a `PreparedRender`; retain its entries
+and directory with the saved scene. `nm.render_prepared(scene, prepared, frames=frames)` verifies
+current source, parameters, inputs and timing against those entries and consumes the binary cache
+without creating a GPU session, including in background Blender. Missing/stale entries fail before
+the affected frame reaches the scene renderer. Motion blur requiring multiple procedural states
+remains unqualified and is rejected.
+
+Use **Pack Output on Save** to preserve the latest generated Image in a `.blend`. DSL, stable
+instance IDs, typed/keyed parameters and Image input references persist; GPU handles do not.
+Movie/sequence inputs require an exact-frame provider. Audio/MIDI snapshots can drive existing
+automation through the session API; device capture and `scope`/`spectrum` remain outside this port.
 
 ## What works today
 
@@ -154,7 +214,8 @@ evolved or animated result.
 - **Chaotic programs.** Chaotic agent flows that feed the fluid solver, and continuous cellular
   automata, render deterministically and stay bounded, but they are not graded for pixel parity
   ([docs/CHAOS-GATE.md](docs/CHAOS-GATE.md)).
-- **Authoring.** Programs are compiled and baked entirely inside Blender.
+- **Authoring.** Programs compile, preview and bake inside Blender. Live integration qualification
+  is tracked separately from the historical rendered parity contract.
 
 Platform details: **[docs/BLENDER-PLATFORM-NOTES.md](docs/BLENDER-PLATFORM-NOTES.md)**.
 

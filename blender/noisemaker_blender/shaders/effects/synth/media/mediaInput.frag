@@ -46,7 +46,7 @@ vec2 tile(vec2 st) {
 // transparent pixels cannot darken edges or bleed their hidden RGB into them.
 vec4 mediaTexel(ivec2 p, ivec2 size) {
     vec4 c = texelFetch(imageTex, clamp(p, ivec2(0), size - 1), 0);
-    return vec4(c.rgb * c.a, c.a);
+    return inputPremultiplied != 0 ? c : vec4(c.rgb * c.a, c.a);
 }
 
 vec4 sampleMedia(vec2 uv) {

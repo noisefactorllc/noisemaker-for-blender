@@ -1,8 +1,9 @@
 # Blender Platform Notes (empirical)
 
 Target: **Blender 5.1.2**, Python **3.13.9**, GPU backend **METAL / APPLE** (Apple Silicon).
-Every claim below was verified on this machine with a spike (see `blender/harness/spike_*.py`),
-not just from docs. These are the load-bearing facts the backend depends on.
+The historical sections record the original backend spikes (`blender/harness/spike_*.py`).
+Current integration qualification is recorded in section 7; historical counts are not current
+full-catalog or realtime acceptance.
 
 ## 1. The compositor cannot host this; we *feed* it
 
@@ -12,7 +13,8 @@ faithful GLSL port is **not "compositor-native."** The design is **"compositor-f
 the effects via the `gpu` module, bake the result into an **Image datablock**, which the real
 compositor consumes through a standard **Image node**. A bespoke `CUSTOM` node tree (with a
 hand-written evaluator) provides the noisemaker graph UI. This limit is fundamental, not a gap.
-(OSL is CPU/material-only — rejected. DSL→native-compositor-graph is infeasible — rejected.)
+OSL does not provide this port's complete multipass feedback graph contract; it is not the
+integration path. Its CPU/OptiX availability does not change that boundary.
 
 ## 2. GPU works only in GUI mode (not `--background`) on macOS
 
@@ -23,8 +25,8 @@ Module *import* works headless; *drawing* does not.
 **Consequence — the harness mirrors the TouchDesigner `.toe` pattern:** launch Blender **with
 GUI**, run a `--python` script that defers GPU work to a `bpy.app.timers` callback (fires after
 the window/context is live, `first_interval≈0.5`), renders all programs, then
-`bpy.ops.wm.quit_blender()`. A window flashes briefly — same as the TD harness. (If CI ever
-needs true headless, run it on **Linux**, where EEVEE/gpu headless is supported.)
+`bpy.ops.wm.quit_blender()`. A window flashes briefly — same as the TD harness. Fresh `gpu` evaluation on other operating systems needs its own native qualification; do not
+infer it from a successful background scene render or a GPU-module import.
 
 ## 3. Shaders: `create_from_info` only — no raw GLSL, no `uniform` keyword
 
@@ -50,7 +52,8 @@ Must use `gpu.shader.create_from_info(GPUShaderCreateInfo)`. Inside the GLSL sou
   `buf.dimensions = W*H*4; arr = np.array(buf, np.float32).reshape(H,W,4)`.
 - **Row 0 is the BOTTOM** of the image (GL origin). Flip vertically (`arr[::-1]`) to match the
   top-down goldens.
-- Quantize with `round(clip(v,0,1)*255)`.
+- Legacy capture quantizes with `round(clip(v,0,1)*255)`. The live/session float path retains
+  negative/HDR samples and flips rows without clipping or quantization.
 
 ## 5. Core ops, all verified
 
@@ -160,6 +163,23 @@ the reference renders on the same GPU (ANGLE over Metal) separates that class fr
 
 **Exception — the chaos class.** Chaotic agent→navierStokes chains and continuous CAs diverge by
 design over long evolutions; see [`CHAOS-GATE.md`](CHAOS-GATE.md).
+
+## 7. Live integration qualification
+
+The 2026-10-07 native integration probes use Blender 5.1.2 / Apple M4 / Metal. Coherent float
+Image publication reaches the measured stock consumers; writing only to an Image-associated GPU
+texture does not update CPU pixels, Cycles, compositor and Geometry Nodes consistently. The
+persistent session path preserves float samples; the old bake/parity path still quantizes.
+
+Fresh GPU evaluation inside native animation's render callbacks crashed on the second frame.
+Production callbacks only mark/suspend work. Scripted evaluation before each scene render passes
+the tested Eevee/Cycles frame markers. Cycles Persistent Data needs a prepared EXR sequence to
+refresh frames; generated Image updates alone retained the first frame. Background Blender can
+reopen and render those verified caches without constructing a Noisemaker GPU session.
+
+See [the implementation checkpoint](REALTIME-INTEGRATION-PLAN.md#9-implementation-status) for
+individual harnesses, measurements and unqualified gates. These results do not establish native
+F12 integration, full-catalog realtime performance or another platform's GPU behavior.
 
 ## Sources (Blender 4.x/5.x docs; confirmed on 5.1.2)
 gpu / gpu.types / gpu.shader API; GPUShaderCreateInfo + create_from_info; GLSL cross-compilation

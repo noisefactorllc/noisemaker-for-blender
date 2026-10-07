@@ -4,7 +4,8 @@
 
 The objective is a GPU port with immediate editor feedback and a supported Python API that integrates Noisemaker output into Blender scenes, animation, materials, geometry processing and compositing. An editable program must continue rendering while its output is used by other Blender systems. Manual rebaking cannot be the required authoring loop.
 
-This document contains a source audit, proposed architecture and remediation sequence. It was prepared on 2026-10-07 against local `main` at `a2c473e23aca9840608fb9b1216b3af69e20eff4`, with a clean worktree before this document was added. No renderer, UI, test, dependency, workflow or historical audit document was changed. No implementation or release is qualified by this plan.
+Sections 1–8 preserve the initial source audit, proposed architecture and remediation sequence.
+Section 9 records implementation and native verification performed after the plan. It was prepared on 2026-10-07 against local `main` at `a2c473e23aca9840608fb9b1216b3af69e20eff4`, with a clean worktree before this document was added. No renderer, UI, test, dependency, workflow or historical audit document was changed. No implementation or release is qualified by this plan.
 
 The recommended design retains the Python DSL compiler and Blender GPU backend, adds a persistent rendering session, and publishes each evaluated frame to a coherent floating-point Image. That Image is the baseline output path: Blender's Image Editor, material preview, compositor and Geometry Nodes already display or consume it. Direct GPU presentation in editor regions is an optimization, added only where task 0 measurements show Image publication cannot meet the preview gates. The same session API drives interactive use and deterministic rendering. Eevee and Cycles remain the scene renderers.
 
@@ -353,7 +354,7 @@ Measure the flagship/stateful workload separately at 512², 1024² and 1080p. Re
 
 Existing engine-free discovery remains as executed in section 2. New native harnesses should run in isolated preferences on a GPU-capable host with `--factory-startup --python-exit-code 1 --python <harness>` and a real supported graphics session. A test must terminate on its own, fail on missing assertions/output, record capabilities and avoid modifying user scenes/preferences.
 
-The future native suite should accept named groups for session/rectangular output, preview, timeline, consumers, inputs, final render, persistence and performance. Run focused groups during implementation, then the complete suite once integrated. Do not report these proposed harnesses as runnable now.
+The planned native suite should cover session/rectangular output, preview, timeline, consumers, inputs, final render, persistence and performance. Run focused groups during implementation, then the complete suite once integrated. At plan creation these harnesses did not exist; section 9 identifies the implemented entry points and the gates they actually exercised.
 
 ## 7. Priorities and decision gates
 
@@ -368,3 +369,78 @@ A separate RenderEngine, unverified GPU mutation of Image storage, permanent reb
 This review establishes the current bake-oriented integration and specific code-level gaps. It does not prove the public Image bridge can sustain the proposed rates, that shared-GPU Image writes are coherent, that native animation callbacks can safely prepare every frame, or that fresh background GPU execution works on a target host. Those are the first native proving tasks.
 
 The current implementation has more capability than the README's description of an entirely blocking bake, but less Blender integration than the broad “textures, materials, animated backgrounds” wording suggests. The remediation should preserve the functioning GPU/compiler core while making editor, scene and programmatic behavior explicit and testable.
+
+
+## 9. Implementation status
+
+Implementation started from plan commit `86f3c2ef95b4ea63d256dadef4f5d5c6efcf0aea` on
+2026-10-07. This is an implementation checkpoint, not qualification of the full requested outcome.
+The original task checklists remain open where their combined acceptance criteria are incomplete.
+
+### 9.1 Implemented paths
+
+- `api.py` and `runtime/session.py`: immutable programs, persistent GPU sessions, rectangular
+  dimensions, raw float output, borrowed handle invalidation, transactional source replacement,
+  typed scalar/define/resource updates and bounded stateful replay. Legacy square bake and
+  quantized parity capture retain their separate contracts.
+- `integration/lifecycle.py`, `scheduler.py`, `parameters.py` and the Live panels: timer-driven
+  source/parameter updates, last-good output on invalid source, pause/reset, evaluated scene
+  parameters, stable keyed bindings and explicit timeline/free-run modes. GPU work does not run
+  in render/frame handlers.
+- `integration/images.py` and consumer helpers: coherent float Images, explicit color/alpha roles,
+  stable ownership, material/world/compositor/Geometry Nodes stock Image nodes and preserved
+  unrelated links. Direct writes to Image-associated GPU textures were rejected as a universal
+  delivery mechanism because downstream consumers do not agree.
+- `runtime/inputs.py` and `integration/inputs.py`: declared Image, text and evaluated mesh inputs,
+  premultiplied media handling, exact-frame audio/MIDI snapshots and content-based CPU identities.
+  Movie/sequence inputs require an explicit exact-frame provider.
+- `integration/render.py`, `sequences.py` and `runtime/frame_cache.py`: explicit GPU preparation,
+  scripted scene animation, hashed binary float caches and CPU-only prepared scene rendering.
+  Cycles Persistent Data temporarily uses verified numeric EXR sequences; original Image nodes
+  and settings are restored after the render scope.
+- `integration/persistence.py`: persistent instance configuration, Image input references, stable
+  identities and optional save-time packing of the latest output. GPU resources are reconstructed.
+
+### 9.2 Native observations and verification
+
+The native host is the spare office Mac, Apple M4, Blender 5.1.2, Metal. Tests use disposable
+`--factory-startup` GUI processes under the host's shared resource lock; only prepared cache
+consumption uses `--background`. New GUI harnesses require `NM_HARNESS_AUTOCLOSE=1` before
+changing the disposable scene and closing their process. Evidence is retained on that host under
+`/Users/alex/.nmr/task0-20261007*` and mirrored during the run outside the checkout.
+
+| Gate | Result and scope |
+|---|---|
+| Persistent session | `test_render_session_native.py`: legacy square output comparison, 257×129 output, HDR/negative/premultiplied alpha publication, repeated-frame/handle checks and stateful sequential/jump/backward replay passed. |
+| Host inputs | `test_host_inputs.py`: asymmetric Image orientation/update, text change, evaluated mesh deformation, compiled `media()` with a 3×2 premultiplied source and audio-driven alpha change passed. |
+| Float consumer probe | `probe_consumer_coherence.py`: 11 assertions passed, including the analytic RGB delta `[.75, -1.75, 1.375]` in six Eevee/Cycles material/world and CPU/GPU compositor renders, both evaluated Geometry Nodes vertices, and managed node/link identity. Tolerance was .03; compositor alpha remained .60635. |
+| Scripted final rendering | `test_final_render.py`: six frame markers passed, covering Eevee, Cycles Persistent Data off, and Cycles Persistent Data on; temporary sequence nodes restored the original generated Image. |
+| Prepared background rendering | `test_frame_cache_background.py`: reopened the saved scene, forbade GPU session creation, rendered Cycles Persistent Data frames 2 then 1, checked their pixels and rejected changed source before renderer entry. |
+| Saved outputs/inputs | `test_save_reopen_live.py`: latest packed float output and persisted media Image input survived reopening. Undo/redo has not passed an actual GUI undo interaction. |
+| Live interaction before pacing correction | `test_live_interactive.py`: actual Text Editor source edits, static/multipass scalar changes, invalid-source recovery and pause/resume passed. Publication p95 was 47.3/61.8 ms; this does not measure edit-to-display latency. The shorter free-run segment averaged 25.79 displayed generations/s, below the 30 FPS target. |
+| Continuous multipass preview | `probe_live_integration.py` (`NM_PROBE_PHASE=continuous`): 60.039 seconds of actual `noise().bloom()` GPU evaluation at 512² produced 24.87 publications/s and 24.85 displayed generations/s. This misses the proposed ≥30/s gate. Shader compiles/file reads stayed at 5/8, with one surface and four pooled textures. |
+| Image transfer alone | A separate 60-second Image Editor probe displayed 46.8 generations/s at 512² with a 60 Hz requested timer. Float publication p95 was 0.386 ms and publication-to-draw p95 was 12.435 ms. It used precomputed pixels, not full graph evaluation. |
+
+### 9.3 Remaining acceptance boundaries
+
+Automatic F12/native animation is not qualified. Fresh GPU evaluation from `frame_change_post`
+crashed Blender's Metal context; real graph evaluation in `render_pre` crashed when native
+animation reached its second frame, including with Lock Interface. Suspension prevents live timer
+mutation during render but does not prepare fresh native frames. The Live panel warns about this
+boundary. Scripted preparation and cache consumption do not close automatic-render acceptance.
+
+Stateful Blender instances with keyed or driven parameters require historical parameter
+snapshots. Without those snapshots the integration rejects the request rather than applying the
+target frame's values to earlier simulation steps. Prepared-cache consumption of dependent live
+instances is rejected until historical upstream snapshots can be validated without first mutating
+Images; this also limits the Cycles Persistent Data scripted path. Fresh live/scripted
+evaluation with Persistent Data off orders producers before consumers. Direct instance sessions synchronize evaluated
+parameters at the current scene time; requests at a different scene time fail explicitly. Plain
+Program sessions can supply deterministic per-step parameter/input providers.
+
+The 60-second multipass preview gate is measured but unmet. Live material/compositor refresh, ten-minute resource
+stress, flagship workloads at 512²/1024²/1080p, full current rendered parity, clean package lifecycle,
+actual undo/redo, duplicated-scene consumer remapping and other operating systems/backends require separate evidence. Cross-window
+GPU frees are deferred until the owning window returns; permanent window loss remains a resource
+lifetime qualification limit. Multi-state motion blur remains rejected. These boundaries must not
+be presented as completed plan tasks or supported platform claims.

@@ -458,6 +458,19 @@ function transpileVertFrag (vertSrc, fragSrc) {
 const PROGRAM_OVERRIDES = {
 }
 
+function adaptHostInputSource (src, key) {
+  if (key !== 'synth/media/mediaInput') return src
+  // Blender Image GPU textures may already contain premultiplied RGB. Keep
+  // the reference's straight-alpha path as the default for other uploads.
+  const uniform = 'uniform vec2 imageSize;'
+  const conversion = 'return vec4(c.rgb * c.a, c.a);'
+  if (src.split(uniform).length !== 2 || src.split(conversion).length !== 2) {
+    throw new Error('mediaInput host alpha adaptation no longer matches reference source')
+  }
+  return src.replace(uniform, `${uniform}\nuniform int inputPremultiplied;`)
+    .replace(conversion, 'return inputPremultiplied != 0 ? c : vec4(c.rgb * c.a, c.a);')
+}
+
 function* enumeratePrograms (filter) {
   for (const ns of NAMESPACES) {
     const nsDir = join(EFFECTS_DIR, ns)
@@ -496,7 +509,8 @@ function main () {
     try {
       res = kind === 'vertfrag'
         ? transpileVertFrag(readFileSync(prog.vertPath, 'utf8'), readFileSync(prog.fragPath, 'utf8'))
-        : transpile(readFileSync(prog.path, 'utf8'), ns, name)
+        : transpile(adaptHostInputSource(readFileSync(prog.path, 'utf8'),
+            `${ns}/${name}/${program}`), ns, name)
     } catch (err) {
       flagged++; flags.push(`${ns}/${name}/${program}: THREW ${err?.message || err}`); continue
     }

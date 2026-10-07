@@ -545,16 +545,18 @@ def _resolve_pass_uniforms(render_pass, time, external_state):
     return effective
 
 
-def default_engine(size, time, frame, delta_time=0.0):
+def default_engine(size, time, frame, delta_time=0.0, *, width=None, height=None):
+    width = size if width is None else width
+    height = size if height is None else height
     return {
-        "resolution": [float(size), float(size)],
-        "fullResolution": [float(size), float(size)],
+        "resolution": [float(width), float(height)],
+        "fullResolution": [float(width), float(height)],
         "tileOffset": [0.0, 0.0],
         "time": float(time),
         "deltaTime": float(delta_time),
         "frame": int(frame),
-        "aspect": 1.0,
-        "aspectRatio": 1.0,
+        "aspect": float(width) / float(height),
+        "aspectRatio": float(width) / float(height),
         "renderScale": 1.0,
         "seed": 0,
     }

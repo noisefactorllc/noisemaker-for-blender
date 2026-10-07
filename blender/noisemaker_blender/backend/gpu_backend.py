@@ -14,6 +14,7 @@ import os
 import re
 import json
 import math
+from contextlib import contextmanager
 
 import gpu
 import numpy as np
@@ -44,6 +45,29 @@ _WARNED_UNIFORMS = set()
 _SCREEN_SPEC = {"width": "screen", "height": "screen"}
 _VOLUME_SURFACE = re.compile(r"^global_vol[0-7]$")
 _VOLUME_SURFACE_SPEC = {"width": 64, "height": 4096}
+_DEFERRED_FREE = []  # GPU wrappers remain alive until their owning window returns.
+
+
+def _window_context_token():
+    # This is an RNA pointer check. Never query gpu.state or an active framebuffer
+    # from a handler: Blender/Metal can crash before it raises a Python exception.
+    import bpy
+    window = getattr(bpy.context, "window", None)
+    if window is None:
+        raise RuntimeError("qualified Blender window GPU context required")
+    return window.as_pointer()
+
+
+@contextmanager
+def _preserve_gpu_state():
+    """Restore editor blend/viewport state after successful or failed GPU work."""
+    blend = gpu.state.blend_get()
+    viewport = gpu.state.viewport_get()
+    try:
+        yield
+    finally:
+        gpu.state.blend_set(blend)
+        gpu.state.viewport_set(*viewport)
 
 
 def _warn_uniform_once(name, ctype, value, detail="not set — value kept its shader default"):
@@ -91,22 +115,37 @@ class _Surface:
 
 
 class GpuBackend:
-    def __init__(self, shaders_root, size=256):
+    def __init__(self, shaders_root, size=256, *, width=None, height=None):
+        self.context_token = _window_context_token()
+        for owner in tuple(_DEFERRED_FREE):
+            if owner.context_token == self.context_token:
+                _DEFERRED_FREE.remove(owner)
+                owner.free()
         self.shaders_root = shaders_root
-        self.size = size
+        self.width = size if width is None else width
+        self.height = size if height is None else height
+        self.size = self.width  # square-API compatibility
         self.surfaces = {}        # surfaceName -> _Surface (offscreen pair), for global_*
         self.pool = {}            # phys_id -> GPUOffScreen, for pooled textures
         self.frame_read = {}      # surfaceName -> GPUOffScreen (current frame binding)
         self.frame_write = {}
         self._shader_cache = {}
         self._batch_cache = {}
+        self._ubo_cache = {}
         self._fb_cache = {}       # tuple(id(off)..) -> GPUFrameBuffer (MRT)
         self._vbuf_cache = {}     # count -> GPUVertBuf (attribute-less points draw)
+        self.external_inputs = {}
         # Queryable structured diagnostics for the historically-silent
         # unknown-dimension-form and unknown-format fallbacks.
         self.diagnostics = DiagnosticCollector()
         self._warned_dimension_fallbacks = set()
         self._warned_format_fallbacks = set()
+        self.metrics = {"shader_compiles": 0, "shader_file_reads": 0,
+                        "ubo_allocations": 0, "ubo_updates": 0}
+
+    def assert_context(self):
+        if _window_context_token() != self.context_token:
+            raise RuntimeError("GPU context changed; recreate the render session")
 
     def _diagnostic_state(self):
         """Lazily-create the diagnostic state triple (collector, dimension
@@ -143,9 +182,11 @@ class GpuBackend:
         return gpu.capabilities.max_texture_size_get()
 
     # ---- dimension resolution (reference/04 §resolveDimension) -------------
-    def resolve_dim(self, spec, uniforms):
+    def resolve_dim(self, spec, uniforms, axis="width"):
         _, warned_dim, _ = self._diagnostic_state()
-        return resolve_dimension(spec, self.size, uniforms,
+        screen_size = (getattr(self, "height", self.size) if axis == "height"
+                       else getattr(self, "width", self.size))
+        return resolve_dimension(spec, screen_size, uniforms,
                                  diagnostics=self.diagnostics,
                                  warned=warned_dim)
 
@@ -157,8 +198,13 @@ class GpuBackend:
 
     def _new_off(self, w, h, fmt):
         off = GPUOffScreen(w, h, format=fmt)
-        with off.bind():                      # reference/05: FBOs cleared once to (0,0,0,0) at creation
-            gpu.state.active_framebuffer_get().clear(color=(0.0, 0.0, 0.0, 0.0))
+        try:
+            with _preserve_gpu_state():
+                with off.bind():              # reference/05: clear once to transparent
+                    gpu.state.active_framebuffer_get().clear(color=(0.0, 0.0, 0.0, 0.0))
+        except Exception:
+            off.free()
+            raise
         return off
 
     # ---- surface/pool setup ----------------------------------------------
@@ -166,6 +212,8 @@ class GpuBackend:
         texspecs = dict(graph.textures)
         for p in graph.passes:
             for tid in list(p.get("inputs", {}).values()) + list(p.get("outputs", {}).values()):
+                if tid == "none":
+                    continue
                 # An unwritten volume surface keeps the native 64^3 atlas (64x4096);
                 # write3d gives exported volumes their producer's spec.
                 default = _VOLUME_SURFACE_SPEC if _VOLUME_SURFACE.match(tid) else _SCREEN_SPEC
@@ -174,8 +222,8 @@ class GpuBackend:
         # physical slot size — a small pooled texture renders only its corner of a shared slot).
         self.tex_dims = {}
         for tid, spec in texspecs.items():
-            self.tex_dims[tid] = (self.resolve_dim(spec.get("width", "screen"), uniforms),
-                                  self.resolve_dim(spec.get("height", "screen"), uniforms))
+            self.tex_dims[tid] = (self.resolve_dim(spec.get("width", "screen"), uniforms, "width"),
+                                  self.resolve_dim(spec.get("height", "screen"), uniforms, "height"))
         for tid, spec in texspecs.items():
             if tid.startswith("global_"):
                 name = tid[len("global_"):]
@@ -243,9 +291,15 @@ class GpuBackend:
                 s.read, s.write = s.write, s.read
 
     def _read(self, tid, graph):
+        if tid in self.external_inputs:
+            return self.external_inputs[tid]
         if tid.startswith("global_"):
             return self.frame_read[tid[len("global_"):]]
         return self.pool[self.pool_key[tid]]
+
+    def set_external_inputs(self, frames):
+        """Borrow caller-owned GPU textures for the next evaluation."""
+        self.external_inputs = dict(frames)
 
     def _write(self, tid, graph):
         if tid.startswith("global_"):
@@ -258,32 +312,82 @@ class GpuBackend:
             self.frame_read[n], self.frame_write[n] = self.frame_write[n], self.frame_read[n]
 
     def free(self):
+        try:
+            self.assert_context()
+        except RuntimeError:
+            self.abandon()
+            return
+        if self in _DEFERRED_FREE:
+            _DEFERRED_FREE.remove(self)
         for s in self.surfaces.values():
             s.read.free(); s.write.free()
         for off in self.pool.values():
             off.free()
         self.surfaces.clear(); self.pool.clear()
+        self.frame_read.clear(); self.frame_write.clear()
+        self._shader_cache.clear(); self._batch_cache.clear()
+        self._ubo_cache.clear()
+        self._fb_cache.clear(); self._vbuf_cache.clear()
+        self.__dict__.pop("tex_dims", None)
+        self.__dict__.pop("pool_key", None)
+        self.__dict__.pop("texture_aliases", None)
+        self.__dict__.pop("_live_ubo", None)
+        self.__dict__.pop("_live_block_ubo", None)
+        self.external_inputs.clear()
+
+    def abandon(self):
+        """Defer destruction when the GPU owner window is no longer current."""
+        if self not in _DEFERRED_FREE:
+            _DEFERRED_FREE.append(self)
 
     # ---- shaders ----------------------------------------------------------
     def compile(self, namespace, func, prog, defines):
         defines = defines or {}
+        rel = "blit" if namespace is None and func == "blit" else (
+            namespace + "/" + func + "/" + prog)
+        key = (rel, tuple(sorted(defines.items())))
+        cached = self._shader_cache.get(key)
+        if cached is not None:
+            return cached
         if namespace is None and func == "blit":
-            frag, desc, vert, rel = _BLIT_FRAG, _BLIT_DESC, None, "blit"
+            frag, desc, vert = _BLIT_FRAG, _BLIT_DESC, None
         else:
             base = os.path.join(self.shaders_root, namespace, func, prog)
-            frag = open(base + ".frag").read()
-            desc = json.load(open(base + ".createinfo.json"))
-            vert = open(base + ".vert").read() if desc.get("vertex") else None
-            rel = namespace + "/" + func + "/" + prog
-        key = (rel, tuple(sorted(defines.items())))
-        if key not in self._shader_cache:
-            if vert is not None:
-                shader = shader_build.build_shader_vf(vert, frag, desc, defines)
-            else:
-                shader = shader_build.build_shader(frag, desc, defines)
-            rev = {v: k for k, v in desc.get("uniformAliases", {}).items()}
-            self._shader_cache[key] = (shader, desc, rev)
+            with open(base + ".frag") as stream:
+                frag = stream.read()
+            with open(base + ".createinfo.json") as stream:
+                desc = json.load(stream)
+            vert = None
+            if desc.get("vertex"):
+                with open(base + ".vert") as stream:
+                    vert = stream.read()
+            self.metrics["shader_file_reads"] += 2 + int(vert is not None)
+        if vert is not None:
+            shader = shader_build.build_shader_vf(vert, frag, desc, defines)
+        else:
+            shader = shader_build.build_shader(frag, desc, defines)
+        rev = {v: k for k, v in desc.get("uniformAliases", {}).items()}
+        self._shader_cache[key] = (shader, desc, rev)
+        self.metrics["shader_compiles"] += 1
         return self._shader_cache[key]
+
+    def _update_ubo(self, shader, instance, packed):
+        cache = getattr(self, "_ubo_cache", None)
+        if cache is None:
+            cache = self._ubo_cache = {}
+        key = (id(shader), instance, len(packed))
+        data = Buffer('FLOAT', len(packed), packed)
+        ubo = cache.get(key)
+        if ubo is None:
+            ubo = GPUUniformBuf(data)
+            cache[key] = ubo
+            if hasattr(self, "metrics"):
+                self.metrics["ubo_allocations"] += 1
+        else:
+            ubo.update(data)
+            if hasattr(self, "metrics"):
+                self.metrics["ubo_updates"] += 1
+        return ubo
 
     def _fs_batch(self, shader):
         if shader not in self._batch_cache:
@@ -322,6 +426,13 @@ class GpuBackend:
                 # (zero) colors — gradient came out all-black. Normalize any
                 # sequence to exactly the declared component count.
                 n = {"VEC2": 2, "VEC3": 3, "VEC4": 4}.get(ctype)
+                if isinstance(value, str):
+                    if not re.fullmatch(r"#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?", value) or n not in (3, 4):
+                        raise TypeError("%s requires numeric components or a hex color" % name)
+                    value = [int(value[index:index + 2], 16) / 255.0
+                             for index in range(1, len(value), 2)]
+                    if n == 4 and len(value) == 3:
+                        value.append(1.0)
                 if n is not None and not isinstance(value, (str, bytes)) and hasattr(value, "__len__"):
                     value = list(value)
                     if len(value) > n:
@@ -352,7 +463,7 @@ class GpuBackend:
             # GPUUniformBuf stays alive through the draw that follows this call.
             values = {name: merged.get(rev.get(name, name)) for _, name in fields}
             packed = std140.pack(fields, values)
-            self._live_ubo = GPUUniformBuf(Buffer('FLOAT', len(packed), packed))
+            self._live_ubo = self._update_ubo(shader, std140.INSTANCE, packed)
             shader.uniform_block(std140.INSTANCE, self._live_ubo)
         else:
             for ctype, name in fields:
@@ -364,11 +475,11 @@ class GpuBackend:
             # packUniformsWithLayout). Hold the ref on self so it outlives the draw.
             slots = blk["members"][0][2]
             packed = std140.pack_with_layout(merged, blk["layout"], slots)
-            self._live_block_ubo = GPUUniformBuf(Buffer('FLOAT', len(packed), packed))
+            self._live_block_ubo = self._update_ubo(shader, blk["instance"], packed)
             shader.uniform_block(blk["instance"], self._live_block_ubo)
         for slot, stype, name in desc.get("samplers", []):
             tid = inputs.get(rev.get(name, name))
-            if tid is not None:
+            if tid is not None and tid != "none":
                 shader.uniform_sampler(name, self._read(tid, graph).texture_color)
 
     # ---- pass execution ---------------------------------------------------
@@ -380,7 +491,8 @@ class GpuBackend:
             # maps onto the whole target, so the coordinate divides by the target's
             # size (a volume atlas is not screen-sized).
             target = next(iter(p.get("outputs", {}).values()), None)
-            w, h = self.tex_dims.get(target, (self.size, self.size))
+            w, h = self.tex_dims.get(target, (getattr(self, "width", self.size),
+                                              getattr(self, "height", self.size)))
             merged = {"resolution": [float(w), float(h)]}
             inputs = {"src": p["inputs"]["src"]}
         elif pt == "effect":
@@ -389,14 +501,18 @@ class GpuBackend:
             merged.update(p.get("uniforms", {}))
             inputs = p.get("inputs", {})
         else:
-            return
+            raise ValueError("unsupported pass type %r" % pt)
         mode = p.get("drawMode")
         if mode == "points":
             self._render_points(compiled, merged, inputs, p, graph, per_particle=1)
         elif mode == "billboards":
             self._render_points(compiled, merged, inputs, p, graph, per_particle=6, tris=True)
-        else:
+        elif mode == "triangles":
+            self._render_triangles(compiled, merged, inputs, p, graph)
+        elif mode is None:
             self._render(compiled, merged, inputs, p, graph)
+        else:
+            raise ValueError("unsupported draw mode %r" % mode)
 
     def _resolve_outputs(self, desc, p, graph):
         """Resolve output offscreens in fragmentOut-slot order (MRT-aware), plus the LOGICAL
@@ -425,7 +541,8 @@ class GpuBackend:
         if not offs:                                   # blit / unnamed single output
             prim = next(iter(out_map.values()))
             offs = [self._write(prim, graph)]
-        lw, lh = self.tex_dims.get(prim, (self.size, self.size))
+        lw, lh = self.tex_dims.get(prim, (getattr(self, "width", self.size),
+                                          getattr(self, "height", self.size)))
         return offs, lw, lh
 
     @staticmethod
@@ -479,21 +596,17 @@ class GpuBackend:
         vx, vy, vw, vh = self._resolve_pass_viewport_box(p, merged, w, h)
         mrt = len(write_offs) > 1
         ctx = self._mrt_fb(write_offs).bind() if mrt else write_offs[0].bind()
-        with ctx:
-            if p.get("clear"):
-                gpu.state.active_framebuffer_get().clear(color=(0.0, 0.0, 0.0, 0.0))
-            gpu.state.blend_set(self._blend_mode(p))
-            shader.bind()
-            self._bind_inputs(shader, desc, rev, merged, inputs, graph)
-            # Very tall viewports lose their leftmost pixel column on the Metal
-            # backend (a 64x4096 atlas draw silently skipped x=0 on both MRT and
-            # single-target offscreens; a <=2048-tall viewport covers every
-            # column). Draw in vertical slabs: gl_FragCoord stays window-space,
-            # so slabbed draws are semantically identical to the single draw.
-            for slab_y, slab_h in slab_ranges(vy, vh):
-                gpu.state.viewport_set(vx, slab_y, vw, slab_h)
-                self._fs_batch(shader).draw(shader)
-            gpu.state.blend_set('NONE')
+        with _preserve_gpu_state():
+            with ctx:
+                if p.get("clear"):
+                    gpu.state.active_framebuffer_get().clear(color=(0.0, 0.0, 0.0, 0.0))
+                gpu.state.blend_set(self._blend_mode(p))
+                shader.bind()
+                self._bind_inputs(shader, desc, rev, merged, inputs, graph)
+                # Slab tall Metal viewports without changing gl_FragCoord.
+                for slab_y, slab_h in slab_ranges(vy, vh):
+                    gpu.state.viewport_set(vx, slab_y, vw, slab_h)
+                    self._fs_batch(shader).draw(shader)
 
     def _render_points(self, compiled, merged, inputs, p, graph, per_particle=1, tris=False):
         shader, desc, rev = compiled
@@ -504,16 +617,46 @@ class GpuBackend:
         src = inputs.get("xyzTex") or next(iter(inputs.values()))
         src_off = self._read(src, graph)
         count = src_off.width * src_off.height * per_particle
-        with target.bind():
-            if p.get("clear"):
-                gpu.state.active_framebuffer_get().clear(color=(0.0, 0.0, 0.0, 0.0))
-            gpu.state.viewport_set(vx, vy, vw, vh)
-            gpu.state.blend_set(self._blend_mode(p))
-            shader.bind()
-            self._bind_inputs(shader, desc, rev, merged, inputs, graph)
-            batch = GPUBatch(type='TRIS' if tris else 'POINTS', buf=self._points_vbuf(count))
-            batch.draw(shader)
-            gpu.state.blend_set('NONE')
+        with _preserve_gpu_state():
+            with target.bind():
+                if p.get("clear"):
+                    gpu.state.active_framebuffer_get().clear(color=(0.0, 0.0, 0.0, 0.0))
+                gpu.state.viewport_set(vx, vy, vw, vh)
+                gpu.state.blend_set(self._blend_mode(p))
+                shader.bind()
+                self._bind_inputs(shader, desc, rev, merged, inputs, graph)
+                batch = GPUBatch(type='TRIS' if tris else 'POINTS', buf=self._points_vbuf(count))
+                batch.draw(shader)
+
+    def _render_triangles(self, compiled, merged, inputs, p, graph):
+        shader, desc, rev = compiled
+        offs, w, h = self._resolve_outputs(desc, p, graph)
+        if len(offs) != 1:
+            raise ValueError("mesh triangles require one color target")
+        source = self._read(inputs["meshPositions"], graph)
+        count = getattr(source, "vertex_count", None)
+        if count is None:
+            raise ValueError("mesh position input has no triangle vertex count")
+        normal = self._read(inputs["meshNormals"], graph)
+        if getattr(normal, "vertex_count", None) != count:
+            raise ValueError("mesh position/normal vertex counts differ")
+        vx, vy, vw, vh = self._resolve_pass_viewport_box(p, merged, w, h)
+        old_depth_test = gpu.state.depth_test_get()
+        old_depth_mask = gpu.state.depth_mask_get()
+        try:
+            with _preserve_gpu_state():
+                with offs[0].bind():
+                    gpu.state.active_framebuffer_get().clear(depth=1.0)
+                    gpu.state.depth_test_set("LESS")
+                    gpu.state.depth_mask_set(True)
+                    gpu.state.viewport_set(vx, vy, vw, vh)
+                    gpu.state.blend_set(self._blend_mode(p))
+                    shader.bind()
+                    self._bind_inputs(shader, desc, rev, merged, inputs, graph)
+                    GPUBatch(type='TRIS', buf=self._points_vbuf(count)).draw(shader)
+        finally:
+            gpu.state.depth_test_set(old_depth_test)
+            gpu.state.depth_mask_set(old_depth_mask)
 
     def sync(self):
         """Force GPU command submission/completion. Blender batches draws within a single
@@ -534,10 +677,16 @@ class GpuBackend:
 
     # ---- readback ---------------------------------------------------------
     def read_surface(self, name):
+        arr = self.read_surface_float(name)
+        return np.round(np.clip(arr, 0.0, 1.0) * 255.0).astype(np.uint8)
+
+    def read_surface_float(self, name):
+        """Top-down scene-linear float32 pixels; preserve HDR and negative values."""
         off = self.frame_read[name]
         w, h = off.width, off.height
-        with off.bind():
-            buf = gpu.state.active_framebuffer_get().read_color(0, 0, w, h, 4, 0, 'FLOAT')
+        with _preserve_gpu_state():
+            with off.bind():
+                buf = gpu.state.active_framebuffer_get().read_color(0, 0, w, h, 4, 0, 'FLOAT')
         buf.dimensions = w * h * 4
         arr = np.array(buf, dtype=np.float32).reshape(h, w, 4)[::-1]
-        return np.round(np.clip(arr, 0.0, 1.0) * 255.0).astype(np.uint8)
+        return arr

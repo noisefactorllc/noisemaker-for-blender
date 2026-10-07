@@ -38,7 +38,7 @@ bl_info = {
 
 # Submodules registered in dependency order: the PropertyGroup + Scene pointer first,
 # then the operator that consumes settings, then the node tree and panels that drive it.
-_MODULES = ("props", "ops", "nodes", "ui")
+_MODULES = ("props", "ops", "nodes", "ui", "integration.lifecycle")
 
 
 def register():

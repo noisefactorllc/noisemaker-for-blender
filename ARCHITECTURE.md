@@ -57,6 +57,33 @@ reference revision this checkout is synchronized to is pinned in `parity/referen
   through its stock Image node. The package `__init__.py` imports no `bpy` at module load, so the
   compiler and runtime tests run under plain Python.
 
+## Persistent Blender integration
+
+`api.py` exposes immutable `Program` snapshots, `RenderSession`, `FrameRequest` and borrowed
+`OutputHandle` objects without importing Blender at facade import time. `runtime/session.py`
+retains backend resources across frames, validates explicit input/draw contracts and supports
+independent width/height. Float readback is separate from the legacy quantized capture path.
+`runtime/clock.py` maps scene frames and subframes to seconds/loop time; bounded replay retains
+the last complete output while stateful seeks catch up. GPU checkpoints are not assumed portable.
+
+`integration/lifecycle.py` and `scheduler.py` own timer-driven live instances. Callbacks mark or
+suspend work; they do not evaluate GPU graphs in frame/render handlers. Stable keyed custom
+properties preserve bindings across source edits, with unmatched bindings retained as orphans.
+`integration/images.py` publishes float pixels to an instance-owned Image, and consumer helpers
+create stock Image nodes without replacing unrelated links. `integration/inputs.py` supplies
+Image, text and evaluated mesh adapters through the declared input names.
+
+`integration/render.py` supplies explicit preparation, scripted animation and CPU-only cache
+consumption. `runtime/frame_cache.py` stores binary float arrays with hashed scalar provenance.
+`integration/sequences.py` temporarily routes Image users through numeric EXR sequences when
+Cycles Persistent Data retains generated-image textures. File persistence stores configuration,
+Image references and optionally packed pixels, never GPU wrappers.
+
+Fresh GPU evaluation from Blender's native animation callbacks remains unqualified after a
+Metal framebuffer crash. The scripted path does not establish automatic F12/native animation,
+all-platform support, or the complete performance targets. See
+[the implementation status](docs/REALTIME-INTEGRATION-PLAN.md#9-implementation-status).
+
 ## Out of scope
 
 - Audio and MIDI device input. The `scope` and `spectrum` programs read audio arrays and are not

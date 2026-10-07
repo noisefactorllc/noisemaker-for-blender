@@ -5,6 +5,10 @@
       "imageSize"
     ],
     [
+      "INT",
+      "inputPremultiplied"
+    ],
+    [
       "VEC2",
       "resolution"
     ],
@@ -64,7 +68,7 @@
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 64,
+  "std140Bytes": 80,
   "ubo": false,
   "notes": []
 }

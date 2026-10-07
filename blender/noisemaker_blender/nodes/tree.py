@@ -36,6 +36,7 @@ class NoisemakerProgramNode(Node):
     frames: props._frames()
     timestep: props._timestep()
     image_name: props._image_name()
+    live_instance_id: bpy.props.StringProperty(name="Live Instance ID", default="")
 
     @classmethod
     def poll(cls, ntree):
@@ -68,6 +69,29 @@ class NoisemakerProgramNode(Node):
         op.frames = self.frames
         op.timestep = self.timestep
         op.image_name = self.image_name
+        scene = context.scene
+        live = next((item for item in scene.noisemaker_instances
+                     if item.instance_id == self.live_instance_id), None) if scene else None
+        if live is None:
+            start = layout.operator("noisemaker.live_add", text="Start Live", icon='PLAY')
+            start.source_mode = self.source_mode
+            start.text_name = self.text.name if self.text else ""
+            start.filepath = self.filepath
+            start.preview_width = self.size
+            start.preview_height = self.size
+            start.image_name = self.image_name
+            start.node_tree_name = self.id_data.name
+            start.node_name = self.name
+        else:
+            row = layout.row(align=True)
+            toggle = row.operator("noisemaker.live_toggle",
+                                  text="Resume" if live.paused else "Pause", icon='PLAY' if live.paused else 'PAUSE')
+            toggle.instance_id = live.instance_id
+            reset = row.operator("noisemaker.live_reset", text="Reset", icon='FILE_REFRESH')
+            reset.instance_id = live.instance_id
+            layout.prop(live, "output_image", text="Live Image")
+            if live.last_error:
+                layout.label(text=live.last_error[:90], icon='ERROR')
 
 
 def _add_menu(self, context):
