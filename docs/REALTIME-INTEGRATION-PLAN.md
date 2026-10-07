@@ -399,7 +399,10 @@ The original task checklists remain open where their combined acceptance criteri
   Cycles Persistent Data temporarily uses verified numeric EXR sequences; original Image nodes
   and settings are restored after the render scope.
 - `integration/persistence.py`: persistent instance configuration, Image input references, stable
-  identities and optional save-time packing of the latest output. GPU resources are reconstructed.
+  identities and optional save-time packing of the latest output. Output references store an Image UUID
+  and resolve it against the instance owner; consumer nodes retain their ordinary Image links.
+  Legacy local output pointer properties migrate on load/undo/redo, before timer-driven evaluation,
+  and before save-time packing. GPU resources are reconstructed.
 
 ### 9.2 Native observations and verification
 
@@ -414,15 +417,16 @@ changing the disposable scene and closing their process. Evidence is retained on
 | Persistent session | `test_render_session_native.py`: legacy square output comparison, 257×129 output, HDR/negative/premultiplied alpha publication, repeated-frame/handle checks and stateful sequential/jump/backward replay passed. |
 | Host inputs | `test_host_inputs.py`: asymmetric Image orientation/update, text change, evaluated mesh deformation, compiled `media()` with a 3×2 premultiplied source and audio-driven alpha change passed. |
 | Float consumer probe | `probe_consumer_coherence.py`: 11 assertions passed, including the analytic RGB delta `[.75, -1.75, 1.375]` in six Eevee/Cycles material/world and CPU/GPU compositor renders, both evaluated Geometry Nodes vertices, and managed node/link identity. Tolerance was .03; compositor alpha remained .60635. |
-| Scripted final rendering | `test_final_render.py` at exact `d823bb1`: six frame markers passed, covering Eevee, Cycles Persistent Data off, and Cycles Persistent Data on; temporary sequence nodes restored the original generated Image. |
-| Prepared background rendering | `test_frame_cache_background.py` at exact `d823bb1`: reopened the saved scene, forbade GPU session creation, rendered Cycles Persistent Data frames 2 then 1, checked their pixels and rejected changed source before renderer entry. The cache directory and files were read-only; the inventory and SHA-256 hashes stayed unchanged, and original modes were restored. |
-| Saved outputs/inputs | `test_save_reopen_live.py`: latest packed float output and persisted media Image input survived reopening. Undo/redo has not passed an actual GUI undo interaction. |
+| Scripted final rendering | `test_final_render.py` at `d2dc7ab`: six frame markers passed, covering Eevee, Cycles Persistent Data off, and Cycles Persistent Data on; temporary sequence nodes restored the original generated Image. |
+| Prepared background rendering | `test_frame_cache_background.py` at `d2dc7ab`: reopened the saved scene, forbade GPU session creation, rendered Cycles Persistent Data frames 2 then 1, checked their pixels and rejected changed source before renderer entry. The cache directory and files were read-only; the inventory and SHA-256 hashes stayed unchanged, and original modes were restored. |
+| Saved outputs/inputs | At `d2dc7ab`, three independent tracked create → undo/redo → save/reopen sequences passed. Each forced copied-Scene output publication between undo and redo, checked 16×8/64×8 pixels and fresh sessions, drew the Live panel, and verified scalar Image UUID references without a saved output pointer. No ID-user warning or crash occurred. Old `a2d0257` files also migrated and reopened correctly, including an immediate save before the first live timer. Earlier `a2d0257` and intermediate candidates crashed in nested Image-pointer conversion or reported Image user undercounts; those failures are retained. A timer-paused stress probe passed after the reference-storage change. This is measured lifecycle coverage, not a proof for every undo history. |
 | Live interaction before pacing correction | `test_live_interactive.py`: actual Text Editor source edits, static/multipass scalar changes, invalid-source recovery and pause/resume passed. Publication p95 was 47.3/61.8 ms; this does not measure edit-to-display latency. The shorter free-run segment averaged 25.79 displayed generations/s, below the 30 FPS target. |
 | Continuous multipass preview | `probe_live_integration.py` (`NM_PROBE_PHASE=continuous`): 60.039 seconds of actual `noise().bloom()` GPU evaluation at 512² produced 24.87 publications/s and 24.85 displayed generations/s. This misses the proposed ≥30/s gate. Shader compiles/file reads stayed at 5/8, with one surface and four pooled textures. |
 | Image transfer alone | A separate 60-second Image Editor probe displayed 46.8 generations/s at 512² with a 60 Hz requested timer. Float publication p95 was 0.386 ms and publication-to-draw p95 was 12.435 ms. It used precomputed pixels, not full graph evaluation. |
 | Ten-minute multipass preview | The staged `task0-20261007-continuous-600` probe completed 600.018 s with 18,100 publications and presentations. Aggregate rate was 30.166/s, but the worst sliding 60-second window was 23.75/s, so sustained acceptance remains unmet. Shader compiles/file reads stayed at 5/8, surface/pool counts at 1/4, and process RSS rose and was reclaimed (653,216 KB start, 719,616 KB peak, 586,208 KB end). This establishes bounded resources for that measured snapshot, not whole-catalog realtime performance. |
 | Native shader catalog | The `e750b80` runtime plus corrected declared-variant harness executed all 309 shader programs: 307 compiled programs, 317 compiled variants, two known unsupported audio programs (`scope`, `spectrum`) and zero unexpected failures. Unsupported programs remain in the denominator. |
-| Engine-free and distribution checks | At `d823bb1`, `scripts/test` passed all 352 unit tests, all 16 PNG decoder tests and all compiler parity gates. The real export-kit builder packaged 891 tracked add-on files, and all 22 Blender export-kit contract tests passed. That exact ZIP also installed, enabled, disabled and unregistered successfully in an isolated Blender 5.1.2 GUI process. |
+| Engine-free and distribution checks | At `d2dc7ab`, `scripts/test` passed all 367 unit tests, all 16 PNG decoder tests and all compiler parity gates. The real export-kit builder packaged 891 tracked add-on files, and all 22 Blender export-kit contract tests passed. The final ZIP (SHA-256 `9e39e6be026ca18f5ed84a603a878c25f4e5595962f5b396af290f36274b40da`) installed, enabled, registered and disabled successfully in an isolated Blender 5.1.2 GUI process. |
+| Frozen keyed replay | `test_timeline.py` at exact `05ee79c` captured evaluated keyframes, restored Scene time, and matched sequential frames 1–20 against seeks 1→20→5→20 at 30000/1001 FPS. Keyed history changed raw pixels versus constant history by .0561523. Native driver capture and current-instance animated final rendering remain unqualified. |
 | Full rendered parity | The exact `e750b80` candidate and independently verified pinned reference `8fa067f6afec1f091272a8fae7b0b40d78f7b04d` completed all 116 cases: 1 exact, 49 strict, 8 near, 58 fail, zero missing/deferred/skipped. All candidate and reference pixels have hashes/provenance. The exact pre-change `c18336a` source, rendered against the same byte-identical goldens, produced identical grades and byte-identical candidate PNGs for all 116 cases. Thus historical output is preserved, while the existing numerical parity gate remains failed. |
 
 ### 9.3 Remaining acceptance boundaries
@@ -455,7 +459,37 @@ resource sizes and render-pass conditions remain rejected.
 The sustained multipass preview gate is measured but unmet. The ten-minute run gives bounded-resource
 evidence for its measured snapshot. Live material/compositor refresh, flagship workloads at
 512²/1024²/1080p, passing full rendered parity,
-actual undo/redo, duplicated-scene consumer remapping and other operating systems/backends require separate evidence. Cross-window
+undo histories beyond the measured repetitions, duplicated-scene consumer remapping and other
+operating systems/backends require separate evidence. Linked legacy output references cannot be
+migrated and are rejected. Cross-window
 GPU frees are deferred until the owning window returns; permanent window loss remains a resource
 lifetime qualification limit. Multi-state motion blur remains rejected. These boundaries must not
 be presented as completed plan tasks or supported platform claims.
+
+### 9.4 Native render integration decision
+
+The proposed next architecture is a Blender source bridge, retaining Eevee and Cycles. This is
+a design direction requiring approval, not an implemented or qualified path. A supported Python
+handler cannot supply the needed abort result: Blender prints handler exceptions and discards
+successful return values. The still-frame `render_pre` callback also precedes render dependency
+graph initialization. [Handler dispatch](https://github.com/blender/blender/blob/v5.1.2/source/blender/python/intern/bpy_app_handlers.cc#L435-L455),
+[still-frame ordering](https://github.com/blender/blender/blob/v5.1.2/source/blender/render/intern/pipeline.cc#L1813-L1828).
+
+The proposed gate sits in the engine-rendered view-layer path after `engine_depsgraph_init` and
+before the engine's `update`/`render` calls. It receives the actual render dependency graph,
+evaluated Scene, ViewLayer, frame/subframe and required Image generation; a viewport graph from
+`bpy.context` cannot substitute. This location and API shape are an engineering proposal inferred
+from the source, not a supported extension point. [Engine synchronization](https://github.com/blender/blender/blob/v5.1.2/source/blender/render/intern/engine.cc#L810-L875).
+
+Its result must distinguish ready, cancelled and failed. Non-ready results must release locks,
+prevent engine synchronization and file writes, preserve cancellation cleanup, and propagate an
+error through both synchronous and asynchronous jobs. GPU preparation requires a proven owning-
+context handoff; the render worker must not call the current Python GPU session directly.
+Persistent Data must consume the exact newly published generation. Those are acceptance
+requirements, not assumptions about a native implementation.
+
+A maintained source build would need version/platform qualification, starting with the existing
+Blender 5.1.2/Apple Metal test target. An upstream API addition is the alternative to maintaining
+that patch. Neither route is implemented by this add-on checkpoint, and neither by itself fixes
+the measured preview-rate shortfall. The public-API implementation must not be presented as the
+full requested realtime/automatic-render outcome.

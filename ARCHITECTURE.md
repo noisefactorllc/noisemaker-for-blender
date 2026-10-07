@@ -77,7 +77,11 @@ Image, text and evaluated mesh adapters through the declared input names.
 consumption. `runtime/frame_cache.py` stores binary float arrays with hashed scalar provenance.
 `integration/sequences.py` temporarily routes Image users through numeric EXR sequences when
 Cycles Persistent Data retains generated-image textures. File persistence stores configuration,
-Image references and optionally packed pixels, never GPU wrappers.
+Image input references and optionally packed pixels, never GPU wrappers. Live output references
+store scalar Image UUIDs and resolve them against instance ownership; the public `output_image`
+property returns the actual Image. This avoids nested output Image pointers that crashed native
+undo/redo and save. Existing local output pointer properties migrate on load/undo/redo, before
+timer-driven evaluation, and before save-time packing.
 
 Fresh GPU evaluation from Blender's native animation callbacks remains unqualified after a
 Metal framebuffer crash. The scripted path does not establish automatic F12/native animation,
