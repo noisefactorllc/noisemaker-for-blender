@@ -166,6 +166,85 @@ class FinalPolicyTests(unittest.TestCase):
         with self.assertRaisesRegex(RenderPreparationError, 'motion blur'):
             render_animation(scene, 1, 2, registry=Registry(), renderer=lambda scene: {'FINISHED'})
 
+    def test_prepared_sequence_keeps_cache_read_only_and_cleans_up_after_cancel(self):
+        from unittest.mock import patch
+        import numpy as np
+        import tempfile
+        from noisemaker_blender.integration import sequences
+
+        pixels = np.array([[[.25, .5, .75, 1.]]], dtype=np.float32)
+        identity = {'frame': 1, 'alpha_mode': 'PREMUL'}
+        with tempfile.TemporaryDirectory() as cache_dir:
+            cache_path = pathlib.Path(cache_dir)
+            original = object()
+            user = types.SimpleNamespace(frame_start=8, frame_duration=9,
+                                         frame_offset=2, use_auto_refresh=False,
+                                         use_cyclic=True)
+            saved_user = dict(vars(user))
+            node = types.SimpleNamespace(image=original, image_user=user)
+            tree = types.SimpleNamespace(nodes=[node], library=None)
+            temporary_paths = []
+            removed_images = []
+
+            class Pixels:
+                def __init__(self, values):
+                    self.values = np.asarray(values, dtype=np.float32)
+                def foreach_set(self, values):
+                    self.values = np.asarray(values, dtype=np.float32).copy()
+                def foreach_get(self, values):
+                    values[:] = self.values
+
+            class Image:
+                def __init__(self, values):
+                    self.size = (1, 1)
+                    self.pixels = Pixels(values)
+                    self.colorspace_settings = types.SimpleNamespace(name='')
+                    self.alpha_mode = 'PREMUL'
+                    self.source = 'FILE'
+                    self.filepath_raw = ''
+                def update(self):
+                    pass
+                def save(self):
+                    path = pathlib.Path(self.filepath_raw)
+                    self_test.assertNotEqual(path.parent, cache_path)
+                    path.write_bytes(self.pixels.values.tobytes())
+
+            class Images:
+                def new(self, *args, **kwargs):
+                    return Image(np.zeros(4, dtype=np.float32))
+                def load(self, path, **kwargs):
+                    return Image(np.frombuffer(pathlib.Path(path).read_bytes(), dtype=np.float32))
+                def remove(self, image):
+                    removed_images.append(image)
+
+            self_test = self
+            bpy = types.SimpleNamespace(data=types.SimpleNamespace(images=Images()))
+            config = types.SimpleNamespace(output_image=original)
+            registry = types.SimpleNamespace(get=lambda _scene, _id: types.SimpleNamespace(config=config))
+            prepared = PreparedRender(cache_dir, ({'instance_id': 'one', 'identity': identity},))
+            real_temporary_directory = tempfile.TemporaryDirectory
+
+            def temporary_directory(*args, **kwargs):
+                result = real_temporary_directory(*args, **kwargs)
+                temporary_paths.append(pathlib.Path(result.name))
+                return result
+
+            with patch.dict(sys.modules, {'bpy': bpy}), \
+                    patch.object(PreparedRender, 'validate', return_value=True), \
+                    patch.object(sequences.FrameCache, 'read', return_value=pixels), \
+                    patch.object(sequences, '_trees', return_value=(tree,)), \
+                    patch.object(tempfile, 'TemporaryDirectory', side_effect=temporary_directory):
+                with self.assertRaisesRegex(RuntimeError, 'cancelled'):
+                    with sequences.prepared_sequences(Scene(), prepared, registry):
+                        self.assertIsNot(node.image, original)
+                        raise RuntimeError('cancelled')
+            self.assertIs(node.image, original)
+            self.assertEqual(vars(user), saved_user)
+            self.assertEqual(tuple(cache_path.iterdir()), ())
+            self.assertEqual(len(temporary_paths), 1)
+            self.assertFalse(temporary_paths[0].exists())
+            self.assertGreaterEqual(len(removed_images), 3)
+
 
 if __name__ == '__main__':
     unittest.main()

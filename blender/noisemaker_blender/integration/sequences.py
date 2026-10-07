@@ -7,6 +7,7 @@ scope and restored afterwards; the owned live Image and all node links survive.
 from contextlib import contextmanager
 from pathlib import Path
 import hashlib
+import tempfile
 import numpy as np
 
 from ..runtime.frame_cache import FrameCache
@@ -42,6 +43,7 @@ def prepared_sequences(scene, prepared, registry):
         groups.setdefault(entry['instance_id'], []).append(entry['identity'])
     replacements = []
     temporary_images = []
+    temporary_directory = tempfile.TemporaryDirectory(prefix='noisemaker-exr-')
     try:
         for instance_id, entries in groups.items():
             entries.sort(key=lambda item: item['frame'])
@@ -71,7 +73,7 @@ def prepared_sequences(scene, prepared, registry):
                         raise RenderPreparationError('A prepared sequence cannot change dimensions')
                     writer.pixels.foreach_set(np.ascontiguousarray(pixels[::-1]).reshape(-1))
                     writer.update()
-                    path = Path(prepared.directory) / ('%s_%06d.exr' % (stem, index))
+                    path = Path(temporary_directory.name) / ('%s_%06d.exr' % (stem, index))
                     writer.filepath_raw = str(path)
                     writer.save()
                     # Inspect the saved transport, not just the source pixel array.
@@ -114,13 +116,18 @@ def prepared_sequences(scene, prepared, registry):
                     user.use_cyclic = False
         yield
     finally:
-        for node, original, saved in reversed(replacements):
+        try:
+            for node, original, saved in reversed(replacements):
+                try:
+                    node.image = original
+                    for field, value in saved.items():
+                        setattr(node.image_user, field, value)
+                except ReferenceError:
+                    # A caller may remove a consumer during a canceled scripted render.
+                    pass
+        finally:
             try:
-                node.image = original
-                for field, value in saved.items():
-                    setattr(node.image_user, field, value)
-            except ReferenceError:
-                # A caller may remove a consumer during a canceled scripted render.
-                pass
-        for image in temporary_images:
-            bpy.data.images.remove(image)
+                for image in temporary_images:
+                    bpy.data.images.remove(image)
+            finally:
+                temporary_directory.cleanup()
