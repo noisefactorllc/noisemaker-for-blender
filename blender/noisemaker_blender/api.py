@@ -4,6 +4,7 @@ from .runtime.session import Program, RenderSession
 from .runtime.output import OutputHandle, OutputDescriptor, StaleOutputError
 from .runtime.clock import FrameRequest
 from .integration.render import RenderPolicy, PreparedRender
+from .integration.parameters import PreparedParameterSnapshots
 
 
 def _instance_scene(instance):
@@ -67,6 +68,9 @@ def compile(source):
 def open_session(program, *, size=None, width=None, height=None,
                  backend_factory=None, shaders_root=None):
     instance = None
+    prepared = program if isinstance(program, PreparedParameterSnapshots) else None
+    if prepared is not None:
+        program = prepared.program
     if not isinstance(program, Program) and getattr(program, "instance_id", None):
         from .integration.persistence import source_for_instance
         instance = program
@@ -84,6 +88,16 @@ def open_session(program, *, size=None, width=None, height=None,
     instance_values = _instance_values(instance, program) if instance is not None else None
     session = RenderSession(program, size=size, width=width, height=height,
                             backend_factory=backend_factory, shaders_root=shaders_root)
+    if prepared is not None:
+        try:
+            compiled_values = program.parameter_values()
+            for key, value in prepared.static_values:
+                if compiled_values.get(key) != value:
+                    session.set_parameter(key, value)
+            session.set_parameter_snapshot_provider(prepared)
+        except Exception:
+            session.close()
+            raise
     if instance is not None:
         try:
             compiled_values = program.parameter_values()
@@ -168,6 +182,12 @@ def create_instance(scene, program, name="Noisemaker"):
     return instance
 
 
+def prepare_parameter_snapshots(instance, request, *, max_steps=64):
+    """Freeze bounded evaluated Scene parameters for a Program replay session."""
+    from .integration.parameters import prepare_parameter_snapshots as prepare
+    return prepare(instance, request, max_steps=max_steps)
+
+
 def attach_material(instance, material, image):
     from .integration.materials import attach_material as attach
     return attach(instance, material, image)
@@ -205,6 +225,7 @@ def render_prepared(scene, prepared, frames=None, policy=None, *, registry=None,
 
 
 __all__ = ["Program", "RenderSession", "FrameRequest", "RenderPolicy", "PreparedRender",
+           "PreparedParameterSnapshots", "prepare_parameter_snapshots",
            "OutputHandle",
            "OutputDescriptor", "StaleOutputError", "compile", "open_session",
            "set_parameter", "bind_input", "set_external_state", "create_instance", "attach_material",

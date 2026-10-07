@@ -3,11 +3,160 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
 import math
 import re
 from typing import Mapping
 
 from ..compiler.lang_data import STD_ENUMS
+
+
+def _snapshot_policy(request):
+    return (request.fps, request.fps_base, request.origin_frame,
+            request.loop_seconds, request.offset_seconds,
+            request.fixed_step_seconds, request.mode)
+
+
+def _frozen_parameter_value(value):
+    if isinstance(value, (list, tuple)):
+        return tuple(_frozen_parameter_value(item) for item in value)
+    if isinstance(value, Mapping):
+        raise TypeError("parameter snapshots require scalar or vector values")
+    return value
+
+
+@dataclass(frozen=True)
+class PreparedParameterSnapshots:
+    """Frozen evaluated Blender values; independent of later scene mutations."""
+
+    program: object
+    policy: tuple
+    animated_keys: tuple
+    static_values: tuple
+    steps: tuple
+
+    def __post_init__(self):
+        object.__setattr__(self, "policy", tuple(self.policy))
+        object.__setattr__(self, "animated_keys", tuple(self.animated_keys))
+        object.__setattr__(self, "static_values", tuple(
+            (key, _frozen_parameter_value(value)) for key, value in self.static_values))
+        object.__setattr__(self, "steps", tuple(tuple(
+            (key, _frozen_parameter_value(value)) for key, value in step)
+            for step in self.steps))
+
+    def source_identity(self):
+        material = (self.program.source_id, self.policy, self.animated_keys,
+                    self.static_values, self.steps)
+        encoded = json.dumps(material, sort_keys=True, separators=(",", ":"),
+                             allow_nan=False).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()
+
+    def resolve(self, request):
+        from ..runtime.clock import map_frame
+        if _snapshot_policy(request) != self.policy:
+            raise ValueError("parameter snapshot time policy differs from request")
+        sample = map_frame(request)
+        index = sample.simulation_step
+        if index < 0 or index >= len(self.steps):
+            raise ValueError("missing historical snapshot for step %d" % index)
+        values = dict(self.steps[index])
+        revision = hashlib.sha256(json.dumps(
+            self.steps[index], sort_keys=True, separators=(",", ":"),
+            allow_nan=False).encode("utf-8")).hexdigest()
+        return values, revision
+
+
+def prepare_parameter_snapshots(instance, request, *, max_steps=64):
+    """Capture exact evaluated keyed values before GPU replay.
+
+    This is an explicit, frozen Program-session input. Scene time is restored
+    after at most 256 fixed-step samples. Later keyframe/driver edits require a
+    new capture; no live-instance freshness is inferred from this snapshot.
+    """
+    from .. import api
+    from ..runtime.clock import map_frame
+    from ..runtime.session import RenderSession
+    from .lifecycle import LiveRegistry, registry
+    from .persistence import source_for_instance
+
+    if request.mode != "timeline":
+        raise ValueError("parameter snapshots require timeline mode")
+    if type(max_steps) is not int or not 1 <= max_steps <= 256:
+        raise ValueError("max_steps must be an integer from 1 to 256")
+    sample = map_frame(request)
+    step_seconds = request.fixed_step_seconds or 1.0 / sample.fps_effective
+    exact_step = sample.elapsed_seconds / step_seconds
+    if exact_step < 0 or not math.isclose(exact_step, round(exact_step), abs_tol=1e-6):
+        raise ValueError("stateful snapshots require an exact fixed-step target")
+    count = sample.simulation_step + 1
+    if count > max_steps:
+        raise ValueError("historical snapshot count exceeds max_steps")
+    scene = getattr(instance, "id_data", None)
+    if scene is None or not getattr(instance, "instance_id", None):
+        raise TypeError("expected a registered Noisemaker instance")
+    if (request.fps != scene.render.fps or not math.isclose(
+            request.fps_base, scene.render.fps_base, rel_tol=0, abs_tol=1e-9)):
+        raise ValueError("snapshot request fps/fps_base must match Scene render settings")
+    source = source_for_instance(instance)
+    program = api.compile(source)
+    if not program.graph().is_stateful():
+        raise ValueError("historical parameter snapshots require a stateful program")
+    values = api._instance_values(instance, program)
+    animated = animated_parameter_keys(scene, instance, values.keys())
+    graph = program.graph()
+    for key in animated:
+        matches = list(RenderSession._matching_passes(graph, key))
+        if not matches or any(location != "uniform" or metadata.get("size") or
+                              metadata.get("resource") or
+                              RenderSession._resource_sensitive(graph, target) or
+                              RenderSession._condition_sensitive(graph, target)
+                              for render_pass, target, location, metadata in matches):
+            raise ValueError("historical snapshots do not support animated "
+                             "define/resource/conditional parameter: %s" % key)
+    static = tuple(sorted((key, value) for key, value in values.items()
+                          if key not in animated))
+    definitions = LiveRegistry._definitions(program)
+    store = BindingStore(specs_from_effects(definitions))
+    store.seed(seed_values_from_program(program, definitions))
+    BlenderPropertyAdapter(instance).load(store)
+    try:
+        import bpy
+    except ImportError as exc:
+        raise RuntimeError("Blender evaluated Scene is required for snapshots") from exc
+    current_layer = getattr(bpy.context, "view_layer", None)
+    name = getattr(current_layer, "name", "")
+    view_layer = scene.view_layers.get(name) or scene.view_layers[0]
+    original = (scene.frame_current, scene.frame_subframe)
+    steps = []
+    registry.suspend("parameter_snapshot")
+    try:
+        for index in range(count):
+            step_request, _time, _frame, _delta = RenderSession._step_request(
+                request, sample, step_seconds, index)
+            scene.frame_set(step_request.frame, subframe=step_request.subframe)
+            with bpy.context.temp_override(scene=scene, view_layer=view_layer):
+                view_layer.update()
+                depsgraph = bpy.context.evaluated_depsgraph_get()
+            evaluated_scene = scene.evaluated_get(depsgraph)
+            evaluated = next((item for item in evaluated_scene.noisemaker_instances
+                              if item.instance_id == instance.instance_id), None)
+            if evaluated is None:
+                raise KeyError("evaluated instance missing: %s" % instance.instance_id)
+            evaluated_values = BlenderPropertyAdapter(instance).evaluated_values(
+                store, depsgraph, evaluated_owner=evaluated)
+            for key, baseline in static:
+                if evaluated_values[key] != baseline:
+                    raise ValueError("untracked parameter varies during snapshot preparation: %s" % key)
+            steps.append(tuple((key, evaluated_values[key]) for key in animated))
+        if source_for_instance(instance) != source:
+            raise RuntimeError("instance source changed during parameter preparation")
+        return PreparedParameterSnapshots(program, _snapshot_policy(request), animated,
+                                          static, tuple(steps))
+    finally:
+        try:
+            scene.frame_set(original[0], subframe=original[1])
+        finally:
+            registry.resume("parameter_snapshot")
 
 _NUMERIC = (int, float)
 _VECTOR_LENGTHS = {"vec2": 2, "vec3": 3, "vec4": 4, "mat3": 9}

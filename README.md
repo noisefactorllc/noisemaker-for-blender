@@ -181,6 +181,14 @@ Instance sessions require the request frame/subframe/FPS to match the current Sc
 evaluated parameters on every evaluation. Use a plain Program session for explicit independent
 time requests and exact-frame snapshot providers.
 
+For bounded stateful replay with animated scalar parameters,
+`nm.prepare_parameter_snapshots(instance, request, max_steps=64)` captures evaluated values
+through the requested fixed simulation step and restores the Scene time. Pass that result to
+`nm.open_session(prepared, width=..., height=...)`. It freezes the Program and parameter history;
+subsequent Scene edits require a new capture. It does not bind live inputs or authorize current
+instance/final-cache freshness. Capture is limited to 256 steps and rejects animated defines,
+resource dimensions or parameters that select render passes.
+
 `nm.render_animation(scene, first, last)` prepares and publishes each exact frame before the
 scene renderer runs. Cycles Persistent Data uses prepared float EXR sequences during that render
 scope and restores the original Image nodes afterward. Prepared rendering currently rejects

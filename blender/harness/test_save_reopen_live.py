@@ -2,15 +2,16 @@
 
 Set NM_LIVE_PHASE=create, run in an isolated Blender GPU window, then run again
 with NM_LIVE_PHASE=verify and the saved blend file as Blender's input file.
-Require both phase JSON results to report success=true. Undo is reported as a
-separate subcheck because scripted timer contexts may reject its operator poll.
-Scratch files go only to NM_EVIDENCE_DIR.
+Require both phase JSON results to report success=true, including actual undo
+and redo after a disposable operator-created undo baseline. Scratch files go
+only to NM_EVIDENCE_DIR.
 """
 from array import array
 import json
 import os
 from pathlib import Path
 import sys
+import time
 import traceback
 
 import bpy
@@ -36,8 +37,27 @@ def read_pixel(image):
     return list(pixels[:4])
 
 
+def finish(result):
+    (EVIDENCE / (PHASE + ".json")).write_text(json.dumps(result, indent=2))
+    print("NM_LIVE_PERSISTENCE", json.dumps(result), flush=True)
+    if ARMED:
+        bpy.ops.wm.quit_blender()
+
+
+def window_override():
+    window = bpy.context.window
+    area = next((area for area in window.screen.areas if area.type == 'VIEW_3D'), None)
+    if area is None:
+        area = next(area for area in window.screen.areas
+                    if any(region.type == 'WINDOW' for region in area.regions))
+    region = next(region for region in area.regions if region.type == 'WINDOW')
+    return bpy.context.temp_override(window=window, screen=window.screen,
+                                     area=area, region=region)
+
+
 def run():
     result = {"success": False, "phase": PHASE, "blender": bpy.app.version_string}
+    deferred = False
     try:
         assert ARMED, "disposable native probe requires NM_HARNESS_AUTOCLOSE=1 and --factory-startup"
         assert not bpy.app.background and bpy.context.window is not None, "GUI GPU window required"
@@ -129,48 +149,134 @@ def run():
             assert copied.instance_id != config.instance_id
             assert copied.output_image is None, "duplicate adopted original output Image"
             assert copied in repaired
-            # A timer callback may have no active undo operator context even in
-            # a real GUI window; report that admission limit separately.
+            # Blender's Operator API creates an undo step for an operator with
+            # REGISTER and UNDO after it finishes. Seal the disposable baseline
+            # first, then edit in a second operator before polling undo.
+            class NM_OT_probe_baseline(bpy.types.Operator):
+                bl_idname = "noisemaker.probe_baseline"
+                bl_label = "Probe Noisemaker Undo Baseline"
+                bl_options = {'REGISTER', 'UNDO'}
+                def execute(self, context):
+                    context.scene["nm_undo_probe_baseline"] = 1
+                    return {'FINISHED'}
             class NM_OT_probe_width(bpy.types.Operator):
                 bl_idname = "noisemaker.probe_width"
                 bl_label = "Probe Noisemaker Undo"
-                bl_options = {'UNDO'}
+                bl_options = {'REGISTER', 'UNDO'}
                 def execute(self, context):
                     context.scene.noisemaker_instances[0].preview_width = 64
                     return {'FINISHED'}
             copied_id = copied.instance_id
-            bpy.utils.register_class(NM_OT_probe_width)
-            try:
-                area = next(area for area in bpy.context.window.screen.areas
-                            if any(region.type == 'WINDOW' for region in area.regions))
-                region = next(region for region in area.regions if region.type == 'WINDOW')
-                with bpy.context.temp_override(window=bpy.context.window,
-                                               screen=bpy.context.window.screen,
-                                               area=area, region=region):
-                    if bpy.ops.ed.undo.poll():
-                        assert bpy.ops.noisemaker.probe_width('EXEC_DEFAULT') == {'FINISHED'}
-                        assert scene.noisemaker_instances[0].preview_width == 64
-                        assert bpy.ops.ed.undo('EXEC_DEFAULT') == {'FINISHED'}
-                        restored = bpy.context.scene.noisemaker_instances[0]
-                        assert restored.preview_width == 16, "undo did not restore live config"
-                        result["undo_status"] = "verified"
-                    else:
-                        result["undo_status"] = "unqualified: operator poll rejected timer context"
-            finally:
-                bpy.utils.unregister_class(NM_OT_probe_width)
-            result.update(success=True, instance_id=created["instance_id"],
+            scene_name = scene.name
+            result.update(persistence_success=True, instance_id=created["instance_id"],
                           image_name=created["image_name"], pixel=after,
-                          duplicate_id=copied_id, media_pixel=media_after)
+                          duplicate_id=copied_id, media_pixel=media_after,
+                          undo_status="pending")
+            before_record = registry.ensure_session(scene, created["instance_id"], 16, 8,
+                                                    force_sync=True)
+            before_image = registry._produce(before_record)
+            assert tuple(before_image.size) == (16, 8)
+            before_session = before_record.session
+            bpy.context.preferences.edit.use_global_undo = True
+            result["global_undo"] = bool(bpy.context.preferences.edit.use_global_undo)
+            bpy.utils.register_class(NM_OT_probe_baseline)
+            bpy.utils.register_class(NM_OT_probe_width)
+            with window_override():
+                assert bpy.ops.noisemaker.probe_baseline('EXEC_DEFAULT') == {'FINISHED'}
+                assert bpy.ops.noisemaker.probe_width('EXEC_DEFAULT') == {'FINISHED'}
+            assert scene.noisemaker_instances[0].preview_width == 64
+
+            def close_undo(error=None):
+                if error is not None:
+                    result["undo_status"] = "failed"
+                    result["error"] = "%s: %s" % (type(error).__name__, error)
+                    result["traceback"] = traceback.format_exc()
+                for operator_class in (NM_OT_probe_width, NM_OT_probe_baseline):
+                    try:
+                        bpy.utils.unregister_class(operator_class)
+                    except RuntimeError:
+                        pass
+                finish(result)
+                return None
+
+            def restored_output(expected_width):
+                current_scene = bpy.data.scenes[scene_name]
+                current = next(item for item in current_scene.noisemaker_instances
+                               if item.instance_id == created["instance_id"])
+                assert current.preview_width == expected_width, \
+                    "undo/redo did not restore the live configuration width"
+                # Undo handlers invalidate old GPU state. Rebuild on this later
+                # timer tick, after Blender has replaced the Scene datablocks.
+                registry.tick(tuple(bpy.data.scenes), now=time.monotonic(), allowed=False,
+                              window_id=bpy.context.window.as_pointer())
+                refreshed = registry.ensure_session(current_scene, current.instance_id,
+                                                    expected_width, 8, force_sync=True)
+                image = registry._produce(refreshed)
+                assert image.is_float and image.get("noisemaker_owner") == current.instance_id
+                assert tuple(image.size) == (expected_width, 8), \
+                    "rebuilt Image dimensions do not match restored config"
+                pixel = read_pixel(image)
+                assert max(abs(a - b) for a, b in zip(pixel, created["pixel"])) < 0.01, \
+                    "rebuilt output pixels differ from saved keyed parameter"
+                return refreshed.session, pixel
+
+            state = {"undo_session": None}
+
+            def verify_after_redo():
+                try:
+                    redo_session, redo_pixel = restored_output(64)
+                    assert state["undo_session"].closed, \
+                        "redo did not dispose the post-undo GPU session"
+                    assert redo_session is not state["undo_session"], \
+                        "redo reused a session from the replaced Scene"
+                    result["redo_output"] = {"size": [64, 8], "pixel": redo_pixel,
+                                             "rebuilt_session": True}
+                    result["undo_status"] = "verified"
+                    result["success"] = True
+                    return close_undo()
+                except Exception as exc:
+                    return close_undo(exc)
+
+            def verify_after_undo():
+                try:
+                    undo_session, undo_pixel = restored_output(16)
+                    assert before_session.closed, "undo did not dispose the prior GPU session"
+                    assert undo_session is not before_session, \
+                        "undo reused a session from the replaced Scene"
+                    state["undo_session"] = undo_session
+                    result["undo_output"] = {"size": [16, 8], "pixel": undo_pixel,
+                                             "rebuilt_session": True}
+                    with window_override():
+                        result["redo_poll_after_undo"] = bool(bpy.ops.ed.redo.poll())
+                        assert result["redo_poll_after_undo"], "redo unavailable after undo"
+                        assert bpy.ops.ed.redo('EXEC_DEFAULT') == {'FINISHED'}
+                    bpy.app.timers.register(verify_after_redo, first_interval=0.2)
+                except Exception as exc:
+                    return close_undo(exc)
+                return None
+
+            def verify_undo():
+                try:
+                    with window_override():
+                        result["undo_poll_after_edit"] = bool(bpy.ops.ed.undo.poll())
+                        assert result["undo_poll_after_edit"], \
+                            "undo unavailable after two REGISTER/UNDO operators"
+                        assert bpy.ops.ed.undo('EXEC_DEFAULT') == {'FINISHED'}
+                    bpy.app.timers.register(verify_after_undo, first_interval=0.2)
+                except Exception as exc:
+                    return close_undo(exc)
+                return None
+
+            deferred = True
+            bpy.app.timers.register(verify_undo, first_interval=0.2)
         else:
             raise ValueError("NM_LIVE_PHASE must be create or verify")
     except Exception as exc:
         result["error"] = "%s: %s" % (type(exc).__name__, exc)
         result["traceback"] = traceback.format_exc()
     finally:
-        (EVIDENCE / (PHASE + ".json")).write_text(json.dumps(result, indent=2))
-        print("NM_LIVE_PERSISTENCE", json.dumps(result), flush=True)
-        if ARMED:
-            bpy.ops.wm.quit_blender()
+        if not deferred:
+            finish(result)
     return None
 
 

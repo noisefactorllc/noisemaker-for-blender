@@ -312,6 +312,18 @@ class RenderSession:
             return False
         return any(mentions(spec) for spec in graph.textures.values())
 
+    @staticmethod
+    def _condition_sensitive(graph, uniform):
+        def mentions(value):
+            if isinstance(value, dict):
+                return value.get("uniform") == uniform or any(
+                    mentions(item) for item in value.values())
+            if isinstance(value, (list, tuple)):
+                return any(mentions(item) for item in value)
+            return False
+        return any(mentions(render_pass.get("conditions"))
+                   for render_pass in graph.passes)
+
     def set_parameter(self, key, value):
         self._assert_open()
         matches = list(self._matching_passes(self.graph, key))
@@ -469,9 +481,11 @@ class RenderSession:
             if not matches:
                 raise KeyError(key)
             for render_pass, target, location, metadata in matches:
-                if location != "uniform" or self._resource_sensitive(self.graph, target) or (
-                        metadata.get("size") or metadata.get("resource")):
-                    raise ValueError("stateful parameter snapshots support scalar uniforms only: %s" % key)
+                if (location != "uniform" or self._resource_sensitive(self.graph, target)
+                        or self._condition_sensitive(self.graph, target)
+                        or metadata.get("size") or metadata.get("resource")):
+                    raise ValueError("stateful parameter snapshots support unconditional scalar "
+                                     "uniforms only: %s" % key)
                 if metadata:
                     from ..integration.parameters import ParameterSpec
                     value = ParameterSpec.from_metadata(key, metadata).validate(value)
@@ -488,8 +502,13 @@ class RenderSession:
         if provider is not None and not callable(provider) and not callable(
                 getattr(provider, "resolve", None)):
             raise TypeError("parameter snapshot provider must be callable")
+        if provider is not None:
+            identity = getattr(provider, "source_identity", None)
+            if not callable(identity):
+                raise TypeError("parameter snapshot provider needs source_identity()")
+            if not isinstance(identity(), (str, int)):
+                raise TypeError("parameter source identity must be scalar")
         self._parameter_state_provider = provider
-        self._parameter_source_identity()
         self._revision += 1
         self._replay.invalidate()
         self._last_request = None

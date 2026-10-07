@@ -414,12 +414,16 @@ changing the disposable scene and closing their process. Evidence is retained on
 | Persistent session | `test_render_session_native.py`: legacy square output comparison, 257×129 output, HDR/negative/premultiplied alpha publication, repeated-frame/handle checks and stateful sequential/jump/backward replay passed. |
 | Host inputs | `test_host_inputs.py`: asymmetric Image orientation/update, text change, evaluated mesh deformation, compiled `media()` with a 3×2 premultiplied source and audio-driven alpha change passed. |
 | Float consumer probe | `probe_consumer_coherence.py`: 11 assertions passed, including the analytic RGB delta `[.75, -1.75, 1.375]` in six Eevee/Cycles material/world and CPU/GPU compositor renders, both evaluated Geometry Nodes vertices, and managed node/link identity. Tolerance was .03; compositor alpha remained .60635. |
-| Scripted final rendering | `test_final_render.py`: six frame markers passed, covering Eevee, Cycles Persistent Data off, and Cycles Persistent Data on; temporary sequence nodes restored the original generated Image. |
-| Prepared background rendering | `test_frame_cache_background.py`: reopened the saved scene, forbade GPU session creation, rendered Cycles Persistent Data frames 2 then 1, checked their pixels and rejected changed source before renderer entry. |
+| Scripted final rendering | `test_final_render.py` at exact `d823bb1`: six frame markers passed, covering Eevee, Cycles Persistent Data off, and Cycles Persistent Data on; temporary sequence nodes restored the original generated Image. |
+| Prepared background rendering | `test_frame_cache_background.py` at exact `d823bb1`: reopened the saved scene, forbade GPU session creation, rendered Cycles Persistent Data frames 2 then 1, checked their pixels and rejected changed source before renderer entry. The cache directory and files were read-only; the inventory and SHA-256 hashes stayed unchanged, and original modes were restored. |
 | Saved outputs/inputs | `test_save_reopen_live.py`: latest packed float output and persisted media Image input survived reopening. Undo/redo has not passed an actual GUI undo interaction. |
 | Live interaction before pacing correction | `test_live_interactive.py`: actual Text Editor source edits, static/multipass scalar changes, invalid-source recovery and pause/resume passed. Publication p95 was 47.3/61.8 ms; this does not measure edit-to-display latency. The shorter free-run segment averaged 25.79 displayed generations/s, below the 30 FPS target. |
 | Continuous multipass preview | `probe_live_integration.py` (`NM_PROBE_PHASE=continuous`): 60.039 seconds of actual `noise().bloom()` GPU evaluation at 512² produced 24.87 publications/s and 24.85 displayed generations/s. This misses the proposed ≥30/s gate. Shader compiles/file reads stayed at 5/8, with one surface and four pooled textures. |
 | Image transfer alone | A separate 60-second Image Editor probe displayed 46.8 generations/s at 512² with a 60 Hz requested timer. Float publication p95 was 0.386 ms and publication-to-draw p95 was 12.435 ms. It used precomputed pixels, not full graph evaluation. |
+| Ten-minute multipass preview | The staged `task0-20261007-continuous-600` probe completed 600.018 s with 18,100 publications and presentations. Aggregate rate was 30.166/s, but the worst sliding 60-second window was 23.75/s, so sustained acceptance remains unmet. Shader compiles/file reads stayed at 5/8, surface/pool counts at 1/4, and process RSS rose and was reclaimed (653,216 KB start, 719,616 KB peak, 586,208 KB end). This establishes bounded resources for that measured snapshot, not whole-catalog realtime performance. |
+| Native shader catalog | The `e750b80` runtime plus corrected declared-variant harness executed all 309 shader programs: 307 compiled programs, 317 compiled variants, two known unsupported audio programs (`scope`, `spectrum`) and zero unexpected failures. Unsupported programs remain in the denominator. |
+| Engine-free and distribution checks | At `d823bb1`, `scripts/test` passed all 352 unit tests, all 16 PNG decoder tests and all compiler parity gates. The real export-kit builder packaged 891 tracked add-on files, and all 22 Blender export-kit contract tests passed. That exact ZIP also installed, enabled, disabled and unregistered successfully in an isolated Blender 5.1.2 GUI process. |
+| Full rendered parity | The exact `e750b80` candidate and independently verified pinned reference `8fa067f6afec1f091272a8fae7b0b40d78f7b04d` completed all 116 cases: 1 exact, 49 strict, 8 near, 58 fail, zero missing/deferred/skipped. All candidate and reference pixels have hashes/provenance. The exact pre-change `c18336a` source, rendered against the same byte-identical goldens, produced identical grades and byte-identical candidate PNGs for all 116 cases. Thus historical output is preserved, while the existing numerical parity gate remains failed. |
 
 ### 9.3 Remaining acceptance boundaries
 
@@ -428,6 +432,12 @@ crashed Blender's Metal context; real graph evaluation in `render_pre` crashed w
 animation reached its second frame, including with Lock Interface. Suspension prevents live timer
 mutation during render but does not prepare fresh native frames. The Live panel warns about this
 boundary. Scripted preparation and cache consumption do not close automatic-render acceptance.
+A later exact-`d823bb1` probe prepared both frames once in `render_init`, but frame-2
+`render_pre` preceded `frame_change_post` and rejected stale evaluated parameters. Blender
+swallowed that handler exception, returned `FINISHED` and wrote the frame with stale pixels.
+Deliberate preparation failure in `render_init` plus refusal in `render_pre` likewise produced
+output files. Thus successful preparation alone does not establish an abort-on-failure barrier;
+Python render handlers are not qualified for the automatic path. No such handler was installed.
 
 Stateful Blender instances with keyed or driven parameters require historical parameter
 snapshots. Without those snapshots the integration rejects the request rather than applying the
@@ -436,10 +446,15 @@ instances is rejected until historical upstream snapshots can be validated witho
 Images; this also limits the Cycles Persistent Data scripted path. Fresh live/scripted
 evaluation with Persistent Data off orders producers before consumers. Direct instance sessions synchronize evaluated
 parameters at the current scene time; requests at a different scene time fail explicitly. Plain
-Program sessions can supply deterministic per-step parameter/input providers.
+Program sessions can supply deterministic per-step parameter/input providers. The explicit
+`prepare_parameter_snapshots` API captures up to 256 evaluated fixed-step scalar samples and
+restores Scene time. Its immutable result opens a frozen Program session; it does not claim
+freshness after Scene edits or qualify current-instance final rendering. Animated defines,
+resource sizes and render-pass conditions remain rejected.
 
-The 60-second multipass preview gate is measured but unmet. Live material/compositor refresh, ten-minute resource
-stress, flagship workloads at 512²/1024²/1080p, full current rendered parity, clean package lifecycle,
+The sustained multipass preview gate is measured but unmet. The ten-minute run gives bounded-resource
+evidence for its measured snapshot. Live material/compositor refresh, flagship workloads at
+512²/1024²/1080p, passing full rendered parity,
 actual undo/redo, duplicated-scene consumer remapping and other operating systems/backends require separate evidence. Cross-window
 GPU frees are deferred until the owning window returns; permanent window loss remains a resource
 lifetime qualification limit. Multi-state motion blur remains rejected. These boundaries must not

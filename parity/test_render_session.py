@@ -309,6 +309,30 @@ class RenderSessionTests(unittest.TestCase):
                              session.backend.executed_passes if item["passType"] == "effect"]
             self.assertEqual(effect_values, [1, 12, 3, 4])
 
+    def test_parameter_snapshot_provider_rejects_conditions_and_failed_setter_is_atomic(self):
+        stateful = graph()
+        stateful["passes"][0]["inputs"] = {"stateTex": "global_state"}
+        stateful["passes"][0]["outputs"] = {"color": "global_state"}
+        stateful["passes"][0]["conditions"] = {
+            "runIf": [{"uniform": "seed", "equals": 1}]}
+        stateful["passes"].append({
+            "passType": "blit", "inputs": {"src": "global_state"},
+            "outputs": {"color": "global_o0"},
+        })
+        class Snapshots:
+            def source_identity(self): return "conditional-seed"
+            def resolve(self, request): return {"noise#0.seed": request.frame}, str(request.frame)
+        with self.session(api.Program.from_graph("conditional-stateful", stateful)) as session:
+            revision = session._revision
+            with self.assertRaisesRegex(TypeError, "source_identity"):
+                session.set_parameter_snapshot_provider(lambda request: ({}, "invalid"))
+            self.assertIsNone(session._parameter_state_provider)
+            self.assertEqual(session._revision, revision)
+            session.set_parameter_snapshot_provider(Snapshots())
+            with self.assertRaisesRegex(ValueError, "unconditional scalar"):
+                session.evaluate(api.FrameRequest(frame=1))
+            self.assertEqual(session.backend.executions, 0)
+
     def test_stateful_free_run_uses_completed_fixed_steps_at_fractional_wall_time(self):
         stateful = graph()
         stateful["passes"][0]["inputs"] = {"stateTex": "global_state"}
@@ -322,6 +346,167 @@ class RenderSessionTests(unittest.TestCase):
             self.assertEqual(session.backend.executions, 8)  # steps 0 through 3
             session.evaluate(api.FrameRequest(frame=1, mode="free_run", wall_seconds=0.149))
             self.assertEqual(session.backend.executions, 8)
+
+    def test_prepared_blender_parameter_snapshots_seek_with_fractional_fps(self):
+        from noisemaker_blender.integration.lifecycle import registry
+        class Owner(dict):
+            def id_properties_ui(self, key):
+                return SimpleNamespace(update=lambda **kwargs: None)
+            def path_from_id(self): return "noisemaker_instances[0]"
+        class Collection(list):
+            def __init__(self, scene): super().__init__(); self.scene = scene
+            def add(self):
+                item = Owner()
+                item.id_data = self.scene
+                item.input_bindings = ()
+                item.preview_width = 32
+                item.preview_height = 32
+                self.append(item)
+                return item
+        layer = SimpleNamespace(name="View", update=lambda: None)
+        class Layers(list):
+            def get(self, name): return layer
+        class Scene:
+            frame_current = 7
+            frame_subframe = .25
+            def __init__(self):
+                self.noisemaker_instances = Collection(self)
+                self.view_layers = Layers([layer])
+                self.render = SimpleNamespace(fps=30000, fps_base=1001)
+                self.eval_owner = None
+                self.sampled = []
+            def as_pointer(self): return id(self)
+            def update_tag(self, **kwargs): pass
+            def frame_set(self, frame, subframe=0):
+                self.frame_current, self.frame_subframe = frame, subframe
+                self.sampled.append((frame, subframe))
+                if getattr(self, "fail_at", None) == frame:
+                    raise RuntimeError("historical Scene evaluation failed")
+                if self.eval_owner is not None:
+                    self.eval_owner.update(self.noisemaker_instances[0])
+                    self.eval_owner["nm:reactionDiffusion#0.feed"] = (
+                        70.0 if frame < 5 else 90.0)
+            def evaluated_get(self, depsgraph):
+                return SimpleNamespace(noisemaker_instances=[self.eval_owner])
+        scene = Scene()
+        source = "search synth\nreactionDiffusion().write(o0)\nrender(o0)"
+        instance = api.create_instance(scene, api.compile(source))
+        scene.eval_owner = Owner(instance)
+        scene.eval_owner.instance_id = instance.instance_id
+        path = 'noisemaker_instances[0]["nm:reactionDiffusion#0.feed"]'
+        scene.animation_data = SimpleNamespace(
+            action=SimpleNamespace(fcurves=[SimpleNamespace(data_path=path)], layers=()),
+            action_slot=None, drivers=(), nla_tracks=())
+        context = SimpleNamespace(view_layer=layer,
+                                  temp_override=lambda **kwargs: nullcontext(),
+                                  evaluated_depsgraph_get=lambda: object())
+        target = api.FrameRequest(frame=20, fps=30000, fps_base=1001)
+        try:
+            with self.assertRaisesRegex(ValueError, "max_steps"):
+                api.prepare_parameter_snapshots(instance, target, max_steps=10)
+            self.assertEqual(scene.sampled, [])
+            with self.assertRaisesRegex(ValueError, "fps/fps_base"):
+                api.prepare_parameter_snapshots(instance, api.FrameRequest(frame=20, fps=24))
+            self.assertEqual(scene.sampled, [])
+            with patch.dict(sys.modules, {"bpy": SimpleNamespace(context=context)}):
+                prepared = api.prepare_parameter_snapshots(instance, target)
+            mutable_vector = [1.0, 2.0]
+            vector_snapshot = api.PreparedParameterSnapshots(
+                prepared.program, prepared.policy, ("vector",),
+                (("vector", mutable_vector),), ((("vector", mutable_vector),),))
+            mutable_vector[0] = 9.0
+            self.assertEqual(vector_snapshot.static_values[0][1], (1.0, 2.0))
+            self.assertEqual(vector_snapshot.steps[0][0][1], (1.0, 2.0))
+            self.assertEqual((scene.frame_current, scene.frame_subframe), (7, .25))
+            self.assertEqual(len(scene.sampled), 21)  # 20 samples, then restore
+            self.assertEqual(prepared.resolve(api.FrameRequest(
+                frame=4, fps=30000, fps_base=1001))[0][
+                    "reactionDiffusion#0.feed"], 70.0)
+            self.assertEqual(prepared.resolve(api.FrameRequest(
+                frame=5, fps=30000, fps_base=1001))[0][
+                    "reactionDiffusion#0.feed"], 90.0)
+            scene.animation_data = SimpleNamespace(
+                action=None, action_slot=None,
+                drivers=[SimpleNamespace(data_path=path)], nla_tracks=())
+            with patch.dict(sys.modules, {"bpy": SimpleNamespace(context=context)}):
+                driven = api.prepare_parameter_snapshots(instance, target)
+            self.assertEqual(driven.source_identity(), prepared.source_identity())
+            scene.fail_at = 3
+            with patch.dict(sys.modules, {"bpy": SimpleNamespace(context=context)}):
+                with self.assertRaisesRegex(RuntimeError, "historical Scene evaluation"):
+                    api.prepare_parameter_snapshots(instance, target)
+            self.assertEqual((scene.frame_current, scene.frame_subframe), (7, .25))
+            scene.fail_at = None
+            with self.assertRaisesRegex(ValueError, "time policy"):
+                prepared.resolve(api.FrameRequest(frame=5, fps=24))
+            frozen_identity = prepared.source_identity()
+            scene.frame_set(3)
+            self.assertEqual(prepared.source_identity(), frozen_identity)
+            self.assertEqual(prepared.resolve(api.FrameRequest(
+                frame=5, fps=30000, fps_base=1001))[0][
+                    "reactionDiffusion#0.feed"], 90.0)
+            class AccumBackend(FakeBackend):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    self.accumulated = 0.0
+                def execute(self, render_pass, graph, engine):
+                    super().execute(render_pass, graph, engine)
+                    if "feed" in render_pass.get("uniforms", {}):
+                        self.accumulated = self.accumulated * 1.01 + render_pass["uniforms"]["feed"]
+                def read_surface_float(self, name):
+                    return self.accumulated
+            def req(frame):
+                return api.FrameRequest(frame=frame, fps=30000, fps_base=1001)
+            with api.open_session(prepared, size=32, backend_factory=AccumBackend) as sequence:
+                for frame in range(1, 21):
+                    output = sequence.evaluate(req(frame))
+                expected_twenty = sequence.read_float(output)
+                output = sequence.evaluate(req(5))
+                expected_five = sequence.read_float(output)
+            with api.open_session(prepared, size=32, backend_factory=AccumBackend) as session:
+                session.evaluate(req(1))
+                output = session.evaluate(target)
+                self.assertEqual(session.read_float(output), expected_twenty)
+                at_twenty = [item["uniforms"].get("feed") for item in
+                             session.backend.executed_passes if "feed" in item.get("uniforms", {})]
+                self.assertIn(70.0, at_twenty)
+                self.assertIn(90.0, at_twenty)
+                output = session.evaluate(req(5))
+                self.assertEqual(session.read_float(output), expected_five)
+                output = session.evaluate(target)
+                self.assertEqual(session.read_float(output), expected_twenty)
+            with self.assertRaisesRegex(ValueError, "missing historical snapshot"):
+                prepared.resolve(api.FrameRequest(frame=21, fps=30000, fps_base=1001))
+        finally:
+            registry.remove(scene, instance.instance_id)
+
+    def test_prepared_snapshots_reject_animated_define_before_scene_mutation(self):
+        source = ("search synth\nnoise(type: simplex).write(o1)\n"
+                  "reactionDiffusion().write(o0)\nrender(o0)")
+        path = 'noisemaker_instances[0]["nm:noise#0.type"]'
+        scene = SimpleNamespace(
+            render=SimpleNamespace(fps=24, fps_base=1),
+            animation_data=SimpleNamespace(
+                action=None, drivers=[SimpleNamespace(data_path=path)], nla_tracks=()))
+        scene.noisemaker_instances = []
+        scene.frame_set = lambda *args, **kwargs: self.fail("Scene time changed")
+        instance = SimpleNamespace(id_data=scene, instance_id="instance", source_mode="INLINE",
+                                   source=source, path_from_id=lambda: "noisemaker_instances[0]")
+        with patch.object(api, "_instance_values", return_value={"noise#0.type": 0}):
+            with self.assertRaisesRegex(ValueError, "define/resource"):
+                api.prepare_parameter_snapshots(instance, api.FrameRequest(frame=2))
+        conditional_source = "search synth\nreactionDiffusion().write(o0)\nrender(o0)"
+        conditional_graph = api.compile(conditional_source).graph()
+        conditional_graph.passes[0]["conditions"] = {
+            "runIf": [{"uniform": "feed", "equals": 70.0}]}
+        conditional_program = api.Program.from_graph(conditional_source, conditional_graph.data)
+        instance.source = conditional_source
+        scene.animation_data.drivers = [SimpleNamespace(
+            data_path='noisemaker_instances[0]["nm:reactionDiffusion#0.feed"]')]
+        with patch.object(api, "compile", return_value=conditional_program), patch.object(
+                api, "_instance_values", return_value={"reactionDiffusion#0.feed": 70.0}):
+            with self.assertRaisesRegex(ValueError, "conditional"):
+                api.prepare_parameter_snapshots(instance, api.FrameRequest(frame=2))
 
     def test_define_parameter_rebuilds_shader_state_transactionally(self):
         program = api.compile("search synth\nnoise(type: simplex).write(o0)\nrender(o0)")
