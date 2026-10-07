@@ -78,7 +78,7 @@ class StandaloneArchiveIdentityTests(unittest.TestCase):
         self.assertIsNotNone(
             m, "no literal bl_info dict matched in the packaged __init__.py")
         bl_info = ast.literal_eval(m.group(1))
-        self.assertEqual(bl_info["version"], (0, 1, 13))
+        self.assertEqual(bl_info["version"], (0, 1, 14))
         self.assertEqual(bl_info["version"], noisemaker_blender.VERSION,
                          "bl_info version must stay in lockstep with VERSION")
         # The zip ships the same tree the checkout does (inventory identity).
