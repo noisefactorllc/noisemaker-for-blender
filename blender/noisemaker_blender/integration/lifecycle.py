@@ -80,6 +80,22 @@ class LiveRegistry:
         return record
 
     @staticmethod
+    def _owned_output_image(config):
+        """Resolve the saved scalar reference without nested Image RNA pointers."""
+        try:
+            import bpy
+        except ImportError:
+            return None
+        from .persistence import resolve_output_image
+        instance_id = config.instance_id
+        owners = sum(1 for scene in bpy.data.scenes
+                     for config in getattr(scene, "noisemaker_instances", ())
+                     if config.instance_id == instance_id)
+        if owners > 1:
+            raise ValueError("duplicate Noisemaker instance identity: %s" % instance_id)
+        return resolve_output_image(config)
+
+    @staticmethod
     def _ordered_configs(scene, *, preview=False):
         configs = [config for config in getattr(scene, "noisemaker_instances", ())
                    if config.instance_id and (config.live_enabled if preview else
@@ -448,7 +464,8 @@ class LiveRegistry:
                 self._sync_inputs(record)
             if record.publisher is None:
                 from .images import ImagePublisher
-                record.publisher = ImagePublisher(config.instance_id, image=config.output_image,
+                record.publisher = ImagePublisher(config.instance_id,
+                                                  image=self._owned_output_image(config),
                                                   role=config.color_role, alpha_mode=config.alpha_mode)
             values = self._evaluated_values(record)
             for key, value in values.items():
@@ -608,6 +625,8 @@ class LiveRegistry:
             self._window_id = window_id
         if self.pending_rebuild:
             self.shutdown()
+            from .persistence import migrate_legacy_output_refs
+            migrate_legacy_output_refs(scenes)
             ensure_unique_ids(scenes)
             self.pending_rebuild = False
         valid = {self._key(scene, config.instance_id)
@@ -703,11 +722,20 @@ def _pre_rebuild(*_args):
 
 def _rebuild(*_args):
     registry.pending_rebuild = True
+    import bpy
+    from .persistence import migrate_legacy_output_refs
+    try:
+        migrate_legacy_output_refs(tuple(bpy.data.scenes))
+    except Exception as exc:
+        registry.lifecycle_error = "output migration failed: %s: %s" % (type(exc).__name__, exc)
+        print("Noisemaker " + registry.lifecycle_error, flush=True)
 
 
 def _save_pre(*_args):
     import bpy
     try:
+        from .persistence import migrate_legacy_output_refs
+        migrate_legacy_output_refs(tuple(bpy.data.scenes))
         pack_outputs_before_save(bpy.data.scenes)
     except Exception as exc:
         registry.lifecycle_error = "save output packing failed: %s: %s" % (type(exc).__name__, exc)

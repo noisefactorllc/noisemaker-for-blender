@@ -126,11 +126,21 @@ class NoisemakerLiveInstance(bpy.types.PropertyGroup):
         ('PREMUL', "Premultiplied", "Noisemaker shader output convention"),
         ('STRAIGHT', "Straight", "Use only for a source with straight alpha"),
     ], default='PREMUL')
-    output_image: bpy.props.PointerProperty(name="Output Image", type=bpy.types.Image)
+    output_image_ref: bpy.props.StringProperty(name="Output Image ID", default="", options={'HIDDEN'})
     input_bindings: bpy.props.CollectionProperty(type=NoisemakerImageInput)
     pack_output: bpy.props.BoolProperty(name="Pack Output on Save", default=False,
                                         description="Store the current float Image pixels in the .blend file")
     last_error: bpy.props.StringProperty(name="Last Error", default="")
+
+    @property
+    def output_image(self):
+        from .integration.persistence import resolve_output_image
+        return resolve_output_image(self)
+
+    @output_image.setter
+    def output_image(self, image):
+        from .integration.persistence import assign_output_image
+        assign_output_image(self, image)
 
 
 def register():

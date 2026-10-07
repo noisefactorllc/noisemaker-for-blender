@@ -89,7 +89,13 @@ class NoisemakerProgramNode(Node):
             toggle.instance_id = live.instance_id
             reset = row.operator("noisemaker.live_reset", text="Reset", icon='FILE_REFRESH')
             reset.instance_id = live.instance_id
-            layout.prop(live, "output_image", text="Live Image")
+            try:
+                output_image = live.output_image
+            except ValueError as exc:
+                layout.label(text=str(exc)[:90], icon='ERROR')
+            else:
+                layout.label(text="Live Image: " + (output_image.name if output_image else "None"),
+                             icon='IMAGE_DATA')
             if live.last_error:
                 layout.label(text=live.last_error[:90], icon='ERROR')
 

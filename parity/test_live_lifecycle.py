@@ -481,6 +481,85 @@ class LifecycleTests(unittest.TestCase):
             self.assertEqual(repaired, [(scene,)])
             lifecycle.unregister()
 
+    def test_publisher_reconstruction_does_not_read_nested_output_pointer(self):
+        import hashlib
+        import types
+        from noisemaker_blender.integration import images
+
+        class Config:
+            instance_id = "one"
+            output_image_ref = "image-one"
+            source_mode = "INLINE"
+            source = "noise()"
+            preview_width = 64
+            preview_height = 32
+            color_role = "color"
+            alpha_mode = "PREMUL"
+            last_error = ""
+
+            @property
+            def output_image(self):
+                raise AssertionError("nested Image pointer must not be read")
+
+        image = {"noisemaker_owner": "one", "noisemaker_image_id": "image-one"}
+        image_owner = SimpleNamespace(library=None, is_float=True,
+                                      get=image.get)
+        fake_bpy = types.ModuleType("bpy")
+        scene = Scene(Config())
+        fake_bpy.data = SimpleNamespace(images=[image_owner], scenes=[scene])
+        registry = LiveRegistry()
+        record = registry.get(scene, "one")
+        record.program = SimpleNamespace(graph=lambda: SimpleNamespace(is_stateful=lambda: False))
+        record.source_hash = hashlib.sha256(b"noise()").hexdigest()
+        record.session = SimpleNamespace(width=64, height=32, close=lambda: None)
+        registry._evaluated_values = lambda _record: {}
+        received = []
+        with patch.dict(sys.modules, {"bpy": fake_bpy}), \
+             patch.object(images, "ImagePublisher",
+                          side_effect=lambda owner, **kwargs: received.append(kwargs["image"]) or object()):
+            registry.sync_instance(scene, scene.noisemaker_instances[0], width=64, height=32)
+        self.assertEqual(received, [image_owner])
+        registry.shutdown()
+
+    def test_save_pre_migrates_raw_output_before_pack_read(self):
+        import types
+        from noisemaker_blender.integration import lifecycle
+
+        class Config(dict):
+            instance_id = "one"
+            output_image_ref = ""
+            library = None
+        class Image(dict):
+            library = None
+            is_float = True
+        item = Config(output_image=object())
+        scene = Scene(item)
+        scene.library = None
+        image = Image(noisemaker_owner="one")
+        fake_bpy = types.ModuleType("bpy")
+        fake_bpy.data = SimpleNamespace(scenes=[scene], images=[image])
+        checked = []
+        def pack(scenes):
+            self.assertNotIn("output_image", item)
+            self.assertEqual(item.output_image_ref, image["noisemaker_image_id"])
+            checked.append(tuple(scenes))
+        with patch.dict(sys.modules, {"bpy": fake_bpy}), \
+             patch.object(lifecycle, "pack_outputs_before_save", side_effect=pack):
+            lifecycle._save_pre()
+        self.assertEqual(checked, [(scene,)])
+
+    def test_publisher_reconstruction_rejects_unrepaired_duplicate_owner(self):
+        import types
+        image = SimpleNamespace(library=None, is_float=True,
+                                get=lambda key: "one" if key == "noisemaker_owner" else None)
+        scene = Scene(config("one"))
+        duplicate = Scene(config("one"))
+        fake_bpy = types.ModuleType("bpy")
+        fake_bpy.data = SimpleNamespace(images=[image], scenes=[scene, duplicate])
+        with patch.dict(sys.modules, {"bpy": fake_bpy}):
+            with self.assertRaisesRegex(ValueError, "duplicate Noisemaker instance identity"):
+                LiveRegistry._owned_output_image(scene.noisemaker_instances[0])
+
     def test_render_enumerates_paused_consumers_and_ignores_unconnected_instances(self):
         scene = Scene(config("off"), config("visible", enabled=True, paused=True),
                       config("linked", image=object(), paused=True))

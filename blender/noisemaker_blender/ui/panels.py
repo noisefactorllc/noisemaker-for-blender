@@ -96,7 +96,13 @@ def _draw_live(layout, context):
     layout.prop(config, "fixed_step_seconds")
     layout.prop(config, "color_role")
     layout.prop(config, "alpha_mode")
-    layout.prop(config, "output_image")
+    try:
+        output_image = config.output_image
+    except ValueError as exc:
+        layout.label(text=str(exc)[:120], icon='ERROR')
+    else:
+        layout.label(text="Output Image: " + (output_image.name if output_image else "None"),
+                     icon='IMAGE_DATA')
     layout.prop(config, "pack_output")
     if config.input_bindings:
         inputs_box = layout.box()
