@@ -45,6 +45,47 @@ class Images(list):
         return image
 
 
+class PackedPixels(Pixels):
+    def __init__(self, image):
+        self.image = image
+
+    def foreach_set(self, values):
+        if len(values) != self.image.size[0] * self.image.size[1] * 4:
+            raise ValueError('pixel array length differs from Image buffer')
+        super().foreach_set(values)
+
+
+class PackedImage(Image):
+    def __init__(self, name, width, height, **kwargs):
+        super().__init__(name, width, height, **kwargs)
+        self.pixels = PackedPixels(self)
+        self.packed_file = None
+        self._alpha_mode = 'STRAIGHT'
+        self.source = 'GENERATED'
+
+    @property
+    def alpha_mode(self):
+        return self._alpha_mode
+
+    @alpha_mode.setter
+    def alpha_mode(self, value):
+        self._alpha_mode = value
+        if self.packed_file is not None:
+            self.size = self.packed_size  # Packed FILE data reloads on assignment.
+
+    def pack(self):
+        self.packed_size = self.size
+        self.packed_file = object()
+        self.source = 'FILE'
+
+
+class PackedImages(Images):
+    def new(self, name, **kwargs):
+        image = PackedImage(name, **kwargs)
+        self.append(image)
+        return image
+
+
 class PublicationTests(unittest.TestCase):
     def setUp(self):
         self.images = Images()
@@ -75,6 +116,18 @@ class PublicationTests(unittest.TestCase):
         resized = pub.publish(np.ones((7, 9, 4)), generation=3)
         self.assertIs(resized, first)
         self.assertEqual(resized.size, (9, 7))
+
+    def test_packed_image_resize_keeps_pointer_and_new_pixel_capacity(self):
+        images = PackedImages()
+        bpy = types.SimpleNamespace(data=types.SimpleNamespace(images=images))
+        image = ImagePublisher('one', bpy_module=bpy).publish(
+            np.ones((2, 3, 4)), generation=1)
+        image.pack()
+        reopened = ImagePublisher('one', image=image, bpy_module=bpy)
+        resized = reopened.publish(np.ones((4, 5, 4)), generation=2)
+        self.assertIs(resized, image)
+        self.assertEqual(resized.size, (5, 4))
+        self.assertEqual(len(resized.pixels.values), 5 * 4 * 4)
 
     def test_name_collision_and_other_instance_are_never_overwritten(self):
         user = self.images.new('Clouds', width=8, height=8, float_buffer=True)

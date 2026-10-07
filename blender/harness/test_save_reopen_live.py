@@ -149,9 +149,9 @@ def run():
             assert copied.instance_id != config.instance_id
             assert copied.output_image is None, "duplicate adopted original output Image"
             assert copied in repaired
-            # Blender's Operator API creates an undo step for an operator with
-            # REGISTER and UNDO after it finishes. Seal the disposable baseline
-            # first, then edit in a second operator before polling undo.
+            # The disposable GUI process has no established undo stack on
+            # startup. Push a baseline, then execute operators with undo
+            # enabled so an actual undo can be exercised on a later tick.
             class NM_OT_probe_baseline(bpy.types.Operator):
                 bl_idname = "noisemaker.probe_baseline"
                 bl_label = "Probe Noisemaker Undo Baseline"
@@ -182,8 +182,10 @@ def run():
             bpy.utils.register_class(NM_OT_probe_baseline)
             bpy.utils.register_class(NM_OT_probe_width)
             with window_override():
-                assert bpy.ops.noisemaker.probe_baseline('EXEC_DEFAULT') == {'FINISHED'}
-                assert bpy.ops.noisemaker.probe_width('EXEC_DEFAULT') == {'FINISHED'}
+                assert bpy.ops.ed.undo_push.poll(), "cannot establish undo baseline"
+                assert bpy.ops.ed.undo_push(message="NM baseline") == {'FINISHED'}
+                assert bpy.ops.noisemaker.probe_baseline('EXEC_DEFAULT', True) == {'FINISHED'}
+                assert bpy.ops.noisemaker.probe_width('EXEC_DEFAULT', True) == {'FINISHED'}
             assert scene.noisemaker_instances[0].preview_width == 64
 
             def close_undo(error=None):

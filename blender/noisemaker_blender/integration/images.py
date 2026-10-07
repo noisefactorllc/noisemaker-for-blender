@@ -68,14 +68,15 @@ class ImagePublisher:
             image = self._bpy.data.images.new(name, width=width, height=height,
                                              alpha=True, float_buffer=True)
             image[OWNER] = self.owner_id
-        elif tuple(image.size) != (width, height):
-            image.scale(width, height)
-        # Setting colorspace can regenerate a generated image; do it before pixels.
+        # Image metadata can reload a packed FILE image at its packed dimensions.
+        # Apply it before scale so the last operation establishes pixel capacity.
         color_space = _COLOR_SPACES[self.role]
         if image.colorspace_settings.name != color_space:
             image.colorspace_settings.name = color_space
         image.alpha_mode = self.alpha_mode
         image.use_fake_user = True
+        if tuple(image.size) != (width, height):
+            image.scale(width, height)
         image.pixels.foreach_set(self.buffer.reshape(-1))
         image.update()
         image['noisemaker_generation'] = generation
