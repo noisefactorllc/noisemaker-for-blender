@@ -1,4 +1,4 @@
-"""Structured runtime diagnostics (GAP-007, reference dd4606ea/e24c844f lineage).
+"""Structured runtime diagnostics (reference dd4606ea/e24c844f lineage).
 
 Mirrors the reference's ``shaders/src/runtime/backends/diagnostics.js``
 ``DIAGNOSTIC_CODES`` / ``DiagnosticCollector``, adapted to the port's single
@@ -26,7 +26,7 @@ DIAGNOSTIC_CODES = {
 class DiagnosticCollector:
     """A capped, queryable collector for structured diagnostics that are
     recorded rather than thrown — the historically-silent dimension and texture
-    format fallbacks (GAP-007) keep their historical behavior (no new
+    format fallbacks keep their historical behavior (no new
     rejection) but now surface structured records instead of pure silence."""
 
     def __init__(self, cap=64):

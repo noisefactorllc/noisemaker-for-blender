@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for structured runtime diagnostics (GAP-007, reference
+"""Regression tests for structured runtime diagnostics (reference
 commits dd4606ea / a0e9bbff lineage, ported 2026-10 sync round).
 
 Ported from reference `shaders/tests/test_backend_diagnostics.js` case shapes,

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Regression tests for runtime consumption of the resource allocation plan
-(GAP-006) — port of reference shaders/tests/test_resource_pooling.js, plus the
+— a port of reference shaders/tests/test_resource_pooling.js, plus the
 viewport-without-clear guard (upstream `95743621`).
 
-The register row described two missing upstream pieces, both now mirrored:
+Two upstream pieces are mirrored:
   - the analyzer's physical allocation plan (graph.allocations, produced by
     allocate_resources) is consumed by the renderer: virtual textures with
     disjoint lifetimes and safe first-touch/overwrite contracts share one

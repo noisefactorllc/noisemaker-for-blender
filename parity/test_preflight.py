@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for effect preflight (GAP-016, reference commit 12b4d74fb4f2).
+"""Regression tests for effect preflight (reference commit 12b4d74fb4f2).
 
 Ported from reference `shaders/tests/test_preflight.js`, adapted to the port's
 single Blender backend (the reference's webgl2/webgpu pair has no analogue

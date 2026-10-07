@@ -67,7 +67,7 @@ def _get_effect_spec(effect_name, search_order=None):
 
 
 # ============================================================================
-# Replacement preflight prediction (GAP-008; reference commit 403c2a4bf2cb)
+# Replacement preflight prediction (reference commit 403c2a4bf2cb)
 # ============================================================================
 
 def _get_effect_instance(resolved_name):
@@ -194,7 +194,7 @@ def _predict_passes_and_outputs(instance):
 
 
 def predict_replacement(resolved_name, spec, new_args, old_instance, options=None):
-    """Port of ``predictReplacement`` (GAP-008).
+    """Port of ``predictReplacement``.
 
     Predict a candidate replacement's compatibility dimensions before
     mutation: shader availability, arguments (unknown/missing), types, ranges

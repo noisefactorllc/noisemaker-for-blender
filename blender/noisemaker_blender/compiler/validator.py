@@ -614,7 +614,7 @@ def validate(ast):
                     continue
 
                 if ot == "Subchain":
-                    # Surface parser-attached subchain-argument reports (GAP-027)
+                    # Surface parser-attached subchain-argument reports
                     # once per subchain node, in source order.
                     arg_diagnostics = getattr(original, "subchainArgumentDiagnostics", None) or (
                         original.get("subchainArgumentDiagnostics") if isinstance(original, dict) else None

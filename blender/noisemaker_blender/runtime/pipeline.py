@@ -621,7 +621,7 @@ def should_skip(p, lookup):
 
 
 def _record_dimension_fallback(spec, screen_size, diagnostics, warned):
-    """Record a structured ERR_DIMENSION_FALLBACK diagnostic (GAP-007) for an
+    """Record a structured ERR_DIMENSION_FALLBACK diagnostic for an
     unknown dimension form. The historical screen-size fallback is unchanged
     (no new rejection of previously accepted input); the record is deduplicated
     per serialized spec so per-frame resolution cannot grow it unboundedly,
@@ -655,7 +655,7 @@ def resolve_dimension(spec, screen_size, uniforms=None, diagnostics=None, warned
     ``'input'`` and ``'resolution'`` are validator-accepted dimension keywords
     (DIM_KEYWORDS in the reference effect-validator) whose historical
     resolution is the screen dimension; they are recognized forms, not unknown
-    fallbacks, so they add no diagnostic (GAP-007).
+    fallbacks, so they add no diagnostic.
     """
     if uniforms is None:
         uniforms = {}
@@ -687,7 +687,7 @@ def resolve_dimension(spec, screen_size, uniforms=None, diagnostics=None, warned
         if spec.get("scale") is not None:
             return max(1, int(math.floor(screen_size * spec["scale"])))
     # An unknown object form (no param/screenDivide/scale key) keeps the
-    # historical screen-size fallback but records it (GAP-007); an absent spec
+    # historical screen-size fallback but records it; an absent spec
     # (None) is a default, not an unknown form, and adds no diagnostic.
     if spec is not None:
         _record_dimension_fallback(spec, screen_size, diagnostics, warned)
@@ -699,7 +699,7 @@ def resolve_surface_format(spec, diagnostics=None, warned=None):
 
     The historical silent rgba16f fallback is unchanged (no new rejection of
     previously accepted input), but an explicitly authored unknown format now
-    surfaces a structured ERR_UNKNOWN_FORMAT_FALLBACK diagnostic (GAP-007)
+    surfaces a structured ERR_UNKNOWN_FORMAT_FALLBACK diagnostic
     instead of pure silence; the record is deduplicated per format string while
     the warning still fires on every occurrence. An absent format is the
     default, not a fallback, and adds no diagnostic.
@@ -723,7 +723,7 @@ def resolve_surface_format(spec, diagnostics=None, warned=None):
 
 
 def resolve_pass_viewport(pass_obj, width, height, cache_holder=None):
-    """Mirror reference Pipeline.resolvePassViewport (GAP-005).
+    """Mirror reference Pipeline.resolvePassViewport.
 
     Resolves an authored pass.viewport spec ({ x, y, width, height } or
     { x, y, w, h } with dimension expressions or raw numbers) into a concrete
@@ -762,7 +762,7 @@ def resolve_pass_viewport(pass_obj, width, height, cache_holder=None):
 
 
 def build_texture_pooling_plan(graph):
-    """Mirror reference ``Pipeline.buildTexturePoolingPlan`` (GAP-006) plus its
+    """Mirror reference ``Pipeline.buildTexturePoolingPlan`` plus its
     viewport follow-up (upstream `95743621`).
 
     Consumes the analyzer's physical allocation map (``graph.allocations``,
@@ -860,7 +860,7 @@ def build_texture_pooling_plan(graph):
 
 
 def resource_plan(backend, graph):
-    """Mirror reference ``Pipeline.getResourcePlan`` (GAP-006).
+    """Mirror reference ``Pipeline.getResourcePlan``.
 
     Query the actual runtime texture allocation/reuse plan: the analyzer's
     physical allocation map (``graph.allocations``) and the sharing the
@@ -934,8 +934,8 @@ def _resolved_shader_buckets(backend, graph):
 
 
 def _predict_volume_clamps(graph, max_texture_size):
-    """Predict the volumeSize clamps the pipeline applies at init (GAP-016's
-    prediction/runtime lockstep, port side). Shares `_clamp_volume_size` with
+    """Predict the volumeSize clamps the pipeline applies at init (the
+    preflight prediction/runtime lockstep, port side). Shares `_clamp_volume_size` with
     `FrameStepper.__init__`'s actual mutation, so the prediction and the
     runtime can never drift. Read-only; never mutates the graph."""
     clamps = []
@@ -960,8 +960,7 @@ def _predict_volume_clamps(graph, max_texture_size):
 
 def preflight(backend, graph, capabilities=None, shaders=None):
     """Static preflight of a graph against device capabilities, before any
-    pipeline initialization or compilation (GAP-016; reference commit
-    12b4d74fb4f2). Port-side equivalent of reference `Pipeline.preflight`.
+    pipeline initialization or compilation (reference commit 12b4d74fb4f2). Port-side equivalent of reference `Pipeline.preflight`.
 
     Runs the same analysis as `preflight_effect` — per-backend authorability
     (the port's single Blender backend, judged against the backend's own

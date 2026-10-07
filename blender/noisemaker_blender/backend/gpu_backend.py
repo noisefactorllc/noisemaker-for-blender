@@ -103,7 +103,7 @@ class GpuBackend:
         self._fb_cache = {}       # tuple(id(off)..) -> GPUFrameBuffer (MRT)
         self._vbuf_cache = {}     # count -> GPUVertBuf (attribute-less points draw)
         # Queryable structured diagnostics for the historically-silent
-        # unknown-dimension-form and unknown-format fallbacks (GAP-007).
+        # unknown-dimension-form and unknown-format fallbacks.
         self.diagnostics = DiagnosticCollector()
         self._warned_dimension_fallbacks = set()
         self._warned_format_fallbacks = set()
@@ -202,7 +202,7 @@ class GpuBackend:
         # blend's `gl_FragCoord/textureSize` sampling stretched 4x in X and read unwritten columns
         # (vertical bars through the volume). Same-(phys,size) textures still share (real pooling).
         # Physical slot sharing mirrors reference `Pipeline.buildTexturePoolingPlan`
-        # (GAP-006 + upstream 95743621): only textures the plan marks poolable
+        # (and upstream 95743621): only textures the plan marks poolable
         # (identical plain 2D specs, first touch a full-overwrite write, no
         # drawMode/blend/viewport-without-clear partial writes) share one
         # backend texture under the group's primary id; every excluded texture

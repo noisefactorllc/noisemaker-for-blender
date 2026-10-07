@@ -1,5 +1,5 @@
 """Effect preflight — static, side-effect-free analysis of an effect definition
-against device capabilities (GAP-016; reference commit 12b4d74fb4f2).
+against device capabilities (reference commit 12b4d74fb4f2).
 
 Reference `shaders/src/runtime/preflight.js` adds `preflightEffect()`, which
 statically reports — before any pipeline initialization or compilation —
@@ -11,7 +11,8 @@ statically reports — before any pipeline initialization or compilation —
     }
 
 Ported here following that structure, adapted to the port's actual runtime (the
-same truthfulness contract as the GAP-006/GAP-008 dispositions):
+same truthfulness contract as the texture pooling and replacement
+predictions):
 
 - The port has a single rendering backend (Blender's `gpu` module), so the
   per-backend verdict map carries one `blender` entry instead of the
@@ -123,7 +124,7 @@ def _definition_textures(definition):
 
 def preflight_effect(definition, capabilities, shaders=None):
     """Predict per-backend authorability and device-limit-driven format changes
-    for an effect definition (reference `preflightEffect`, GAP-016).
+    for an effect definition (reference `preflightEffect`).
 
     definition  — effect definition dict ({passes, textures, [shaders]})
     capabilities — device capabilities dict ({maxDrawBuffers, maxTextureSize,

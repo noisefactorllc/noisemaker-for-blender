@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Reproduce the published-kit standalone-archive verification (GAP-006).
+"""Reproduce the published-kit standalone-archive verification.
 
 Fetches the served kit.json + engine/noisemaker_blender.zip for a given kit
-version, and machine-checks every GAP-006 required item against the repository
+version, and machine-checks every required item against the repository
 checkout:
 
   - archive inventory: every zip entry byte-identical to the checkout tree

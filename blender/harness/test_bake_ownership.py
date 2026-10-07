@@ -1,6 +1,6 @@
-"""GAP-005 harness: long-bake, cancellation and Image-ownership behavior (GUI mode; self-quits).
+"""Long-bake, cancellation and Image-ownership behavior (GUI mode; self-quits).
 
-Proves the user-facing behaviors GAP-005 qualified:
+Proves these user-facing behaviors:
   ownership   — a bake never resizes or overwrites an existing Image it did not create;
                 it bakes to a fresh unique name and reports it. Images a previous bake
                 created (marker) are reused/updated as before.

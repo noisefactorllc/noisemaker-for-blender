@@ -1112,7 +1112,7 @@ class CompilerTests(unittest.TestCase):
             )
 
     def test_subchain_argument_validation_and_strict_mode(self):
-        # GAP-027 validation: P008 unknown key (discarded)
+        # Subchain argument validation: P008 unknown key (discarded)
         p008_src = 'search synth, filter\nread(o0).subchain(nme: "typo", name: "ok") { .invert() }.write(o1)'
         res = compile(p008_src)
         p008_diags = [d for d in res.get("diagnostics", []) if d.get("code") == "P008"]

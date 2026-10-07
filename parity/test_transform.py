@@ -146,7 +146,7 @@ class TransformTests(unittest.TestCase):
 
 
 # ============================================================================
-# Replacement preflight prediction tests (GAP-008, reference 403c2a4bf2cb)
+# Replacement preflight prediction tests (reference 403c2a4bf2cb)
 # ============================================================================
 
 

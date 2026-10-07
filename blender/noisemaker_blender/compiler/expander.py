@@ -662,7 +662,7 @@ def expand(compilation_result, options=None):
                     "workgroups": pass_def.get("workgroups", _UNDEFINED),
                     "storageBuffers": pass_def.get("storageBuffers", _UNDEFINED),
                     "storageTextures": pass_def.get("storageTextures", _UNDEFINED),
-                    # GAP-005: pass labels and per-pass execution controls are
+                    # Pass labels and per-pass execution controls are
                     # copied verbatim. `name`/`type` stay queryable metadata
                     # (backend shader-kind dispatch remains source-derived);
                     # `viewport` is resolved to backend x/y/w/h numbers by
