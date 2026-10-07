@@ -38,7 +38,7 @@ These are current source and CPU contract observations. No new GPU frame, intera
 
 ### 2.2 Confirmed gaps
 
-The identifiers below belong to this plan. They do not renumber or close the historical `GAP-*` records.
+The identifiers below belong to this plan. They do not renumber or close the historical `GAP-*` records. Line numbers refer to the audit revision `a2c473e`; later commits can move them (the next upstream sync shifted the cited `pipeline.py` ranges by five to six lines).
 
 | ID | Finding and consequence | Current evidence |
 |---|---|---|
