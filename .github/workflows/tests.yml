@@ -6,7 +6,7 @@ name: Tests
 # Jobs:
 #   engine-free  scripts/test: the parity/test_*.py unittest suites, the stdlib
 #                PNG decoder test, and the DSL compiler gates against the
-#                reference revision recorded in STATUS.md.
+#                reference revision pinned in parity/reference-revision.
 #   blender      blender/harness/test_backend_contract.py in a checksum-pinned
 #                Blender 5.1.2 (the version bl_info targets) with --background.
 #                The contract imports Blender's gpu module but creates no GPU
@@ -31,7 +31,6 @@ on:
       - '!.github/FUNDING.yml'
       - '!.github/dependabot.yml'
       - '!.editorconfig'
-      - 'STATUS.md'
     branches: [main]
   workflow_dispatch:
 

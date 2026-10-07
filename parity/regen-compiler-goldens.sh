@@ -10,7 +10,7 @@
 #
 # B5oBsA has compile-time errors; since the checkpoint-era diagnostic change its compile()
 # returns diagnostics rather than raising, so dump-compile.mjs also writes B5oBsA.compile.json
-# (check_compile passes 20/20 including it); expanded/graph still fail and leave no golden
+# (check_compile includes it); expanded/graph still fail and leave no golden
 # (the gates EXCLUDE/skip it); its tokens/ast goldens are still written (it lexes + parses fine).
 set -u
 cd "$(dirname "$0")/.." || exit 1                       # repo root
@@ -29,7 +29,7 @@ for f in parity/corpus/*.dsl; do
   node tools/dump-ast.mjs    "$f"   > "parity/out/$name.ast.json"      2>/dev/null || rm -f "parity/out/$name.ast.json"
   # compile/expanded/graph: B5oBsA's compile() returns diagnostics since the checkpoint-era
   # diagnostic change, so dump-compile.mjs writes B5oBsA.compile.json (check_compile includes
-  # it, 20/20); expanded/graph still fail -> no golden, gates exclude it.
+  # it); expanded/graph still fail -> no golden, gates exclude it.
   node tools/dump-compile.mjs  "$f" > "parity/out/$name.compile.json"  2>/dev/null || rm -f "parity/out/$name.compile.json"
   node tools/dump-expanded.mjs "$f" > "parity/out/$name.expanded.json" 2>/dev/null || rm -f "parity/out/$name.expanded.json"
   node tools/export-graph.mjs --file "$f" "parity/out/$name.graph.json" >/dev/null 2>&1 || rm -f "parity/out/$name.graph.json"

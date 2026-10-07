@@ -86,8 +86,8 @@ class PreflightTests(unittest.TestCase):
         self.assertIn("draw", report["backends"]["blender"]["reasons"][0])
 
     def test_reference_glsl_bucket_shapes_count_as_authored(self):
-        # The port accepts reference-shaped buckets (glsl/fragment/vertex
-        # truthy) so a definition carried over from the reference engine is
+        # The port accepts reference-shaped buckets (a glsl or fragment
+        # source) so a definition carried over from the reference engine is
         # judged by the same field family its compile step consumes.
         for bucket in (
             {"glsl": "void main() {}"},
@@ -98,6 +98,29 @@ class PreflightTests(unittest.TestCase):
                 {"passes": [{"program": "p"}]}, {}, {"p": dict(bucket)}
             )
             self.assertTrue(report["backends"]["blender"]["authorable"], str(bucket))
+
+    def test_a_vertex_shader_alone_is_not_a_program_source(self):
+        # The backend compiles a fragment program; the reference WebGL2
+        # compileProgram() likewise reads source, then glsl, then fragment.
+        report = preflight_effect(
+            {"passes": [{"program": "p"}]}, {},
+            {"p": {"vertex": "#version 300 es\nvoid main() {}", "wgsl": "@fragment fn f() {}"}},
+        )
+        self.assertFalse(report["backends"]["blender"]["authorable"])
+
+    def test_generic_source_is_judged_by_its_language(self):
+        # A GLSL generic source beside WGSL is authorable; a WGSL generic
+        # source is not, even beside a GLSL fragment (source is selected first).
+        report = preflight_effect(
+            {"passes": [{"program": "p"}]}, {},
+            {"p": {"source": "#version 300 es\nvoid main() {}", "wgsl": "@fragment fn f() {}"}},
+        )
+        self.assertTrue(report["backends"]["blender"]["authorable"])
+        report = preflight_effect(
+            {"passes": [{"program": "p"}]}, {},
+            {"p": {"source": "@fragment fn f() {}", "fragment": "#version 300 es\nvoid main() {}"}},
+        )
+        self.assertFalse(report["backends"]["blender"]["authorable"])
 
     def test_without_shader_info_source_availability_is_not_judged(self):
         report = preflight_effect({"passes": [{"program": "p"}]}, {})
@@ -141,6 +164,10 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(mrt_format_bytes("rgba16f"), 8)
         self.assertEqual(mrt_format_bytes("rgba8"), 4)
         self.assertEqual(mrt_format_bytes(None), 8)
+        # Single-channel formats cost their own size, in both spellings.
+        for formats, size in ((("r32f", "r32float"), 4), (("r16f", "r16float"), 2), (("r8", "r8unorm"), 1)):
+            for fmt in formats:
+                self.assertEqual(mrt_format_bytes(fmt), size, fmt)
 
     def test_within_budget_mrt_predicts_no_format_changes(self):
         report = preflight_effect(

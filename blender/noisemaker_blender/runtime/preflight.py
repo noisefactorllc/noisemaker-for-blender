@@ -45,8 +45,12 @@ def mrt_format_bytes(fmt):
     """
     if fmt in ("rgba32f", "rgba32float"):
         return 16
-    if fmt in ("rgba8", "rgba8unorm"):
+    if fmt in ("rgba8", "rgba8unorm", "r32f", "r32float"):
         return 4
+    if fmt in ("r16f", "r16float"):
+        return 2
+    if fmt in ("r8", "r8unorm"):
+        return 1
     return 8
 
 
@@ -54,38 +58,41 @@ def _is_glsl_source(text):
     return isinstance(text, str) and GLSL_ONLY_HINT in text
 
 
+# Each predicate selects the source exactly as its reference backend's
+# compileProgram does, then asks whether that source is in the backend's
+# language: a backend that selects source in the other language fails to
+# compile it.
+
 def _is_wgsl_bucket(bucket):
-    # Reference heuristic, retained for bucket shapes that carry raw source
-    # text: WebGPU falls back to generic source/fragment when they are not GLSL.
+    # Reference WebGPU resolveWGSLSource(): wgsl, then source, then a non-GLSL
+    # fragment.
     if not bucket:
         return False
     if bucket.get("wgsl"):
         return True
-    if bucket.get("source") and not _is_glsl_source(bucket["source"]):
-        return True
-    if bucket.get("fragment") and not _is_glsl_source(bucket["fragment"]):
-        return True
-    return False
+    if bucket.get("source"):
+        return not _is_glsl_source(bucket["source"])
+    return bool(bucket.get("fragment")) and not _is_glsl_source(bucket["fragment"])
 
 
 def _is_glsl_bucket(bucket):
+    # Reference WebGL2 compileProgram(): source, then glsl, then fragment. A
+    # vertex shader alone is not a program source.
     if not bucket:
         return False
-    if bucket.get("glsl") or bucket.get("fragment") or bucket.get("vertex"):
-        return True
-    if bucket.get("source") and not _is_wgsl_bucket(bucket):
-        return True
-    return False
+    if bucket.get("source"):
+        return _is_glsl_source(bucket["source"])
+    return bool(bucket.get("glsl") or bucket.get("fragment"))
 
 
 def _is_authored_bucket(bucket):
     """Does this shader bucket carry a source the port's backend can compile?
 
     The port's compile step consumes a transpiled `.frag` body (plus its
-    `.createinfo.json` descriptor). A bucket counts as authored when any of the
-    source-bearing keys is truthy — either the reference's GLSL keys (`glsl`,
-    `fragment`, `vertex`, or a non-WGSL generic `source`) or the port's
-    resolved-source marker (`frag`).
+    `.createinfo.json` descriptor). A bucket counts as authored when it carries
+    the GLSL fragment source the reference WebGL2 backend would select (a GLSL
+    generic `source`, else `glsl` or `fragment`; a vertex shader alone is not a
+    program source) or the port's resolved-source marker (`frag`).
     """
     if not bucket:
         return False

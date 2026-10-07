@@ -14,7 +14,7 @@ produce render graphs with NO external reference.
 
 B5oBsA has compile-time errors (no graph golden) and is EXCLUDED; we also assert
 that ``compile_graph`` ABORTS on it (raises) like the reference ``compileGraph``
-throws on ERR_COMPILATION_FAILED. The other 19 corpus programs must match.
+throws on ERR_COMPILATION_FAILED. Every other corpus program must match.
 
 Comparison is STRUCTURAL (same rules as check_expanded.py): both sides are loaded
 as plain Python objects. Dict comparison is order-insensitive over keys; list

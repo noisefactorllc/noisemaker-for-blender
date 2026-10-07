@@ -206,7 +206,7 @@ vec3 posterize(vec3 color, float lev) {
 
 vec3 pixellate(vec2 uv, float size) {
     if (size < 1.0) {
-        return nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0))).rgb;
+        return nmTex(inputTex, (uv * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0))).rgb;
     }
 
     size *= 4.0;
@@ -672,7 +672,9 @@ void main() {
     float blendy = periodicFunction(time - offsets(uv));
 
     vec2 origUV = uv;
-    vec4 origcolor = nmTex(inputTex, gl_FragCoord.xy / vec2(textureSize(inputTex, 0)));
+    // Sample at the transformed uv (scale, rotation, offset, flip), mapped
+    // into this tile's input texture, as the WGSL samples textureSample(uv).
+    vec4 origcolor = nmTex(inputTex, (uv * fullResolution - tileOffset) / vec2(textureSize(inputTex, 0)));
     color = origcolor;
 
 #if EFFECT != 0

@@ -7,8 +7,8 @@ parity/out/<name>.expanded.json -- the REFERENCE JS
 ``expand(compile(source), {shaderOverrides})`` output
 ``{passes, programs, textureSpecs, renderSurface}``.
 
-B5oBsA has compile-time errors (no expanded golden) and is EXCLUDED; the other
-19 corpus programs must match.
+B5oBsA has compile-time errors (no expanded golden) and is EXCLUDED; every other
+corpus program must match.
 
 Comparison is STRUCTURAL (same rules as check_compile.py): both sides are loaded
 as plain Python objects. Dict comparison is order-insensitive over keys; list

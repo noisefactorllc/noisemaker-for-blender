@@ -6,8 +6,8 @@ Ported from reference `shaders/tests/test_backend_diagnostics.js` case shapes,
 adapted to the port's single Blender backend (the webgl2/webgpu compile, link,
 uniform-block, missing-render-target, GL-error and uncapturederror union
 members have no analogue here — Blender's `gpu.types.GPUShader` raises on
-compile error and exposes no info log; see the gap006 disposition in
-STATUS.md). The engine-independent members are covered:
+compile error and exposes no info log, which test_backend_contract.py's
+gpu.types probe asserts). The engine-independent members are covered:
 
   - DiagnosticCollector: add-returns-record, 64-cap shift, clear;
   - resolve_dimension: 'input'/'resolution' are validator-accepted keywords
@@ -120,6 +120,15 @@ class TestFormatDiagnostics(unittest.TestCase):
         self.assertEqual(self.fmt({"format": "rgba8"}), "RGBA8")
         self.assertEqual(self.fmt({"format": "RGBA16F"}), "RGBA16F")
         self.assertEqual(self.fmt({"format": "rgba32f"}), "RGBA32F")
+        self.assertEqual(self.collector.records, [])
+
+    def test_webgpu_spellings_resolve_to_the_same_formats(self):
+        # The reference WebGL2 backend resolves the WebGPU spellings the
+        # definition validator accepts (filter/bloom declares rgba16float,
+        # points/buddhabrot rgba32float, the blur family rgba8unorm).
+        self.assertEqual(self.fmt({"format": "rgba8unorm"}), "RGBA8")
+        self.assertEqual(self.fmt({"format": "rgba16float"}), "RGBA16F")
+        self.assertEqual(self.fmt({"format": "rgba32float"}), "RGBA32F")
         self.assertEqual(self.collector.records, [])
 
     def test_absent_format_is_the_default_not_a_fallback(self):

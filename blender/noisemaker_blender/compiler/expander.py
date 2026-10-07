@@ -207,6 +207,9 @@ def expand(compilation_result, options=None):
     programs = {}
     texture_specs = {}      # nodeId_texName -> {width, height, format, is3D?, depth?}
     texture_map = {}        # logical_id -> virtual_texture_id
+    written_volumes = {}    # exported volume -> source sizing uniform
+    read_volumes = {}       # reader sizing scope -> volume and preceding writer
+    exported_textures = {}  # exported atlas -> source texture
     last_written_surface = None  # Track the last surface written to
 
     plans = compilation_result.get("plans") or []
@@ -231,6 +234,7 @@ def expand(compilation_result, options=None):
         # Pipeline uniforms accumulate from upstream effects for downstream use.
         pipeline_uniforms = {}
         chain_scope_id = "chain_%d" % plans.index(plan)
+        volume_size_param = "volumeSize_%s" % chain_scope_id
 
         chain = plan.get("chain") or []
         for step in chain:
@@ -262,6 +266,16 @@ def expand(compilation_result, options=None):
                         current_input_geo = "global_%s" % geo.get("name")  # e.g. 'global_geo0'
                     else:
                         current_input_geo = (geo.get("name") if isinstance(geo, dict) else None) or geo
+                # Resolve the producer scope after all plans have been expanded:
+                # readers may precede writers to consume the previous frame.
+                volume = written_volumes.get(current_input3d)
+                if current_input3d:
+                    # Preserve the writer visible at this read. A later filter
+                    # may rewrite the same surface without becoming its size owner.
+                    read_volumes[volume_size_param] = {"surface": current_input3d, "writer": volume}
+                    value = volume.get("value") if volume else None
+                    pipeline_uniforms["volumeSize"] = 64 if value is None else value
+                    pipeline_uniforms[volume_size_param] = pipeline_uniforms["volumeSize"]
                 node_id = "node_%s" % step_temp
                 if current_input3d:
                     texture_map["%s_out3d" % node_id] = current_input3d
@@ -303,6 +317,12 @@ def expand(compilation_result, options=None):
 
                 if _defined(tex3d) and tex3d and tex3d.get("name") != "none" and current_input3d:
                     target_vol = "global_%s" % tex3d.get("name")
+                    exported_textures[target_vol] = current_input3d
+                    if texture_specs.get(current_input3d) is not None:
+                        texture_specs[target_vol] = dict(texture_specs[current_input3d])
+                    if pipeline_uniforms.get("volumeSize", _UNDEFINED) is not _UNDEFINED:
+                        written_volumes[target_vol] = {"param": volume_size_param,
+                                                       "value": pipeline_uniforms["volumeSize"]}
                     if current_input3d != target_vol:
                         blit_pass = {
                             "id": "%s_write3d_vol_blit" % node_id,
@@ -319,6 +339,9 @@ def expand(compilation_result, options=None):
 
                 if _defined(geo) and geo and geo.get("name") != "none" and current_input_geo:
                     target_geo = "global_%s" % geo.get("name")
+                    exported_textures[target_geo] = current_input_geo
+                    if texture_specs.get(current_input_geo) is not None:
+                        texture_specs[target_geo] = dict(texture_specs[current_input_geo])
                     if current_input_geo != target_geo:
                         geo_blit_pass = {
                             "id": "%s_write3d_geo_blit" % node_id,
@@ -509,7 +532,8 @@ def expand(compilation_result, options=None):
                                     if original_param == "stateSize" and current_particle_pipeline_id
                                     else scope_suffix
                                 )
-                                scoped_param = "%s_%s" % (original_param, dimension_scope)
+                                scoped_param = (volume_size_param if original_param == "volumeSize"
+                                                else "%s_%s" % (original_param, dimension_scope))
                                 scoped_param_map[original_param] = scoped_param
                                 new_dim = dict(dim_spec)
                                 new_dim["param"] = scoped_param
@@ -1039,6 +1063,67 @@ def expand(compilation_result, options=None):
                 # blit program is registered by the inline _write path; a chain
                 # that reaches the final blit without an inline write still has a
                 # 'blit'-program pass but no 'blit' program entry -- reproduced.
+
+    # Follow volume handoffs after expansion so ordering and re-export do not
+    # change atlas dimensions. Cycles without a producer retain their defaults.
+    def resolve_volume(param, visited):
+        if param in visited:
+            return None
+        visited.add(param)
+        read = read_volumes.get(param)
+        writer = None
+        if read is not None:
+            writer = read.get("writer")
+            if writer is None:
+                writer = written_volumes.get(read.get("surface"))
+        if writer is None or writer["param"] == param:
+            return None
+        resolved = resolve_volume(writer["param"], visited)
+        return writer if resolved is None else resolved
+
+    resolved_volumes = {}
+    for param in read_volumes:
+        source = resolve_volume(param, set())
+        if source is not None:
+            resolved_volumes[param] = source
+
+    def resolve_export(tex_id, visited):
+        if tex_id in visited:
+            return texture_specs.get(tex_id)
+        visited.add(tex_id)
+        source = exported_textures.get(tex_id)
+        if not source or source == tex_id:
+            return texture_specs.get(tex_id)
+        spec = resolve_export(source, visited)
+        if spec is not None:
+            texture_specs[tex_id] = dict(spec)
+        return texture_specs.get(tex_id)
+
+    for tex_id in list(exported_textures):
+        resolve_export(tex_id, set())
+    for spec in texture_specs.values():
+        if not isinstance(spec, dict):
+            continue
+        for axis in ("width", "height", "depth"):
+            dim = spec.get(axis)
+            source = resolved_volumes.get(dim.get("param")) if isinstance(dim, dict) else None
+            if source is not None:
+                new_dim = dict(dim)
+                new_dim["param"] = source["param"]
+                spec[axis] = new_dim
+    for pass_obj in passes:
+        uniforms = pass_obj.get("uniforms")
+        if not isinstance(uniforms, dict):
+            continue
+        for param, source in resolved_volumes.items():
+            if param not in uniforms:
+                continue
+            del uniforms[param]
+            uniforms[source["param"]] = source["value"]
+            uniforms["volumeSize"] = source["value"]
+            scoped = pass_obj.get("scopedParams")
+            if isinstance(scoped, dict) and scoped.get("volumeSize") == param:
+                scoped["volumeSize"] = source["param"]
 
     # Determine the render surface.
     if compilation_result.get("render"):

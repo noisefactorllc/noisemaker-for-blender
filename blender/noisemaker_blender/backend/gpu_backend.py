@@ -41,6 +41,10 @@ _FMT_RANK = {"RGBA8": 1, "RGBA16F": 2, "RGBA32F": 3}
 
 _WARNED_UNIFORMS = set()
 
+_SCREEN_SPEC = {"width": "screen", "height": "screen"}
+_VOLUME_SURFACE = re.compile(r"^global_vol[0-7]$")
+_VOLUME_SURFACE_SPEC = {"width": 64, "height": 4096}
+
 
 def _warn_uniform_once(name, ctype, value, detail="not set — value kept its shader default"):
     """Print the first failed/normalized uniform assignment per name, then stay quiet.
@@ -162,7 +166,10 @@ class GpuBackend:
         texspecs = dict(graph.textures)
         for p in graph.passes:
             for tid in list(p.get("inputs", {}).values()) + list(p.get("outputs", {}).values()):
-                texspecs.setdefault(tid, {"width": "screen", "height": "screen"})
+                # An unwritten volume surface keeps the native 64^3 atlas (64x4096);
+                # write3d gives exported volumes their producer's spec.
+                default = _VOLUME_SURFACE_SPEC if _VOLUME_SURFACE.match(tid) else _SCREEN_SPEC
+                texspecs.setdefault(tid, dict(default))
         # Resolve every logical texture's dims once (drives per-pass viewport, not the
         # physical slot size — a small pooled texture renders only its corner of a shared slot).
         self.tex_dims = {}
@@ -369,7 +376,12 @@ class GpuBackend:
         pt = p.get("passType")
         if pt == "blit":
             compiled = self.compile(None, "blit", "blit", None)
-            merged = {"resolution": [float(self.size), float(self.size)]}
+            # The reference blit samples texture(src, v_texCoord): the whole source
+            # maps onto the whole target, so the coordinate divides by the target's
+            # size (a volume atlas is not screen-sized).
+            target = next(iter(p.get("outputs", {}).values()), None)
+            w, h = self.tex_dims.get(target, (self.size, self.size))
+            merged = {"resolution": [float(w), float(h)]}
             inputs = {"src": p["inputs"]["src"]}
         elif pt == "effect":
             compiled = self.compile(p.get("namespace"), p["func"], p["progName"], p.get("defines"))

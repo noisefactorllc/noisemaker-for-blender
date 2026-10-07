@@ -224,3 +224,31 @@ assert _box == (0, 0, 64, 4096), _box
 print("BACKEND CONTRACT PASS — pass viewport box consumes resolved pixel ints")
 
 print("BACKEND CONTRACT PASS — global surface refreshed when format or dimensions change")
+
+# A volume surface that no write3d exported keeps the native 64^3 atlas
+# (64x4096), as the reference runtime allocates it; other unspecified global
+# surfaces stay screen-sized.
+_volume_graph = MockGraph({})
+_volume_graph.passes = [{"inputs": {"tex": "global_vol3"}, "outputs": {"fragColor": "global_o3"}}]
+backend.setup(_volume_graph, {})
+assert (backend.surfaces["vol3"].read.width, backend.surfaces["vol3"].read.height) == (64, 4096)
+assert (backend.surfaces["o3"].read.width, backend.surfaces["o3"].read.height) == (256, 256)
+
+print("BACKEND CONTRACT PASS — unwritten volume surfaces keep the native atlas size")
+
+# A blit maps its whole source onto its whole target, as the reference's
+# texture(src, v_texCoord) does: its resolution is the target's size, not the
+# screen's (a write3d blit into a 16x256 volume atlas must not read only the
+# atlas's first 16/256 of the source).
+_blit_backend = GpuBackend.__new__(GpuBackend)
+_blit_backend.size = 256
+_blit_backend.tex_dims = {"global_vol1": (16, 256), "global_o0": (256, 256)}
+_blit_backend.compile = lambda *args: "blit-program"
+_blit_calls = []
+_blit_backend._render = lambda compiled, merged, inputs, p, graph: _blit_calls.append(merged["resolution"])
+for _target in ("global_vol1", "global_o0"):
+    _blit_backend.execute({"passType": "blit", "inputs": {"src": "node_3_volume"},
+                           "outputs": {"color": _target}}, MockGraph({}), {})
+assert _blit_calls == [[16.0, 256.0], [256.0, 256.0]], _blit_calls
+
+print("BACKEND CONTRACT PASS — a blit's resolution is its target's size")

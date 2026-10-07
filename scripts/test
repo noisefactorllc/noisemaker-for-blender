@@ -5,8 +5,7 @@
 #   2. blender/harness/test_pngread.py  stdlib PNG decoder
 #   3. parity/compiler/check_{lex,parse,compile,expanded,graph}.py
 #        DSL compiler parity against goldens that the reference JS compiler
-#        produces at the reference revision recorded in STATUS.md (the last
-#        "to reference `<sha>`" sync entry)
+#        produces at the reference revision pinned in parity/reference-revision
 #
 # Any failure, error or skipped test fails the run. The remaining
 # blender/harness/test_*.py scripts need Blender itself (see
@@ -152,15 +151,14 @@ summary+=("test_pngread: $(grep -c '^  OK ' <<<"$out" || true) OK, $(grep -c '^ 
 
 # --- 3. DSL compiler parity gates --------------------------------------------
 step "parity/compiler/check_*.py against the reference compiler"
-# shellcheck disable=SC2016  # the backticks are literal STATUS.md text
-pin="$(grep -oE 'to reference `[0-9a-f]{7,40}`' STATUS.md | tail -n 1 | grep -oE '[0-9a-f]{7,40}' || true)"
-[[ -n "$pin" ]] || fail "no 'to reference \`<sha>\`' entry in STATUS.md"
+pin="$(tr -d '[:space:]' < parity/reference-revision)"
+[[ "$pin" =~ ^[0-9a-f]{40}$ ]] || fail "parity/reference-revision does not hold a full commit SHA"
 ref="$work/noisemaker"
 git clone --quiet --filter=blob:none --no-checkout "$REFERENCE_URL" "$ref"
 ref_sha="$(git -C "$ref" rev-parse --verify --quiet "$pin^{commit}")" \
-  || fail "reference revision $pin (STATUS.md) not found in $REFERENCE_URL"
+  || fail "reference revision $pin (parity/reference-revision) not found in $REFERENCE_URL"
 git -C "$ref" -c advice.detachedHead=false checkout --quiet --detach "$ref_sha"
-printf 'reference: %s at %s (STATUS.md pin %s)\n' "$REFERENCE_URL" "$ref_sha" "$pin"
+printf 'reference: %s at %s (pin %s)\n' "$REFERENCE_URL" "$ref_sha" "$pin"
 
 # The goldens are written into a scratch copy so the checkout's parity/out/
 # is left alone.

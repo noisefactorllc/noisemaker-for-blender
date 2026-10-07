@@ -14,8 +14,14 @@ from .preflight import preflight_effect
 
 
 _TAU = math.pi * 2
-# graph texture format string -> GPUOffScreen format token.
-_FORMAT = {"rgba8": "RGBA8", "rgba16f": "RGBA16F", "rgba32f": "RGBA32F"}
+# graph texture format string -> GPUOffScreen format token, in both the WebGL2
+# and the WebGPU spelling (the reference WebGL2 backend resolves both).
+# GPUOffScreen has no single-channel formats, so r8/r16f/r32f keep the fallback.
+_FORMAT = {
+    "rgba8": "RGBA8", "rgba8unorm": "RGBA8",
+    "rgba16f": "RGBA16F", "rgba16float": "RGBA16F",
+    "rgba32f": "RGBA32F", "rgba32float": "RGBA32F",
+}
 _AUTOMATION_FIELD_RANGES = {
     "unit": {"min": 0, "max": 1},
     "oscillatorSpeed": {"min": -20, "max": 20},
