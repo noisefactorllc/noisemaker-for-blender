@@ -1,8 +1,7 @@
 // golden-cdp.mjs — render reference-engine goldens over raw CDP (no npm installs).
 //
-// Generalization of the 2026-09-25 evidence driver (parity/evidence-2026-09-25/
-// cdp-golden.cjs): same renderOne determinism replication against the reference
-// demo served at NM_DEMO_URL, but with caller-configurable output dir and frame
+// Replicates the reference demo's renderOne determinism against the reference
+// served at NM_DEMO_URL, with a caller-configurable output dir and frame
 // protocol so scripts/parity-summary can drive it.
 //
 // Usage: node parity/golden-cdp.mjs <name>=<dslPath>...
@@ -12,7 +11,7 @@
 //   NM_GOLDEN_TIME    normalized time (default 0.25)
 //   NM_GOLDEN_TIMESTEP per-frame timestep (default 0; tt=(time+i*ts)%1 like batch-golden.mjs)
 //   NM_CDP_PORT       Chromium DevTools port (default 9222)
-//   NM_DEMO_URL       demo page URL (default http://127.0.0.1:8777/demo/shaders/)
+//   NM_DEMO_URL       demo page URL (default http://127.0.0.1:$NM_SERVE_PORT/demo/shaders/, port 8777)
 //   NM_REFERENCE_ROOT reference engine root (required, for the graph export)
 //
 // The caller must serve NM_REFERENCE_ROOT at the demo origin root (a static file
@@ -30,7 +29,7 @@ if (!OUT) { console.error('NM_GOLDEN_OUT is required'); process.exit(2) }
 const REFERENCE_ROOT = process.env.NM_REFERENCE_ROOT
 if (!REFERENCE_ROOT) { console.error('NM_REFERENCE_ROOT is required'); process.exit(2) }
 const CDP_PORT = process.env.NM_CDP_PORT || '9222'
-const DEMO_URL = process.env.NM_DEMO_URL || 'http://127.0.0.1:8777/demo/shaders/'
+const DEMO_URL = process.env.NM_DEMO_URL || `http://127.0.0.1:${process.env.NM_SERVE_PORT || '8777'}/demo/shaders/`
 const SIZE = parseInt(process.env.NM_GOLDEN_SIZE || '256', 10)
 const TIME = parseFloat(process.env.NM_GOLDEN_TIME || '0.25')
 const FRAMES = parseInt(process.env.NM_GOLDEN_FRAMES || '8', 10)
@@ -184,7 +183,7 @@ async function main () {
     try { pv = JSON.parse(fs.readFileSync(pvPath, 'utf8')) } catch (e) { pv = { files: {} } }
     pv.reference_revision = process.env.NM_GOLDEN_REF_REV || null
     pv.files = pv.files || {}
-    pv.files[it.name] = { sha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(OUT, `${it.name}.golden.png`))).digest('hex'), bytes: fs.statSync(path.join(OUT, `${it.name}.golden.png`)).size }
+    pv.files[it.name] = { sha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(OUT, `${it.name}.golden.png`))).digest('hex'), bytes: fs.statSync(path.join(OUT, `${it.name}.golden.png`)).size, reference_revision: process.env.NM_GOLDEN_REF_REV || null }
     fs.writeFileSync(pvPath, JSON.stringify(pv, null, 2) + '\n')
     console.log('OK', it.name, width + 'x' + height)
   }

@@ -27,10 +27,11 @@ Environment:
   NM_GOLDEN_AUTO   when set, generate missing/stale goldens from NM_REFERENCE_ROOT
   NM_REFERENCE_ROOT, NM_CHROME (default `chromium`), NM_CDP_PORT (9222),
   NM_SERVE_PORT (8777)  — golden generation
-  --reuse          reuse existing candidate PNGs and provenance-verified goldens
-                   (resumable sweeps); the default renders EVERY case fresh and
-                   refuses goldens without a matching provenance.json entry, so
-                   stale work directories can never be counted as executed
+  --reuse          reuse existing candidate PNGs (resumable sweeps); the default
+                   renders EVERY case fresh. Goldens are graded only with a
+                   provenance.json entry matching their sha256 and minted at the
+                   revision pinned in parity/reference-revision, so stale work
+                   directories can never be counted as executed
   --fresh          accepted no-op (fresh rendering is already the default)
 
 Exit code 0 only when fail == missing == 0. Never fabricates: every count names
@@ -52,6 +53,7 @@ import pngread  # noqa: E402
 
 MANIFESTS = [ROOT / "parity" / "3d-expected.txt", ROOT / "parity" / "artistic-expected.txt"]
 POLICIES = [ROOT / "parity" / "3d-near-policy.json", ROOT / "parity" / "artistic-near-policy.json"]
+REFERENCE_REVISION = ROOT / "parity" / "reference-revision"
 TOLERANCE = 2.0
 SSIM_MIN = 0.98
 
@@ -130,6 +132,29 @@ def sha256(path):
     return h.hexdigest()
 
 
+def pinned_revision():
+    """The reference revision this checkout pins (parity/reference-revision)."""
+    return REFERENCE_REVISION.read_text().strip()
+
+
+def golden_state(gold, gold_dir, pin):
+    """'ok' only for a golden whose provenance.json entry matches its sha256 and
+    was minted at the pinned reference revision; 'missing' or 'stale' otherwise,
+    so a stale or foreign golden in a reused work directory is never graded."""
+    if not gold.exists():
+        return "missing"
+    try:
+        pv = json.loads((gold_dir / "provenance.json").read_text())
+    except (OSError, ValueError):
+        return "stale"
+    entry = pv.get("files", {}).get(gold.name[:-len(".golden.png")])
+    if not entry or entry.get("sha256") != sha256(gold):
+        return "stale"
+    if entry.get("reference_revision") != pin:
+        return "stale"
+    return "ok"
+
+
 def render_candidate(name, dsl, out_png, size, time, frames, timeout):
     jobs = json.dumps([{"dsl": str(dsl), "out": str(out_png)}])
     env = dict(os.environ, NM_JOBS=jobs, NM_SIZE=str(size), NM_TIME=str(time), NM_FRAMES=str(frames))
@@ -201,6 +226,9 @@ def generate_goldens(missing, gold_dir, ref_root, timeout):
                                  capture_output=True, text=True, timeout=30).stdout.strip() or None
     except Exception:
         ref_rev = None
+    pin = pinned_revision()
+    if ref_rev != pin:
+        return "NM_REFERENCE_ROOT is at %s, not the pinned revision %s" % (ref_rev, pin)
     procs = ensure_golden_infra(ref_root, serve_port, cdp_port, chrome)
     try:
         env = dict(os.environ, NM_GOLDEN_OUT=str(gold_dir), NM_CDP_PORT=str(cdp_port),
@@ -271,21 +299,10 @@ def main():
     # entry matching the file's sha256 (written by parity/golden-cdp.mjs), so a
     # stale or foreign golden in a reused work directory cannot be graded.
     auto = os.environ.get("NM_GOLDEN_AUTO") and os.environ.get("NM_REFERENCE_ROOT")
-
-    def golden_state(gold):
-        if not gold.exists():
-            return "missing"
-        try:
-            pv = json.loads((gold_dir / "provenance.json").read_text())
-        except (OSError, ValueError):
-            return "stale"
-        entry = pv.get("files", {}).get(gold.name[:-len(".golden.png")])
-        if not entry or entry.get("sha256") != sha256(gold):
-            return "stale"
-        return "ok"
+    pin = pinned_revision()
 
     if auto:
-        need = [n for n in ready if golden_state(gold_dir / f"{n}.golden.png") != "ok"]
+        need = [n for n in ready if golden_state(gold_dir / f"{n}.golden.png", gold_dir, pin) != "ok"]
         if need:
             err = generate_goldens(need, gold_dir, Path(os.environ["NM_REFERENCE_ROOT"]),
                                    120 * max(1, len(need)))
@@ -296,10 +313,10 @@ def main():
     for name in ready:
         gold = gold_dir / f"{name}.golden.png"
         cand = cand_dir / f"{name}.png"
-        state = golden_state(gold)
+        state = golden_state(gold, gold_dir, pin)
         if state != "ok":
             counts["missing"] += 1
-            why = "no authority golden" if state == "missing" else "golden present but unprovenanced/sha256-mismatched (stale); regenerate with NM_GOLDEN_AUTO=1"
+            why = "no authority golden" if state == "missing" else "golden present but unprovenanced, sha256-mismatched or not minted at the pinned revision (stale); regenerate with NM_GOLDEN_AUTO=1"
             print(f"[missing] {name}: {why}")
             continue
         rec = compare(gold, cand, policies.get(name))
