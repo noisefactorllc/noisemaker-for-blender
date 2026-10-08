@@ -214,8 +214,9 @@ automation through the session API; device capture and `scope`/`spectrum` remain
   program that must fail to compile, is excluded from the expand and graph gates).
 - **Rendered parity.** `scripts/parity-summary` renders the 116 cases listed in
   `parity/3d-expected.txt` and `parity/artistic-expected.txt` with this add-on and with the
-  reference WebGL2 engine at the pinned revision (headless Chromium, ANGLE on SwiftShader), at
-  256×256, time 0.25, 8 frames. Each case grades exact (identical), strict (every channel within
+  reference WebGL2 engine at the pinned revision (headless Chromium, ANGLE over Metal), at
+  256×256, time 0.25, 8 frames. The goldens are minted on the GPU class the add-on renders on, never
+  on SwiftShader ([platform notes](docs/BLENDER-PLATFORM-NOTES.md#6-parity-expectation)). Each case grades exact (identical), strict (every channel within
   2/255, SSIM ≥ 0.98), near (inside a measured entry of the near policies in `parity/`), or fail.
   The latest counts and per-case results are on the compatibility report; this README carries no
   copy of them.

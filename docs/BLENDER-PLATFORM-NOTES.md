@@ -153,13 +153,17 @@ through one of three causes: a port defect (wrong uniform, format, binding or pa
 shader toolchain (Blender GLSL→MSL here, ANGLE in the browser), or a different GPU.
 
 `scripts/parity-summary` mints its authority goldens with the reference engine in headless Chromium
-on ANGLE over **SwiftShader**, a CPU rasterizer, so that any host can reproduce them. The port
-renders on the host GPU. Most single-pass effects then agree within 1/255. Effects that put a hard
-discontinuity in the per-pixel path — a `step()` threshold, an `fwidth()` antialiasing width, a
-high-exponent `pow()` specular term, an oscillating `sin()` tone curve, an argmin or argmax pick, a
-raymarch hit test — can land on opposite sides of it at a sparse set of pixels, so `max-abs-diff`
-reads high on those pixels while SSIM stays near 1. Grading the same candidates against goldens that
-the reference renders on the same GPU (ANGLE over Metal) separates that class from port defects.
+on ANGLE over **Metal**, on the Apple-silicon GPU class the port renders on, and
+`parity/golden-cdp.mjs` refuses any other renderer. Effects that put a hard discontinuity in the
+per-pixel path (a `step()` threshold, an `fwidth()` antialiasing width, a high-exponent `pow()`
+specular term, an oscillating `sin()` tone curve, an argmin or argmax pick, a raymarch hit test)
+resolve it through the GPU's arithmetic. A golden from a different rasterizer lands on the other
+side of it at a sparse set of pixels, so `max-abs-diff` reads high there while SSIM stays near 1.
+
+SwiftShader, a CPU rasterizer, is therefore never the authority. At the 5976b7a pin the same 116
+candidates grade 87 exact, 25 strict, 4 near and 0 failing against goldens minted on ANGLE over
+Metal, and 1 exact, 49 strict, 8 near and 58 failing against goldens minted on SwiftShader. That
+difference measures the rasterizer, not the port.
 
 **Exception — the chaos class.** Chaotic agent→navierStokes chains and continuous CAs diverge by
 design over long evolutions; see [`CHAOS-GATE.md`](CHAOS-GATE.md).

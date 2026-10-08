@@ -16,8 +16,8 @@
 //
 // The caller must serve NM_REFERENCE_ROOT at the demo origin root (a static file
 // server suffices: /demo/shaders/ is the app, /shaders/... its sources) and run
-// headless Chromium with --remote-debugging-port=$NM_CDP_PORT --headless=new
-// --enable-unsafe-swiftshader --use-gl=angle --use-angle=swiftshader --no-sandbox.
+// headless Chromium on the host GPU with --remote-debugging-port=$NM_CDP_PORT
+// --headless=new --use-angle=metal --no-sandbox.
 import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
@@ -100,11 +100,14 @@ if (!PAIR.length) { console.error('usage: node golden-cdp.mjs name=dslPath ...')
 
 const { exportGraph } = await import(pathToFileURL(EXPORT_GRAPH).href)
 
-// The authority is the reference's WebGL2 backend on ANGLE/SwiftShader, served
-// from NM_REFERENCE_ROOT. scripts/parity-summary reuses a browser or a server
-// already listening on its ports, so check both before minting: a GPU-backed
-// browser, or a server rooted at another checkout, would otherwise mint goldens
-// that provenance.json attributes to the pinned revision.
+// The authority is the reference's WebGL2 backend on the GPU class the add-on
+// renders on, ANGLE over Metal on Apple silicon, served from NM_REFERENCE_ROOT.
+// SwiftShader is never the authority: a CPU rasterizer resolves thresholds and
+// nearest picks differently from the Metal GPU Blender renders on.
+// scripts/parity-summary reuses a browser or a server already listening on its
+// ports, so check both before minting: a browser on another renderer, or a
+// server rooted at another checkout, would otherwise mint goldens that
+// provenance.json attributes to the pinned revision.
 const ROOT_PROBES = ['shaders/effects/manifest.json', 'shaders/src/runtime/pipeline.js']
 
 async function checkAuthority (cdp) {
@@ -114,9 +117,13 @@ async function checkAuthority (cdp) {
     const ext = gl.getExtension('WEBGL_debug_renderer_info')
     return String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER))
   })()`)
-  if (!/swiftshader/i.test(renderer || '')) {
-    throw new Error(`the page renders on ${renderer || 'no WebGL2 context'}, not ANGLE on SwiftShader; ` +
-      `is another browser listening on NM_CDP_PORT ${CDP_PORT}?`)
+  if (/swiftshader/i.test(renderer || '')) {
+    throw new Error(`the page renders on ${renderer}: goldens are minted on the GPU class the add-on ` +
+      'renders on (ANGLE over Metal on Apple silicon), never on SwiftShader')
+  }
+  if (!/ANGLE Metal Renderer: Apple/i.test(renderer || '')) {
+    throw new Error(`the page renders on ${renderer || 'no WebGL2 context'}, not ANGLE over Metal on ` +
+      `Apple silicon; is another browser listening on NM_CDP_PORT ${CDP_PORT}?`)
   }
   for (const probe of ROOT_PROBES) {
     const res = await fetch(new URL(`../../${probe}`, DEMO_URL))

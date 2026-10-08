@@ -111,7 +111,8 @@ and a window, so it runs on a GUI host.
 
 Rendered parity uses one protocol on both engines: 256×256, normalized time 0.25, 8 frames from a
 zeroed state. The authority goldens come from the reference engine at the pinned revision, rendered
-by headless Chromium with ANGLE on SwiftShader. A case is **exact** when the images are identical,
+by headless Chromium with ANGLE over Metal on Apple silicon, the GPU class the add-on renders on;
+`parity/golden-cdp.mjs` refuses any other renderer, SwiftShader included. A case is **exact** when the images are identical,
 **strict** when every channel is within 2/255 and SSIM is at least 0.98, and **near** when a
 measured, mechanism-bound entry in `parity/3d-near-policy.json` or
 `parity/artistic-near-policy.json` bounds it. Everything else fails. The manifest's stateful cases
