@@ -100,11 +100,40 @@ if (!PAIR.length) { console.error('usage: node golden-cdp.mjs name=dslPath ...')
 
 const { exportGraph } = await import(pathToFileURL(EXPORT_GRAPH).href)
 
+// The authority is the reference's WebGL2 backend on ANGLE/SwiftShader, served
+// from NM_REFERENCE_ROOT. scripts/parity-summary reuses a browser or a server
+// already listening on its ports, so check both before minting: a GPU-backed
+// browser, or a server rooted at another checkout, would otherwise mint goldens
+// that provenance.json attributes to the pinned revision.
+const ROOT_PROBES = ['shaders/effects/manifest.json', 'shaders/src/runtime/pipeline.js']
+
+async function checkAuthority (cdp) {
+  const renderer = await cdp.evaluate(`(() => {
+    const gl = window.__noisemakerRenderingPipeline?.backend?.gl
+    if (!gl) return null
+    const ext = gl.getExtension('WEBGL_debug_renderer_info')
+    return String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER))
+  })()`)
+  if (!/swiftshader/i.test(renderer || '')) {
+    throw new Error(`the page renders on ${renderer || 'no WebGL2 context'}, not ANGLE on SwiftShader; ` +
+      `is another browser listening on NM_CDP_PORT ${CDP_PORT}?`)
+  }
+  for (const probe of ROOT_PROBES) {
+    const res = await fetch(new URL(`../../${probe}`, DEMO_URL))
+    const served = res.ok ? Buffer.from(await res.arrayBuffer()) : null
+    if (!served || !served.equals(fs.readFileSync(path.join(REFERENCE_ROOT, probe)))) {
+      throw new Error(`${DEMO_URL} does not serve NM_REFERENCE_ROOT (${probe} differs); ` +
+        'is another server listening on NM_SERVE_PORT?')
+    }
+  }
+}
+
 async function main () {
   const cdp = await CDP.connect(await getWsUrl())
   await cdp.send('Page.enable')
   await cdp.send('Page.navigate', { url: DEMO_URL })
   await waitFor(cdp, `!!window.__noisemakerRenderingPipeline && !!document.getElementById('dsl-editor')`)
+  await checkAuthority(cdp)
   for (const it of PAIR) {
     // Determinism: reload between effects so every WebGL context starts from a
     // zero-initialized texture state (batch-golden.mjs renderOne contract).

@@ -237,10 +237,13 @@ def generate_goldens(missing, gold_dir, ref_root, timeout):
                    NM_GOLDEN_TIME=os.environ.get("NM_TIME", "0.25"),
                    NM_GOLDEN_FRAMES=os.environ.get("NM_FRAMES", "8"))
         try:
-            subprocess.run([node, str(ROOT / "parity" / "golden-cdp.mjs")] + pairs,
-                           cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=timeout)
+            run = subprocess.run([node, str(ROOT / "parity" / "golden-cdp.mjs")] + pairs,
+                                 cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired:
             return "golden generation timeout after %ss" % timeout
+        if run.returncode != 0:
+            lines = [ln for ln in (run.stderr or "").splitlines() if ln.strip()]
+            return "golden-cdp.mjs exited %d: %s" % (run.returncode, lines[-1] if lines else "no output")
     finally:
         for p in procs:
             p.terminate()
