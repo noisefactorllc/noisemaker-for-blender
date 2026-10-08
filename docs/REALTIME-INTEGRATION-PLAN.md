@@ -380,6 +380,9 @@ Independent review identified and corrected failed-property-write rollback, GPU 
 on Live disable, and stale prepared Geometry Nodes evaluation. The reviewed implementation is
 `54a9ed7`, integrated on upstream `59e9e84`, with add-on version 0.1.15. Earlier hashes below
 identify retained pre-integration evidence snapshots; they are not final-source qualification.
+A later upstream reference-only update, `b36d4d0`, was integrated as `ee91144`. Product,
+native harness and test code remained byte-identical; the reference revision became
+`15c9114e864fcc8cd2557669f2ac6d36f0ea080f`.
 
 ### 9.1 Implemented paths
 
@@ -418,7 +421,9 @@ changing the disposable scene and closing their process. Evidence directories ar
 
 | Gate | Result and scope |
 |---|---|
+| Current reference compiler gate | At `ee91144`, `scripts/test` passed all 371 unit tests, 16 PNG decoder tests, lexer/parser/compile parity 23/23 each, and expander/graph parity 22/22 each against reference `15c9114e864fcc8cd2557669f2ac6d36f0ea080f`. The rebuilt export kit retained identical hashes and byte counts for all 632 inventoried files, including the previously tested ZIP. |
 | Reviewed engine-free and packaging gates | At `54a9ed7`, `scripts/test` passed 371 unit tests, 16 PNG decoder tests, lexer/parser/compile parity 23/23 each, and expander/graph parity 22/22 each against reference `8e5835932a7297d360b943200b42953224eea0a4`. The full export-kit release test command passed 97 tests with zero failures or skips, including the Blender contracts. The real builder packaged 891 tracked add-on files; ZIP SHA-256 is `414e9fba8a86022c7f34f2711baef8ccf190575f7b6bffd238fad66d520f7b24`. |
+| Reviewed lifecycle transaction and package | The exact `54a9ed7` product bytes, unchanged at `ee91144`, passed native Pause/session retention, Live-disable GPU cleanup, fresh-session resume and keyed override restoration. An injected second IDProperty write failure after the first value/UI mutation restored the prior graph, source, session, Image, values and UI metadata; valid source recovery and separate background save/reopen then passed. The initial reopen fixture incorrectly compared pre-recovery metadata; the retained fixture correction captures the successful recompile metadata before save and adds a recovered-source hash check, without changing failure-time rollback assertions. Evidence is in `task0-20261007-54a9-lifecycle-transaction-corrected`. The exact ZIP above also installed, enabled, registered Scene properties and disabled successfully with isolated Blender scripts/configuration (`task0-20261007-54a9-package`). |
 | Reviewed native integration | Exact `54a9ed7` passed the tracked live-preview harness, three-process create → undo/redo → save/reopen sequence, six Eevee/Cycles scripted frame markers with Persistent Data off/on, and read-only prepared background frames 2→1. The new `test_prepared_geometry.py` passed four Cycles Persistent Data renders in reverse and forward order with unchanged Image socket identity and zero measured vertex-offset error. The same strict harness failed before the consumer-tree invalidation fix because evaluated geometry stayed stale despite correct Image pixels. Evidence is in `task0-20261007-54a9-{gn,live,persistence,render}`; source archive SHA-256 is `7dc6fdd9218395c9b8ee6ee3a854ac635e4f7b3ee3cccef0e5a854f13c4aeed5`. |
 | Persistent session | `test_render_session_native.py`: legacy square output comparison, 257×129 output, HDR/negative/premultiplied alpha publication, repeated-frame/handle checks and stateful sequential/jump/backward replay passed. |
 | Host inputs | `test_host_inputs.py`: asymmetric Image orientation/update, text change, evaluated mesh deformation, compiled `media()` with a 3×2 premultiplied source and audio-driven alpha change passed. |
