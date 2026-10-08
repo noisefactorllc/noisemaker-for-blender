@@ -376,6 +376,10 @@ The current implementation has more capability than the README's description of 
 Implementation started from plan commit `86f3c2ef95b4ea63d256dadef4f5d5c6efcf0aea` on
 2026-10-07. This is an implementation checkpoint, not qualification of the full requested outcome.
 The original task checklists remain open where their combined acceptance criteria are incomplete.
+Independent review identified and corrected failed-property-write rollback, GPU session retention
+on Live disable, and stale prepared Geometry Nodes evaluation. The reviewed implementation is
+`54a9ed7`, integrated on upstream `59e9e84`, with add-on version 0.1.15. Earlier hashes below
+identify retained pre-integration evidence snapshots; they are not final-source qualification.
 
 ### 9.1 Implemented paths
 
@@ -409,11 +413,13 @@ The original task checklists remain open where their combined acceptance criteri
 The native host is the spare office Mac, Apple M4, Blender 5.1.2, Metal. Tests use disposable
 `--factory-startup` GUI processes under the host's shared resource lock; only prepared cache
 consumption uses `--background`. New GUI harnesses require `NM_HARNESS_AUTOCLOSE=1` before
-changing the disposable scene and closing their process. Evidence is retained on that host under
-`/Users/alex/.nmr/task0-20261007*` and mirrored during the run outside the checkout.
+changing the disposable scene and closing their process. Evidence directories are named
+`task0-20261007*` beneath the configured native evidence root and are mirrored outside the checkout.
 
 | Gate | Result and scope |
 |---|---|
+| Reviewed engine-free and packaging gates | At `54a9ed7`, `scripts/test` passed 371 unit tests, 16 PNG decoder tests, lexer/parser/compile parity 23/23 each, and expander/graph parity 22/22 each against reference `8e5835932a7297d360b943200b42953224eea0a4`. The full export-kit release test command passed 97 tests with zero failures or skips, including the Blender contracts. The real builder packaged 891 tracked add-on files; ZIP SHA-256 is `414e9fba8a86022c7f34f2711baef8ccf190575f7b6bffd238fad66d520f7b24`. |
+| Reviewed native integration | Exact `54a9ed7` passed the tracked live-preview harness, three-process create → undo/redo → save/reopen sequence, six Eevee/Cycles scripted frame markers with Persistent Data off/on, and read-only prepared background frames 2→1. The new `test_prepared_geometry.py` passed four Cycles Persistent Data renders in reverse and forward order with unchanged Image socket identity and zero measured vertex-offset error. The same strict harness failed before the consumer-tree invalidation fix because evaluated geometry stayed stale despite correct Image pixels. Evidence is in `task0-20261007-54a9-{gn,live,persistence,render}`; source archive SHA-256 is `7dc6fdd9218395c9b8ee6ee3a854ac635e4f7b3ee3cccef0e5a854f13c4aeed5`. |
 | Persistent session | `test_render_session_native.py`: legacy square output comparison, 257×129 output, HDR/negative/premultiplied alpha publication, repeated-frame/handle checks and stateful sequential/jump/backward replay passed. |
 | Host inputs | `test_host_inputs.py`: asymmetric Image orientation/update, text change, evaluated mesh deformation, compiled `media()` with a 3×2 premultiplied source and audio-driven alpha change passed. |
 | Float consumer probe | `probe_consumer_coherence.py`: 11 assertions passed, including the analytic RGB delta `[.75, -1.75, 1.375]` in six Eevee/Cycles material/world and CPU/GPU compositor renders, both evaluated Geometry Nodes vertices, and managed node/link identity. Tolerance was .03; compositor alpha remained .60635. |
