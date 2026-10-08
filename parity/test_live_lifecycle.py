@@ -55,6 +55,11 @@ class LifecycleTests(unittest.TestCase):
     def test_recompile_reapplies_persisted_keyed_value(self):
         from noisemaker_blender import api
         from noisemaker_blender.integration import lifecycle
+        class UI:
+            def __init__(self): self.data = {}
+            def as_dict(self): return dict(self.data)
+            def clear(self): self.data.clear()
+            def update(self, **kwargs): self.data.update(kwargs)
         class Owner(dict):
             def __init__(self):
                 super().__init__()
@@ -64,7 +69,7 @@ class LifecycleTests(unittest.TestCase):
                 self.alpha_mode = "PREMUL"
                 self.image_name = "Test"
             def id_properties_ui(self, key):
-                return SimpleNamespace(update=lambda **kwargs: None)
+                return self.ui.setdefault(key, UI())
         class Session:
             width, height = 64, 32
             def __init__(self): self.set_calls = []; self.recompiled = []
@@ -403,6 +408,136 @@ class LifecycleTests(unittest.TestCase):
         self.assertTrue(registry.scheduler.status(key).paused)
         self.assertFalse(registry.scheduler._slots[key].continuous)
         self.assertIs(registry.instances_for_scene(scene)[0], record)
+        registry.shutdown()
+
+    def test_disable_releases_session_but_pause_retains_it_and_resume_is_dirty(self):
+        import hashlib
+        from noisemaker_blender import api
+        item = config("one", enabled=True, image=object())
+        scene = Scene(item)
+        registry = LiveRegistry()
+        record = registry.get(scene, "one")
+        key = registry._key(scene, "one")
+        closed = []
+        session = SimpleNamespace(close=lambda: closed.append("close"))
+        record.session = session
+        record.publisher = object()
+        record.program = SimpleNamespace(graph=lambda: SimpleNamespace(is_stateful=lambda: False))
+        record.source_hash = hashlib.sha256(item.source.encode("utf-8")).hexdigest()
+        record.bindings = SimpleNamespace(active_keys=("solid#0.alpha",),
+                                          set=lambda key, value: None)
+        record.applied_values = {"solid#0.alpha": 0.8}
+        registry._evaluated_values = lambda _record: {"solid#0.alpha": 0.8}
+        registry.scan([scene], now=1)
+        item.paused = True
+        registry.scan([scene], now=2)
+        self.assertIs(record.session, session)
+        self.assertEqual(closed, [])
+        item.live_enabled = False
+        registry.scan([scene], now=3)
+        registry.scan([scene], now=4)
+        self.assertEqual(closed, ["close"])
+        self.assertIsNone(record.session)
+        self.assertEqual(record.applied_values, {})
+        self.assertIsNotNone(record.publisher)
+        self.assertIs(registry.instances_for_scene(scene)[0], record)
+        item.live_enabled = True
+        item.paused = False
+        registry.scan([scene], now=5)
+        self.assertFalse(registry.scheduler.status(key).paused)
+        self.assertIn("configuration", registry.scheduler.status(key).dirty)
+        reapplied = []
+        new_session = SimpleNamespace(width=64, height=32,
+                                      set_parameter=lambda key, value: reapplied.append((key, value)),
+                                      close=lambda: None)
+        with patch.object(api, "open_session", return_value=new_session):
+            registry.sync_instance(scene, item, width=64, height=32)
+        self.assertIs(record.session, new_session)
+        self.assertEqual(reapplied, [("solid#0.alpha", 0.8)])
+        registry.shutdown()
+
+    def test_failed_property_write_keeps_previous_session_graph_and_ui(self):
+        from noisemaker_blender import api
+        from noisemaker_blender.integration import lifecycle
+
+        class UI:
+            def __init__(self):
+                self.data = {}
+            def as_dict(self): return dict(self.data)
+            def clear(self): self.data.clear()
+            def update(self, **kwargs): self.data.update(kwargs)
+        class Owner(dict):
+            def __init__(self):
+                super().__init__()
+                self.__dict__.update(vars(config("one", enabled=True)))
+                self.source = "old"
+                self.color_role = "color"
+                self.alpha_mode = "PREMUL"
+                self.image_name = "Test"
+                self.ui = {}
+                self.fail_key = None
+            def __setitem__(self, key, value):
+                if key == self.fail_key:
+                    self.fail_key = None
+                    raise RuntimeError("injected IDProperty failure")
+                super().__setitem__(key, value)
+            def __delitem__(self, key):
+                super().__delitem__(key)
+                self.ui.pop(key, None)
+            def id_properties_ui(self, key):
+                return self.ui.setdefault(key, UI())
+        class Session:
+            width, height = 64, 32
+            def __init__(self):
+                self.recompiled = []
+                self.fail_recompile = False
+            def recompile(self, program):
+                self.recompiled.append(program.source)
+                if self.fail_recompile:
+                    raise RuntimeError("injected backend preflight failure")
+            def set_parameter(self, key, value): pass
+            def close(self): pass
+
+        owner = Owner()
+        scene = Scene(owner)
+        scene.update_tag = lambda **kwargs: None
+        session = Session()
+        registry = LiveRegistry()
+        registry._definitions = lambda program: [{
+            "namespace": "synth", "func": "solid", "globals": {
+                "alpha": {"type": "float", "default": 0.25, "uniform": "alpha",
+                          "description": "old" if program.source == "old" else "new"},
+                **({} if program.source == "old" else {
+                    "beta": {"type": "float", "default": 0.5, "uniform": "beta"}})}}]
+        registry._evaluated_values = lambda record: {
+            key: record.config["nm:" + key] for key in record.bindings.active_keys}
+        with patch.object(api, "compile", side_effect=lambda source: SimpleNamespace(
+                source=source, graph=lambda: SimpleNamespace(is_stateful=lambda: False))), \
+             patch.object(api, "open_session", return_value=session), \
+             patch.object(lifecycle, "seed_values_from_program",
+                          side_effect=lambda program, definitions: {
+                              "solid#0.alpha": 0.25,
+                              **({} if program.source == "old" else {"solid#0.beta": 0.5})}):
+            record = registry.sync_instance(scene, owner, width=64, height=32)
+            old_props = dict(owner)
+            old_ui = {key: value.as_dict() for key, value in owner.ui.items()}
+            owner.source = "new"
+            owner.fail_key = "nm:solid#0.beta"
+            with self.assertRaisesRegex(RuntimeError, "injected IDProperty failure"):
+                registry.sync_instance(scene, owner, force=True, width=64, height=32)
+            self.assertEqual(session.recompiled, [])
+            self.assertEqual(record.program.source, "old")
+            self.assertEqual(record.bindings.active_keys, ("solid#0.alpha",))
+            self.assertEqual(dict(owner), old_props)
+            self.assertEqual({key: value.as_dict() for key, value in owner.ui.items()}, old_ui)
+            session.fail_recompile = True
+            with self.assertRaisesRegex(RuntimeError, "injected backend preflight failure"):
+                registry.sync_instance(scene, owner, force=True, width=64, height=32)
+        self.assertEqual(session.recompiled, ["new"])
+        self.assertEqual(record.program.source, "old")
+        self.assertEqual(record.bindings.active_keys, ("solid#0.alpha",))
+        self.assertEqual(dict(owner), old_props)
+        self.assertEqual({key: value.as_dict() for key, value in owner.ui.items()}, old_ui)
         registry.shutdown()
 
     def test_owned_image_dependency_orders_final_instances_and_rejects_cycle(self):

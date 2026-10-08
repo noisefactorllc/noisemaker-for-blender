@@ -432,24 +432,30 @@ class LiveRegistry:
                                          if key not in previous_keys})
                 adapter = BlenderPropertyAdapter(config)
                 adapter.load(candidate_bindings)
+                candidate_applied_values = {
+                    key: compiled_values.get(key, binding.spec.default)
+                    for key, binding in candidate_bindings._bindings.items()
+                    if not binding.orphaned
+                }
+                transaction = adapter.staged_persist(candidate_bindings)
+                transaction.apply()
                 recompiled = record.session is not None
-                if recompiled:
-                    record.session.recompile(candidate)
+                try:
+                    if recompiled:
+                        record.session.recompile(candidate)
+                except Exception:
+                    transaction.rollback()
+                    raise
                 record.bindings = candidate_bindings
-                adapter.persist(record.bindings)
-                # Newly created nested ID properties are not visible in the
-                # evaluated Scene until its dependency graph is tagged.
-                self._tag_scene_for_properties(scene)
                 record.program = candidate
                 record.source_hash = source_hash
                 # Recompilation reconstructs graph defaults. Compare saved
                 # keyed values with those new defaults, rather than the old
                 # session values, so only actual overrides need reapplication.
-                record.applied_values = {
-                    key: compiled_values.get(key, binding.spec.default)
-                    for key, binding in record.bindings._bindings.items()
-                    if not binding.orphaned
-                }
+                record.applied_values = candidate_applied_values
+                # Newly created nested ID properties are not visible in the
+                # evaluated Scene until its dependency graph is tagged.
+                self._tag_scene_for_properties(scene)
             if record.program is not None and record.program.graph().is_stateful() and record.bindings is not None:
                 animated = animated_parameter_keys(scene, config, record.bindings.active_keys)
                 if animated:
@@ -560,8 +566,22 @@ class LiveRegistry:
                 key = self._key(scene, config.instance_id)
                 if not config.live_enabled:
                     if key in self._records:
+                        record = self._records[key]
                         self.scheduler.set_continuous(key, False)
                         self.scheduler.pause(key)
+                        if record.session is not None:
+                            session = record.session
+                            record.session = None
+                            try:
+                                session.close()
+                            finally:
+                                record.applied_values = {}
+                                record.observed_inputs = None
+                                record.pending_preview_request = None
+                                record.pending_preview_signature = None
+                                record.reset_requested = False
+                                record.free_run_started = now
+                                self.scheduler.mark_dirty(key, "configuration", now=now)
                     continue
                 record = self._record(scene, config)
                 self.scheduler.set_continuous(key, config.time_mode == "free_run" and not playing)

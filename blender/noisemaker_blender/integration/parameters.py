@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import copy
 import hashlib
 import json
 import math
@@ -413,17 +414,25 @@ class BlenderPropertyAdapter:
         return plain if len(plain) <= 63 else "nm:" + hashlib.sha256(key.encode()).hexdigest()[:32]
 
     def persist(self, store: BindingStore):
+        for prop, value, metadata in self._writes(store):
+            self.owner[prop] = value
+            self.owner.id_properties_ui(prop).update(**metadata)
+
+    def staged_persist(self, store: BindingStore):
+        return _PropertyPersistence(self.owner, self._writes(store))
+
+    @classmethod
+    def _writes(cls, store):
+        writes = []
         for key, binding in store._bindings.items():
-            prop = self.property_name(key)
-            self.owner[prop] = binding.spec.encode(binding.value)
-            ui = self.owner.id_properties_ui(prop)
             metadata = {"description": binding.spec.description,
                         "default": binding.spec.encode(binding.spec.default)}
             if _finite(binding.spec.minimum):
                 metadata["min"] = binding.spec.minimum
             if _finite(binding.spec.maximum):
                 metadata["max"] = binding.spec.maximum
-            ui.update(**metadata)
+            writes.append((cls.property_name(key), binding.spec.encode(binding.value), metadata))
+        return tuple(writes)
 
     def load(self, store: BindingStore):
         """Recover saved values before reconciling a newly compiled program."""
@@ -450,6 +459,56 @@ class BlenderPropertyAdapter:
             if value == binding.value:
                 return label
         raise ValueError("parameter has no enum label: %s" % key)
+
+
+class _PropertyPersistence:
+    """Rollback IDProperty values and UI metadata if a graph swap fails."""
+
+    def __init__(self, owner, writes):
+        self.owner = owner
+        self.writes = writes
+        self.before = None
+
+    @staticmethod
+    def _plain(value):
+        to_list = getattr(value, "to_list", None)
+        return to_list() if callable(to_list) else copy.deepcopy(value)
+
+    def apply(self):
+        if self.before is not None:
+            raise RuntimeError("property transaction already applied")
+        before = {}
+        for prop, _value, _metadata in self.writes:
+            if prop in self.owner:
+                ui = self.owner.id_properties_ui(prop)
+                as_dict = getattr(ui, "as_dict", None)
+                if not callable(as_dict) or not callable(getattr(ui, "clear", None)):
+                    raise RuntimeError("IDProperty UI metadata cannot be snapshotted")
+                before[prop] = (True, self._plain(self.owner[prop]), copy.deepcopy(as_dict()))
+            else:
+                before[prop] = (False, None, None)
+        self.before = before
+        try:
+            for prop, value, metadata in self.writes:
+                self.owner[prop] = value
+                self.owner.id_properties_ui(prop).update(**metadata)
+        except Exception:
+            self.rollback()
+            raise
+
+    def rollback(self):
+        if self.before is None:
+            return
+        for prop, _value, _metadata in reversed(self.writes):
+            existed, value, metadata = self.before[prop]
+            if existed:
+                self.owner[prop] = value
+                ui = self.owner.id_properties_ui(prop)
+                ui.clear()
+                ui.update(**metadata)
+            elif prop in self.owner:
+                del self.owner[prop]
+        self.before = None
 
 
 def _action_curves(action, slot=None):

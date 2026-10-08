@@ -117,6 +117,31 @@ class PublicationTests(unittest.TestCase):
         self.assertIs(resized, first)
         self.assertEqual(resized.size, (9, 7))
 
+    def test_publication_invalidates_only_local_geometry_consumers(self):
+        pub = self.publisher()
+        image = pub.publish(np.zeros((1, 1, 4)), generation=1)
+        tagged = []
+
+        def tree(name, target, *, kind='GeometryNodeTree', library=None, repeats=1):
+            nodes = [types.SimpleNamespace(
+                bl_idname='GeometryNodeImageTexture',
+                inputs={'Image': types.SimpleNamespace(default_value=target)})
+                for _ in range(repeats)]
+            return types.SimpleNamespace(
+                bl_idname=kind, library=library, nodes=nodes,
+                update_tag=lambda: tagged.append((name, float(image.pixels.values[0]))))
+
+        self.bpy.data.node_groups = [
+            tree('consumer', image, repeats=2),
+            tree('unrelated', None),
+            tree('shader', image, kind='ShaderNodeTree'),
+            tree('linked', image, library=object()),
+        ]
+        published = pub.publish(np.ones((1, 1, 4)), generation=2)
+        self.assertIs(published, image)
+        self.assertEqual(tagged, [('consumer', 1.0)])
+        self.assertIs(self.bpy.data.node_groups[0].nodes[0].inputs['Image'].default_value, image)
+
     def test_packed_image_resize_keeps_pointer_and_new_pixel_capacity(self):
         images = PackedImages()
         bpy = types.SimpleNamespace(data=types.SimpleNamespace(images=images))

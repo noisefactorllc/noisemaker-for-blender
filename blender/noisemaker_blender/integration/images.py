@@ -79,6 +79,15 @@ class ImagePublisher:
             image.scale(width, height)
         image.pixels.foreach_set(self.buffer.reshape(-1))
         image.update()
+        # Generated Image pixel updates do not invalidate cached Geometry Nodes
+        # evaluation. Tag only local trees that sample this Image, keeping their
+        # Image socket and consumer links unchanged.
+        for tree in getattr(self._bpy.data, 'node_groups', ()):
+            if tree.library is not None or tree.bl_idname != 'GeometryNodeTree':
+                continue
+            if any(node.bl_idname == 'GeometryNodeImageTexture'
+                   and node.inputs['Image'].default_value == image for node in tree.nodes):
+                tree.update_tag()
         image['noisemaker_generation'] = generation
         image['noisemaker_role'] = self.role
         image['noisemaker_provenance'] = metadata
