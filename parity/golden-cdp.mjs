@@ -21,8 +21,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
-import crypto from 'node:crypto'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { declaredRenderer, isAuthorityRenderer, recordGolden } from './golden-provenance.mjs'
 
 const OUT = process.env.NM_GOLDEN_OUT
 if (!OUT) { console.error('NM_GOLDEN_OUT is required'); process.exit(2) }
@@ -107,7 +107,9 @@ const { exportGraph } = await import(pathToFileURL(EXPORT_GRAPH).href)
 // scripts/parity-summary reuses a browser or a server already listening on its
 // ports, so check both before minting: a browser on another renderer, or a
 // server rooted at another checkout, would otherwise mint goldens that
-// provenance.json attributes to the pinned revision.
+// provenance.json attributes to the pinned revision. parity/authority-renderer
+// declares the renderer, and provenance.json records the one each golden was
+// minted on, so scripts/parity-summary can refuse a golden from any other.
 const ROOT_PROBES = ['shaders/effects/manifest.json', 'shaders/src/runtime/pipeline.js']
 
 async function checkAuthority (cdp) {
@@ -121,9 +123,10 @@ async function checkAuthority (cdp) {
     throw new Error(`the page renders on ${renderer}: goldens are minted on the GPU class the add-on ` +
       'renders on (ANGLE over Metal on Apple silicon), never on SwiftShader')
   }
-  if (!/ANGLE Metal Renderer: Apple/i.test(renderer || '')) {
-    throw new Error(`the page renders on ${renderer || 'no WebGL2 context'}, not ANGLE over Metal on ` +
-      `Apple silicon; is another browser listening on NM_CDP_PORT ${CDP_PORT}?`)
+  if (!isAuthorityRenderer(renderer)) {
+    throw new Error(`the page renders on ${renderer || 'no WebGL2 context'}, not the declared authority ` +
+      `"${declaredRenderer()}" (ANGLE over Metal on Apple silicon); is another browser listening on ` +
+      `NM_CDP_PORT ${CDP_PORT}?`)
   }
   for (const probe of ROOT_PROBES) {
     const res = await fetch(new URL(`../../${probe}`, DEMO_URL))
@@ -133,6 +136,7 @@ async function checkAuthority (cdp) {
         'is another server listening on NM_SERVE_PORT?')
     }
   }
+  return renderer
 }
 
 async function main () {
@@ -140,7 +144,6 @@ async function main () {
   await cdp.send('Page.enable')
   await cdp.send('Page.navigate', { url: DEMO_URL })
   await waitFor(cdp, `!!window.__noisemakerRenderingPipeline && !!document.getElementById('dsl-editor')`)
-  await checkAuthority(cdp)
   for (const it of PAIR) {
     // Determinism: reload between effects so every WebGL context starts from a
     // zero-initialized texture state (batch-golden.mjs renderOne contract).
@@ -148,6 +151,8 @@ async function main () {
       await cdp.send('Page.navigate', { url: DEMO_URL })
       await waitFor(cdp, `!!window.__noisemakerRenderingPipeline && !!document.getElementById('dsl-editor')`)
     }
+    // The renderer this golden is minted on, checked and recorded per golden.
+    const renderer = await checkAuthority(cdp)
     try { const g = await exportGraph(it.dsl); fs.writeFileSync(path.join(OUT, `${it.name}.graph.json`), JSON.stringify(g, null, 2) + '\n') } catch (e) { console.error(`[golden] ${it.name} GRAPH-FAIL ${e?.message || e}`) }
     const baseId = await cdp.evaluate(`window.__noisemakerRenderingPipeline?.graph?.id ?? null`)
     await cdp.evaluate(`(() => { const ed = document.getElementById('dsl-editor'); const run = document.getElementById('dsl-run-btn'); ed.value = ${JSON.stringify(it.dsl)}; ed.dispatchEvent(new Event('input', { bubbles: true })); run.click(); return true })()`)
@@ -211,17 +216,12 @@ async function main () {
       topDown[d] = pixels[s]; topDown[d + 1] = pixels[s + 1]; topDown[d + 2] = pixels[s + 2]; topDown[d + 3] = pixels[s + 3]
     }
     fs.writeFileSync(path.join(OUT, `${it.name}.golden.png`), encodePng(width, height, topDown))
-    // Provenance manifest: binds every generated golden to its sha256 and the
-    // reference revision the golden was rendered from, so a stale or foreign
-    // golden in a reused work directory cannot pass as the authority image.
-    const pvPath = path.join(OUT, 'provenance.json')
-    let pv = {}
-    try { pv = JSON.parse(fs.readFileSync(pvPath, 'utf8')) } catch (e) { pv = { files: {} } }
-    pv.reference_revision = process.env.NM_GOLDEN_REF_REV || null
-    pv.files = pv.files || {}
-    pv.files[it.name] = { sha256: crypto.createHash('sha256').update(fs.readFileSync(path.join(OUT, `${it.name}.golden.png`))).digest('hex'), bytes: fs.statSync(path.join(OUT, `${it.name}.golden.png`)).size, reference_revision: process.env.NM_GOLDEN_REF_REV || null }
-    fs.writeFileSync(pvPath, JSON.stringify(pv, null, 2) + '\n')
-    console.log('OK', it.name, width + 'x' + height)
+    // Provenance manifest: binds every generated golden to its sha256, the
+    // reference revision it was rendered from and the renderer it was minted
+    // on, so a stale or foreign golden in a reused work directory cannot pass
+    // as the authority image.
+    recordGolden(OUT, it.name, { referenceRevision: process.env.NM_GOLDEN_REF_REV || null, renderer })
+    console.log('OK', it.name, width + 'x' + height, renderer)
   }
   console.log('DONE')
   process.exit(0)
