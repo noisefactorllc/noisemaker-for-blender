@@ -5,7 +5,11 @@ chaotic agent flows that feed the fluid solver (`points/flow` with `behavior: ch
 sims that ride the same path) and continuous cellular automata such as lenia and mnca, evolved over
 hundreds of frames. They render deterministically and stay bounded in this port, but each engine
 produces a different instance of the same chaos. `parity/programs/north_star.dsl` is the flagship
-example. These programs are not in the graded parity manifest.
+example. Long evolutions of these programs are not in the graded parity manifest.
+The flagship chain itself is graded at the shared 8-frame protocol under a
+measured, mechanism-bound entry in `parity/artistic-near-policy.json`: sub-ULP
+transcendental differences still put each engine on a different instance of the
+same chaos, so its golden comparison is near-bounded, never exact.
 
 ## Why
 
@@ -40,6 +44,9 @@ this port.
 ## How these programs are checked
 
 The graded manifest (`scripts/parity-summary`) holds deterministic cases, including short stateful
-runs of 8 frames. Chaotic programs are checked for stability and character instead: they must
+runs of 8 frames. The flagship chain's 8-frame case is graded under a measured policy entry, since
+at that length the engines stay close (SSIM 0.9996) while still rendering different instances of
+the same chaos. Long evolutions of chaotic programs are checked for stability and character
+instead: they must
 compile, render without NaN or Inf in any pass, stay bounded over the long evolution recipe
 (1800 frames at a 1/600 timestep), and show the same structures as the reference.

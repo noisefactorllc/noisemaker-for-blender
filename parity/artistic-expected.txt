@@ -103,3 +103,6 @@ dither_errorDiffusion
 directionalBlur_angled
 plasticWrap_directed
 spinBlur_offCenter
+lens
+bloom
+north_star

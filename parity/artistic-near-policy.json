@@ -78,6 +78,12 @@
       "mean_abs_diff": 0.45,
       "ssim_min": 0.999,
       "mechanism": "separable Gaussian residual is amplified by subtract-and-rescale sharpening"
+    },
+    "north_star": {
+      "max_abs_diff": 120,
+      "mean_abs_diff": 1.6,
+      "ssim_min": 0.999,
+      "mechanism": "sub-ULP transcendental divergence is amplified by the chaotic flow-to-navierStokes feedback, so each engine renders a different instance of the same chaos at the shared 8-frame protocol (measured 68/0.3973/0.99959 against the ANGLE-over-Metal authority at the 5976b7a pin, matching the 2026-10-07 same-GPU measurement; bounds carry cross-host headroom while staying far below structural failure modes - an all-black render measures mad~255, mean~220 here)"
     }
   }
 }
