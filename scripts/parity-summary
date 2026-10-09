@@ -6,8 +6,9 @@ Contract (gap-closure counts): the last output line is
   PARITY-SUMMARY {"expected":N,"executed":N,"exact":N,"strict":N,"near":N,"defer":N,"skip":N,"fail":N,"missing":N}
 expected counts the authority's cases (the union of parity/3d-expected.txt and
 parity/artistic-expected.txt, or the given case ids); exact the byte-identical
-ones; strict the other passes within the port's published numerical contract
-(mad <= 2, ssim >= 0.98); near the per-case policy-bounded mismatches
+ones (identical PNG file bytes, sha256); strict the other passes within the
+port's published numerical contract (mad <= 2, ssim >= 0.98, measured on the
+decoded pixels); near the per-case policy-bounded mismatches
 (parity/3d-near-policy.json + parity/artistic-near-policy.json, unchanged);
 defer, skip, fail and missing the rest. Given case ids as arguments, only those
 are rendered and counted.
@@ -91,6 +92,10 @@ def compare(gold_path, cand_path, policy):
     c, cshape = load_rgba(cand_path)
     if gshape != cshape:
         return {"cls": "FAIL", "reason": "size_mismatch", "gshape": gshape, "cshape": cshape}
+    # exact is byte identity of the PNG files themselves (the contract's
+    # "byte-identical"), decided before any decoded-pixel grading; decoded
+    # metrics only classify strict/near/fail.
+    byte_identical = sha256(gold_path) == sha256(cand_path)
     n = len(g)
     mad = 0
     total = 0
@@ -117,8 +122,10 @@ def compare(gold_path, cand_path, policy):
     c1 = 0.01 ** 2
     c2 = 0.03 ** 2
     ssim = ((2 * mu_a * mu_b + c1) * (2 * cov + c2)) / ((mu_a ** 2 + mu_b ** 2 + c1) * (va + vb + c2))
-    if mad <= TOLERANCE + 0.001 and ssim >= SSIM_MIN:
-        cls = "exact" if mad == 0 else "strict"
+    if byte_identical:
+        cls = "exact"
+    elif mad <= TOLERANCE + 0.001 and ssim >= SSIM_MIN:
+        cls = "strict"
     elif policy and (mad <= float(policy["max_abs_diff"]) and mean <= float(policy["mean_abs_diff"])
                      and ssim >= float(policy["ssim_min"]) and bool(policy.get("mechanism"))):
         cls = "near"
