@@ -673,18 +673,31 @@ def resolve_dimension(spec, screen_size, uniforms=None, diagnostics=None, warned
     if isinstance(spec, dict):
         if spec.get("param") is not None:
             val = uniforms.get(spec["param"], spec.get("default", spec.get("paramDefault", 64)))
-            if isinstance(val, dict):
-                val = spec.get("default", 64)
-            if spec.get("multiply") is not None:
-                val *= spec["multiply"]
-            if spec.get("power") is not None:
-                val = val ** spec["power"]
+            if not isinstance(val, (int, float)) or isinstance(val, bool) or not math.isfinite(val):
+                # Func wrappers and other nonnumeric authored values are not
+                # evaluated by the runtime. Use the texture spec's existing
+                # numeric default so backends never allocate a NaN size.
+                if spec.get("default") is not None:
+                    val = spec["default"]
+                else:
+                    val = spec.get("paramDefault", 64)
+                    if spec.get("multiply") is not None:
+                        val *= spec["multiply"]
+                    if spec.get("power") is not None:
+                        val = val ** spec["power"]
+            else:
+                if spec.get("multiply") is not None:
+                    val *= spec["multiply"]
+                if spec.get("power") is not None:
+                    val = val ** spec["power"]
             if (spec.get("power") is not None or spec.get("multiply") is not None) \
                     and uniforms.get(spec["param"]) is None and spec.get("default") is not None:
                 val = spec["default"]
             return max(1, int(math.floor(val)))
         if spec.get("screenDivide") is not None:
             div = uniforms.get(spec["screenDivide"], spec.get("default", 1)) or 1
+            if not isinstance(div, (int, float)) or isinstance(div, bool) or not math.isfinite(div):
+                div = spec.get("default", 1) or 1
             return max(1, int(round(screen_size / div)))
         if spec.get("scale") is not None:
             return max(1, int(math.floor(screen_size * spec["scale"])))
