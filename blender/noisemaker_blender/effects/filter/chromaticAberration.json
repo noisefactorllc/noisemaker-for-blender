@@ -6,9 +6,7 @@
     "distort",
     "lens"
   ],
-  "paramAliases": {
-    "aberrationAmt": "aberration"
-  },
+  "paramAliases": {},
   "defaultProgram": "search synth, filter\nnoise(colorMode: mono, ridges: true)\n.chromaticAberration()\n.write(o0)",
   "globals": {
     "aberration": {

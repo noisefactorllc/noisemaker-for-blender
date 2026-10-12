@@ -5,12 +5,7 @@
   "tags": [
     "noise"
   ],
-  "paramAliases": {
-    "noiseType": "type",
-    "loopAmp": "speed",
-    "xScale": "scaleX",
-    "yScale": "scaleY"
-  },
+  "paramAliases": {},
   "uniformLayout": {
     "resolution": {
       "slot": 0,

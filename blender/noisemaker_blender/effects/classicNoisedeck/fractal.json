@@ -5,11 +5,7 @@
   "tags": [
     "geometric"
   ],
-  "paramAliases": {
-    "fractalType": "type",
-    "backgroundColor": "bgColor",
-    "backgroundOpacity": "bgAlpha"
-  },
+  "paramAliases": {},
   "uniformLayout": {
     "resolution": {
       "slot": 0,

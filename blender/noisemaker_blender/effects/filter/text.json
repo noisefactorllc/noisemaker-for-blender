@@ -5,11 +5,7 @@
   "tags": [
     "text"
   ],
-  "paramAliases": {
-    "bgOpacity": "matteOpacity",
-    "bgAlpha": "matteOpacity",
-    "bgColor": "matteColor"
-  },
+  "paramAliases": {},
   "externalTexture": "textTex",
   "defaultProgram": "search filter, synth\n\nperlin(scale: 100)\n  .text()\n  .write(o0)",
   "globals": {

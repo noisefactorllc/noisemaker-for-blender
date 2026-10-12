@@ -5,9 +5,7 @@
   "tags": [
     "color"
   ],
-  "paramAliases": {
-    "vignetteHighlightProtect": "vigHiProtect"
-  },
+  "paramAliases": {},
   "globals": {
     "preset": {
       "type": "int",

@@ -32,13 +32,14 @@ void main() {
             warpedUV.x = 1.0 - warpedUV.x;
         }
     } else if (flipMode == 13) {
-        // mirror up to down
-        if (warpedUV.y > 0.5) {
+        // mirror up to down. warpedUV.y runs up the frame, so the top half
+        // is warpedUV.y > 0.5 and the bottom half samples its reflection.
+        if (warpedUV.y < 0.5) {
             warpedUV.y = 1.0 - warpedUV.y;
         }
     } else if (flipMode == 14) {
         // mirror down to up
-        if (warpedUV.y < 0.5) {
+        if (warpedUV.y > 0.5) {
             warpedUV.y = 1.0 - warpedUV.y;
         }
     } else if (flipMode == 15) {
@@ -46,7 +47,7 @@ void main() {
         if (warpedUV.x > 0.5) {
             warpedUV.x = 1.0 - warpedUV.x;
         }
-        if (warpedUV.y > 0.5) {
+        if (warpedUV.y < 0.5) {
             warpedUV.y = 1.0 - warpedUV.y;
         }
     } else if (flipMode == 16) {
@@ -54,7 +55,7 @@ void main() {
         if (warpedUV.x > 0.5) {
             warpedUV.x = 1.0 - warpedUV.x;
         }
-        if (warpedUV.y < 0.5) {
+        if (warpedUV.y > 0.5) {
             warpedUV.y = 1.0 - warpedUV.y;
         }
     } else if (flipMode == 17) {
@@ -62,7 +63,7 @@ void main() {
         if (warpedUV.x < 0.5) {
             warpedUV.x = 1.0 - warpedUV.x;
         }
-        if (warpedUV.y > 0.5) {
+        if (warpedUV.y < 0.5) {
             warpedUV.y = 1.0 - warpedUV.y;
         }
     } else if (flipMode == 18) {
@@ -70,7 +71,7 @@ void main() {
         if (warpedUV.x < 0.5) {
             warpedUV.x = 1.0 - warpedUV.x;
         }
-        if (warpedUV.y < 0.5) {
+        if (warpedUV.y > 0.5) {
             warpedUV.y = 1.0 - warpedUV.y;
         }
     }

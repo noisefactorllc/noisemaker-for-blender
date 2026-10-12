@@ -5,9 +5,7 @@
   "tags": [
     "color"
   ],
-  "paramAliases": {
-    "mixAmt": "mix"
-  },
+  "paramAliases": {},
   "globals": {
     "tex": {
       "type": "surface",

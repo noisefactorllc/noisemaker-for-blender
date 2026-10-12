@@ -5,10 +5,7 @@
   "tags": [
     "distort"
   ],
-  "paramAliases": {
-    "refractDir": "direction",
-    "mixAmt": "mix"
-  },
+  "paramAliases": {},
   "globals": {
     "blendMode": {
       "type": "int",

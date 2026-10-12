@@ -6,10 +6,7 @@
     "noise",
     "geometric"
   ],
-  "paramAliases": {
-    "cellVariation": "variation",
-    "loopAmp": "speed"
-  },
+  "paramAliases": {},
   "uniformLayout": {
     "resolution": {
       "slot": 0,

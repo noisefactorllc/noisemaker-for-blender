@@ -5,11 +5,7 @@
   "tags": [
     "distort"
   ],
-  "paramAliases": {
-    "aberrationAmt": "aberration",
-    "opacity": "alpha",
-    "loopAmp": "speed"
-  },
+  "paramAliases": {},
   "globals": {
     "shape": {
       "type": "int",

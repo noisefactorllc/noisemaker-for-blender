@@ -6,9 +6,7 @@
     "3d",
     "noise"
   ],
-  "paramAliases": {
-    "cellVariation": "variation"
-  },
+  "paramAliases": {},
   "outputTex3d": "volumeCache",
   "outputGeo": "geoBuffer",
   "globals": {

@@ -25,7 +25,8 @@ from gpu_extras.batch import batch_for_shader
 from . import shader_build, std140
 from ..runtime.diagnostics import DiagnosticCollector
 from ..runtime.pipeline import (resolve_dimension, resolve_surface_format,
-                                build_texture_pooling_plan)
+                                build_texture_pooling_plan,
+                                feedback_surface_plan)
 
 _FS_TRI = {"pos": [(-1.0, -1.0), (3.0, -1.0), (-1.0, 3.0)]}
 from .slab import _MAX_DRAW_SLAB, slab_ranges  # noqa: E402  (GPU-free helper)
@@ -255,6 +256,11 @@ class GpuBackend:
         # drawMode/blend/viewport-without-clear partial writes) share one
         # backend texture under the group's primary id; every excluded texture
         # gets its own standalone slot.
+        # Cross-frame feedback and explicit-persistence classification
+        # (reference `Pipeline._feedbackSurfaces`, upstream 5a8e8f67 +
+        # 8aa4cf64 + fa0e6b35) drives end-of-frame frame_persist().
+        self._feedback_surfaces, self._persistent_surfaces = \
+            feedback_surface_plan(graph)
         self.texture_aliases = build_texture_pooling_plan(graph)
         self.pool_key = {}
         for tid, spec in texspecs.items():
@@ -278,13 +284,18 @@ class GpuBackend:
             self.frame_write[name] = s.write
 
     def frame_persist(self):
-        # end-of-frame double-buffer resolution (reference/04 §10.7). State surfaces persist
-        # their within-frame final bindings (sims/particles continue from last frame's buffers).
-        # Display/scratch surfaces SWAP read<->write (the frame-START persistent bindings, which
-        # within-frame ping-pong left untouched): an odd within-frame write count works either
-        # way, but an even count — lenia's clear+deposit — only stays fresh under the swap.
+        # end-of-frame double-buffer resolution (reference/04 §10.7). State surfaces, graph
+        # feedback surfaces (read-before-write AND written; upstream 5a8e8f67) and textures
+        # the graph marks explicitly persistent (upstream fa0e6b35) persist their within-frame
+        # final bindings — the next frame reads the latest write even when an intervening
+        # update pass was skipped. Display/scratch surfaces SWAP read<->write (the
+        # frame-START persistent bindings, which within-frame ping-pong left untouched): an
+        # odd within-frame write count works either way, but an even count — lenia's
+        # clear+deposit, frame-local scratch — only stays fresh under the swap.
+        feedback = getattr(self, "_feedback_surfaces", None) or ()
+        persistent = getattr(self, "_persistent_surfaces", None) or ()
         for name, s in self.surfaces.items():
-            if _is_state_surface(name):
+            if _is_state_surface(name) or name in feedback or name in persistent:
                 s.read = self.frame_read[name]
                 s.write = self.frame_write[name]
             else:
@@ -331,6 +342,8 @@ class GpuBackend:
         self.__dict__.pop("tex_dims", None)
         self.__dict__.pop("pool_key", None)
         self.__dict__.pop("texture_aliases", None)
+        self.__dict__.pop("_feedback_surfaces", None)
+        self.__dict__.pop("_persistent_surfaces", None)
         self.__dict__.pop("_live_ubo", None)
         self.__dict__.pop("_live_block_ubo", None)
         self.external_inputs.clear()

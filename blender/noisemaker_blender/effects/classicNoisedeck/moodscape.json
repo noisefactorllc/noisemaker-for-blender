@@ -5,9 +5,7 @@
   "tags": [
     "noise"
   ],
-  "paramAliases": {
-    "loopAmp": "speed"
-  },
+  "paramAliases": {},
   "uniformLayout": {
     "resolution": {
       "slot": 0,

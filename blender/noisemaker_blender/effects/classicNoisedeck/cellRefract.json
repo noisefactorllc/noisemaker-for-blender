@@ -6,13 +6,7 @@
     "distort",
     "noise"
   ],
-  "paramAliases": {
-    "cellSmooth": "smooth",
-    "cellVariation": "variation",
-    "refractAmt": "amount",
-    "refractDir": "direction",
-    "loopAmp": "speed"
-  },
+  "paramAliases": {},
   "globals": {
     "amount": {
       "type": "float",

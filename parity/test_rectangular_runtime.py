@@ -20,6 +20,10 @@ class RectangularRuntimeTests(unittest.TestCase):
         self.assertEqual(rectangular["resolution"], [257.0, 129.0])
         self.assertEqual(rectangular["fullResolution"], [257.0, 129.0])
         self.assertAlmostEqual(rectangular["aspectRatio"], 257 / 129)
+        # Reciprocal engine uniforms (reference Pipeline, upstream a7ba29d7):
+        # the shaders multiply by these instead of dividing.
+        self.assertAlmostEqual(rectangular["aspectInv"], 129 / 257)
+        self.assertEqual(rectangular["invFullResolution"], [1.0 / 257, 1.0 / 129])
 
     def test_viewport_resolves_axis_specific_screen_dimensions(self):
         render_pass = {"viewport": {"x": 0, "y": 0, "w": "50%", "h": "50%"}}

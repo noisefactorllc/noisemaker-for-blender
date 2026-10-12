@@ -7,6 +7,12 @@
       "ssim_min": 0.999,
       "mechanism": "sub-ULP cross-GPU divergence flips a discrete fractal raymarch surface-boundary hit or miss"
     },
+    "fractal3d": {
+      "max_abs_diff": 15.0,
+      "mean_abs_diff": 0.001,
+      "ssim_min": 0.999,
+      "mechanism": "sub-ULP cross-GPU divergence flips a discrete raymarch surface-boundary hit or miss (measured 14.0/0.0002/1.0 on the reference-render3d volume after upstream 10001d79/700ac32e — one boundary texel of the lit surface, deterministic on both engine pairs)"
+    },
     "heightmap3d_landscape": {
       "max_abs_diff": 260.0,
       "mean_abs_diff": 0.35,

@@ -6,9 +6,7 @@
     "distort",
     "glitch"
   ],
-  "paramAliases": {
-    "aberrationAmt": "aberration"
-  },
+  "paramAliases": {},
   "globals": {
     "glitchiness": {
       "type": "float",

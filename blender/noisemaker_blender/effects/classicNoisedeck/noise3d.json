@@ -6,10 +6,7 @@
     "3d",
     "noise"
   ],
-  "paramAliases": {
-    "noiseScale": "scale",
-    "noiseType": "type"
-  },
+  "paramAliases": {},
   "globals": {
     "type": {
       "type": "int",

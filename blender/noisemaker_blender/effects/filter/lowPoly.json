@@ -6,10 +6,7 @@
     "geometric",
     "noise"
   ],
-  "paramAliases": {
-    "freq": "scale",
-    "nth": "mode"
-  },
+  "paramAliases": {},
   "globals": {
     "scale": {
       "type": "int",

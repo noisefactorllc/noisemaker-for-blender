@@ -6,10 +6,7 @@
     "geometric",
     "transform"
   ],
-  "paramAliases": {
-    "kaleido": "sides",
-    "loopAmp": "speed"
-  },
+  "paramAliases": {},
   "globals": {
     "sides": {
       "type": "int",

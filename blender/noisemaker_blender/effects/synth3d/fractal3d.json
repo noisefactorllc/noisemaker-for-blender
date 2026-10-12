@@ -5,9 +5,7 @@
   "tags": [
     "3d"
   ],
-  "paramAliases": {
-    "fractalType": "type"
-  },
+  "paramAliases": {},
   "outputTex3d": "volumeCache",
   "outputGeo": "geoBuffer",
   "globals": {

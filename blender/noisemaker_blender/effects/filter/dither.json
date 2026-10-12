@@ -6,10 +6,7 @@
     "color",
     "pixel"
   ],
-  "paramAliases": {
-    "ditherType": "type",
-    "mixAmount": "mix"
-  },
+  "paramAliases": {},
   "globals": {
     "type": {
       "type": "int",

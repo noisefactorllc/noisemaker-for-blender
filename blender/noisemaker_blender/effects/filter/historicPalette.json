@@ -6,9 +6,7 @@
     "color",
     "palette"
   ],
-  "paramAliases": {
-    "paletteIndex": "index"
-  },
+  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise(ridges: true, colorMode: mono)\n.historicPalette()\n.write(o0)",
   "globals": {
     "index": {

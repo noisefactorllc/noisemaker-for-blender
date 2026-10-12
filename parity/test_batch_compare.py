@@ -310,6 +310,9 @@ class BatchCompareTests(unittest.TestCase):
             candidate = golden.copy()
             if name == "flythrough3d":
                 candidate.putpixel((0, 0), (151, 64, 64, 255))
+            elif name == "fractal3d":
+                # 14 > strict 2, <= policy 15 (the measured single boundary texel).
+                candidate.putpixel((0, 0), (78, 64, 64, 255))
             elif name == "heightmap3d_landscape":
                 golden = Image.new("RGBA", (256, 256), (13, 13, 13, 255))
                 candidate = golden.copy()
@@ -330,11 +333,14 @@ class BatchCompareTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         report = json.loads(self.report.read_text())
-        self.assertEqual({"PASS": 8, "NEAR": 3}, report["counts"])
+        self.assertEqual({"PASS": 7, "NEAR": 4}, report["counts"])
         self.assertEqual([], report["unused_policies"])
         flythrough = next(row for row in report["results"] if row["name"] == "flythrough3d")
         self.assertEqual("NEAR", flythrough["cls"])
         self.assertIn("raymarch surface-boundary", flythrough["policy"]["mechanism"])
+        fractal = next(row for row in report["results"] if row["name"] == "fractal3d")
+        self.assertEqual("NEAR", fractal["cls"])
+        self.assertIn("surface-boundary", fractal["policy"]["mechanism"])
         landscape = next(row for row in report["results"] if row["name"] == "heightmap3d_landscape")
         self.assertEqual("NEAR", landscape["cls"])
         self.assertIn("voxel-presence", landscape["policy"]["mechanism"])

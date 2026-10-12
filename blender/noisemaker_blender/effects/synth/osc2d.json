@@ -5,9 +5,7 @@
   "tags": [
     "geometric"
   ],
-  "paramAliases": {
-    "frequency": "freq"
-  },
+  "paramAliases": {},
   "globals": {
     "oscType": {
       "type": "member",

@@ -5,9 +5,7 @@
   "tags": [
     "fractal"
   ],
-  "paramAliases": {
-    "poiMode": "poi"
-  },
+  "paramAliases": {},
   "uniformLayout": {
     "resolution": {
       "slot": 0,

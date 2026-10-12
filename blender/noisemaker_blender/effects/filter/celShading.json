@@ -6,10 +6,7 @@
     "color",
     "edges"
   ],
-  "paramAliases": {
-    "shadingStrength": "strength",
-    "mixAmount": "mix"
-  },
+  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise(octaves: 4, scaleX: 100, scaleY: 100, ridges: true)\n  .celShading()\n  .write(o0)",
   "globals": {
     "mix": {

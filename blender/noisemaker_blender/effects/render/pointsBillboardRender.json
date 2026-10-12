@@ -5,9 +5,7 @@
   "tags": [
     "agents"
   ],
-  "paramAliases": {
-    "rotationVariation": "rotationVar"
-  },
+  "paramAliases": {},
   "globals": {
     "shapeMode": {
       "type": "int",

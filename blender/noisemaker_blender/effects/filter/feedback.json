@@ -5,10 +5,7 @@
   "tags": [
     "sim"
   ],
-  "paramAliases": {
-    "mixAmt": "mix",
-    "aberrationAmt": "aberration"
-  },
+  "paramAliases": {},
   "globals": {
     "blendMode": {
       "type": "int",

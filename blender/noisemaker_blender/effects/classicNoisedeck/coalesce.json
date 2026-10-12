@@ -6,9 +6,7 @@
     "blend",
     "distort"
   ],
-  "paramAliases": {
-    "mixAmt": "mix"
-  },
+  "paramAliases": {},
   "globals": {
     "tex": {
       "type": "surface",

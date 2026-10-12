@@ -6,10 +6,7 @@
     "image",
     "video"
   ],
-  "paramAliases": {
-    "backgroundColor": "bgColor",
-    "backgroundOpacity": "bgAlpha"
-  },
+  "paramAliases": {},
   "externalTexture": "imageTex",
   "uniformLayout": {
     "resolution": {

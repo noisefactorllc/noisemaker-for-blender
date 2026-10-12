@@ -35,14 +35,6 @@
     [
       "INT",
       "colorMode"
-    ],
-    [
-      "VEC2",
-      "tileOffset"
-    ],
-    [
-      "FLOAT",
-      "renderScale"
     ]
   ],
   "samplers": [],
@@ -59,7 +51,7 @@
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 64,
+  "std140Bytes": 48,
   "ubo": false,
   "notes": [
     "MRT (2) — staged"

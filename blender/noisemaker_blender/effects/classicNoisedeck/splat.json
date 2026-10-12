@@ -5,15 +5,7 @@
   "tags": [
     "noise"
   ],
-  "paramAliases": {
-    "splatColor": "color",
-    "splatCutoff": "cutoff",
-    "splatMode": "mode",
-    "splatScale": "scale",
-    "splatSeed": "seed",
-    "splatSpeed": "speed",
-    "useSplats": "enabled"
-  },
+  "paramAliases": {},
   "globals": {
     "enabled": {
       "type": "boolean",

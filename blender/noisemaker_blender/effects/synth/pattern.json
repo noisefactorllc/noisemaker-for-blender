@@ -6,9 +6,7 @@
     "geometric",
     "pattern"
   ],
-  "paramAliases": {
-    "patternType": "type"
-  },
+  "paramAliases": {},
   "globals": {
     "type": {
       "type": "int",

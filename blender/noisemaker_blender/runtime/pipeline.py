@@ -7,6 +7,7 @@ end of frame. Supports multi-frame settle and sampling for stateful effects.
 import json
 import math
 import os
+import re
 import time as clock
 
 from .diagnostics import DIAGNOSTIC_CODES
@@ -557,6 +558,14 @@ def default_engine(size, time, frame, delta_time=0.0, *, width=None, height=None
         "frame": int(frame),
         "aspect": float(width) / float(height),
         "aspectRatio": float(width) / float(height),
+        # Correctly-rounded reciprocal of the aspect and per-component
+        # reciprocals of fullResolution, mirroring reference Pipeline
+        # (upstream a7ba29d7): shader mains multiply by these instead of
+        # dividing, so every backend evaluates identical multiplies rather
+        # than backend-specific division lowering (relaxed math flips
+        # sampler taps at 1-2 ulp).
+        "aspectInv": 1.0 / (float(width) / float(height)),
+        "invFullResolution": [1.0 / float(width), 1.0 / float(height)],
         "renderScale": 1.0,
         "seed": 0,
     }
@@ -872,6 +881,60 @@ def build_texture_pooling_plan(graph):
         for member in members:
             aliases[member] = storage_id
     return aliases
+
+
+_MESH_SURFACE = re.compile(r"^mesh\d+_(positions|normals|uvs)(?:_chain_\d+)?$")
+
+
+def _global_surface_name(tid):
+    """reference ``Pipeline.parseGlobalName`` plus its mesh-texture guard:
+    the surface name of a ``global_*`` texture id, or None. Mesh-linked
+    textures (``global_mesh0_positions``, chain-suffixed in this port) are
+    never graph feedback surfaces (reference ``meshTexturePattern``)."""
+    if not isinstance(tid, str) or not tid.startswith("global_"):
+        return None
+    name = tid[len("global_"):]
+    return None if _MESH_SURFACE.match(name) else name
+
+
+def feedback_surface_plan(graph):
+    """Mirror reference `Pipeline._feedbackSurfaces` collection (upstream
+    5a8e8f67 + 8aa4cf64).
+
+    A global surface READ before its first WRITE in the pass list, and also
+    written, is cross-frame graph feedback — its writer consumes the previous
+    frame's contents, so end-of-frame persistence must keep the frame's final
+    bindings even when a later update pass is skipped. A surface first WRITTEN
+    then read is frame-local scratch (lenia's clear/deposit density target),
+    never feedback: it keeps the end-of-frame swap or the deposit would
+    accumulate unbounded.
+
+    Returns ``(feedback_names, persistent_names)``: the feedback surface names
+    (no ``global_`` prefix) and the names of surfaces whose graph texture spec
+    is explicitly ``persistent`` (upstream fa0e6b35 keeps their cross-frame
+    contents across skipped writes).
+    """
+    read_before_write = set()
+    written = set()
+    for p in graph.passes:
+        # WebGL2's compute fallback writes through storageTextures only when
+        # the pass has no explicit outputs (reference parity).
+        outputs = p.get("outputs") or p.get("storageTextures")
+        for tid in (p.get("inputs") or {}).values():
+            name = _global_surface_name(tid)
+            if name is not None and name not in written:
+                read_before_write.add(name)
+        if outputs:
+            for tid in outputs.values():
+                name = _global_surface_name(tid)
+                if name is not None:
+                    written.add(name)
+    feedback = read_before_write & written
+    persistent = {
+        tid[len("global_"):] for tid, spec in (graph.textures or {}).items()
+        if tid.startswith("global_")
+        and isinstance(spec, dict) and spec.get("persistent") is True}
+    return feedback, persistent
 
 
 def resource_plan(backend, graph):

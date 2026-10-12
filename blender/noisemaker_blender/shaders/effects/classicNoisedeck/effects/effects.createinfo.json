@@ -13,6 +13,14 @@
       "fullResolution"
     ],
     [
+      "VEC2",
+      "invFullResolution"
+    ],
+    [
+      "FLOAT",
+      "aspectInv"
+    ],
+    [
       "FLOAT",
       "renderScale"
     ],
@@ -64,7 +72,7 @@
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 64,
+  "std140Bytes": 80,
   "ubo": false,
   "notes": []
 }

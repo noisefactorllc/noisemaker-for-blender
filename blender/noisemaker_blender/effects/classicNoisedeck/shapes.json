@@ -5,10 +5,7 @@
   "tags": [
     "geometric"
   ],
-  "paramAliases": {
-    "loopAAmp": "speedA",
-    "loopBAmp": "speedB"
-  },
+  "paramAliases": {},
   "uniformLayout": {
     "resolution": {
       "slot": 0,
