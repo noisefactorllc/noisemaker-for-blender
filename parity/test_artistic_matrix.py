@@ -134,12 +134,18 @@ class ArtisticMatrixTests(unittest.TestCase):
 
     def test_expected_parity_manifest_is_unique_and_resolves(self):
         names = [line.strip() for line in EXPECTED.read_text().splitlines() if line.strip()]
-        self.assertEqual(267, len(names))
+        self.assertEqual(274, len(names))
         self.assertEqual(len(names), len(set(names)))
         self.assertEqual([], [name for name in names if not (PROGRAMS / f"{name}.dsl").exists()])
         # The lens and bloom filters and the north_star chain are graded cases,
         # not just ad-hoc measurements.
         self.assertTrue({"lens", "bloom", "north_star"} <= set(names))
+
+    def test_every_tracked_program_is_in_a_parity_manifest(self):
+        names = {line.strip() for line in EXPECTED.read_text().splitlines() if line.strip()}
+        three_d = Path(__file__).with_name("3d-expected.txt")
+        names.update(line.strip() for line in three_d.read_text().splitlines() if line.strip())
+        self.assertEqual({path.stem for path in PROGRAMS.glob("*.dsl")}, names)
 
     def test_all_new_effect_defaults(self):
         missing = [effect for effect in NEW_EFFECTS if {} not in call_arguments(effect)]

@@ -265,3 +265,10 @@ filter_feedback_gradient
 filter_feedback_refract
 filter_motionBlur_active
 filter_motionBlur_seed97
+bb_only
+feedback
+int_nobl
+int_o0
+io0_nobb
+motionBlur
+remap
