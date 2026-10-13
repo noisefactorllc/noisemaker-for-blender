@@ -208,3 +208,8 @@ split
 spookyTicker
 thresholdMix
 uvRemap
+pondRipples_speed3
+pondRipples_speedNeg5
+renderLit3d
+heightGrid_billboard_alpha
+heightGrid_pointsRender_perspective
