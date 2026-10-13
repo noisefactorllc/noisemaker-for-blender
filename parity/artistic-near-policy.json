@@ -7,6 +7,18 @@
       "ssim_min": 0.994,
       "mechanism": "multi-cycle sin tone curve plus pow(v, 8) rim highlight amplifies translator-level rounding"
     },
+    "default_rotate": {
+      "max_abs_diff": 40,
+      "mean_abs_diff": 0.0034,
+      "ssim_min": 0.99998,
+      "mechanism": "45-degree repeated-texture rotation crosses the wrap seam on diagonal x+y=255; finite-precision UV interpolation selects different seam samples at 27 pixels"
+    },
+    "heightGrid_billboard": {
+      "max_abs_diff": 6,
+      "mean_abs_diff": 0.0002,
+      "ssim_min": 0.99999,
+      "mechanism": "perspective billboard additive deposit rasterization and blending differ at 19 sparse fragments across WebGL2 and Blender GPU backends"
+    },
     "oilPaint_dryBrush": {
       "max_abs_diff": 45,
       "mean_abs_diff": 0.35,
