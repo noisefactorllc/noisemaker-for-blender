@@ -464,8 +464,6 @@ void main() {
     vec2 fullRes = fullResolution.x > 0.0 ? fullResolution : resolution;
     float width_f = max(fullRes.x / rs, 1.0);
     float height_f = max(fullRes.y / rs, 1.0);
-    float time = time;
-    float speed = speed;
     float x = (float(global_id.x) + tileOffset.x) / rs;
     float y = (float(global_id.y) + tileOffset.y) / rs;
 
