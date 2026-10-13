@@ -97,6 +97,7 @@ void main() {
     float s = sin(rot);
     float co = cos(rot);
     vec2 rotatedDir = mat2(co, -s, s, co) * dir;
+    rotatedDir.x = fma(co, dir.x, s * dir.y);
 
     uv = rotatedDir * (r + rDelta);
 

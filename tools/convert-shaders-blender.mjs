@@ -462,6 +462,12 @@ const PROGRAM_OVERRIDES = {
     if (frag.split(before).length !== 2) throw new Error('landscape origin no longer matches reference source')
     return frag.replace(before, after)
   },
+  'filter/pondRipples/pondRipples': (frag) => {
+    const before = 'vec2 rotatedDir = mat2(co, -s, s, co) * dir;'
+    const after = `${before}\n    rotatedDir.x = fma(co, dir.x, s * dir.y);`
+    if (frag.split(before).length !== 2) throw new Error('pondRipples rotation no longer matches reference source')
+    return frag.replace(before, after)
+  },
 }
 
 function adaptHostInputSource (src, key) {

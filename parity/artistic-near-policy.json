@@ -37,12 +37,6 @@
       "ssim_min": 0.995,
       "mechanism": "high-exponent Blinn specular pow amplifies height-gradient rounding with a non-axis-aligned light vector"
     },
-    "pondRipples_aroundCenter": {
-      "max_abs_diff": 6,
-      "mean_abs_diff": 0.001,
-      "ssim_min": 0.9999,
-      "mechanism": "sin-based radial displacement lands on a texture-coordinate boundary"
-    },
     "relief": {
       "max_abs_diff": 5,
       "mean_abs_diff": 0.75,
