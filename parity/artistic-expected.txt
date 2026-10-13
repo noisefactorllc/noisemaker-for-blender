@@ -132,3 +132,11 @@ cnd_shapes
 crt
 curl
 deriv
+bulge
+clouds
+colorReplace
+degauss
+fxaa
+historicPalette
+normalize
+prismaticAberration
