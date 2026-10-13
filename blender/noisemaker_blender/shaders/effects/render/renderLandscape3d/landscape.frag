@@ -232,7 +232,7 @@ void main() {
     float span = max(1.6329931619, 1.4142135624 / aspect) * size * 1.08 / max(zoom, 0.001);
     vec3 right = vec3(0.7071067812, 0.0, -0.7071067812);
     vec3 up = vec3(-0.4082482905, 0.8164965809, -0.4082482905);
-    vec3 origin = vec3(size * 2.5) + right * (uv.x + panX) * span + up * (uv.y + panY) * span;
+    vec3 origin = vec3(size * 2.5) + (right * (uv.x + panX) + up * (uv.y + panY)) * span;
 
     // The fixed isometric ray is (-1,-1,-1). Keeping it unnormalized gives unit DDA steps.
     vec3 nearT = origin - size;

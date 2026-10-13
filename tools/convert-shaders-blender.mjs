@@ -456,6 +456,12 @@ function transpileVertFrag (vertSrc, fragSrc) {
 // Reference commit a0d8ea14/77e45a5e now `clamp(...)`s that output natively, so the host override
 // is no longer needed; the generic transform carries the reference clamp through verbatim.)
 const PROGRAM_OVERRIDES = {
+  'render/renderLandscape3d/landscape': (frag) => {
+    const before = 'vec3 origin = vec3(size * 2.5) + right * (uv.x + panX) * span + up * (uv.y + panY) * span;'
+    const after = 'vec3 origin = vec3(size * 2.5) + (right * (uv.x + panX) + up * (uv.y + panY)) * span;'
+    if (frag.split(before).length !== 2) throw new Error('landscape origin no longer matches reference source')
+    return frag.replace(before, after)
+  },
 }
 
 function adaptHostInputSource (src, key) {
