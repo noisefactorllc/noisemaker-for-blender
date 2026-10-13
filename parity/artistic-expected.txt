@@ -260,3 +260,8 @@ ns_smoke
 points_smoke
 wobble
 filter_wormhole
+filter_feedback_active
+filter_feedback_gradient
+filter_feedback_refract
+filter_motionBlur_active
+filter_motionBlur_seed97
