@@ -106,3 +106,9 @@ spinBlur_offCenter
 lens
 bloom
 north_star
+classic_effects_pixels
+classic_effects_blur
+classic_effects_cga
+classic_effects_subpixel
+classic_effects_bloom
+classic_effects_zoomBlur
