@@ -140,3 +140,13 @@ fxaa
 historicPalette
 normalize
 prismaticAberration
+dither
+edge
+emboss
+glowingEdge
+grain
+grime
+invert
+lighting
+normalMap
+octaveWarp
