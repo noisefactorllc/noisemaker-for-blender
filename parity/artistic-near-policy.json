@@ -13,6 +13,18 @@
       "ssim_min": 0.99998,
       "mechanism": "45-degree repeated-texture rotation crosses the wrap seam on diagonal x+y=255; finite-precision UV interpolation selects different seam samples at 27 pixels"
     },
+    "filter_wormhole": {
+      "max_abs_diff": 189,
+      "mean_abs_diff": 0.023,
+      "ssim_min": 0.99979,
+      "mechanism": "OKLab-derived scatter offsets are floored to integer destinations; cross-GPU point deposition differs by one pixel at 15 adjacent destination pairs (30 pixels)"
+    },
+    "flock_smoke": {
+      "max_abs_diff": 156,
+      "mean_abs_diff": 0.0095,
+      "ssim_min": 0.99993,
+      "mechanism": "eight-frame flock steering and point deposition differ at 16 sparse output pixels across WebGL2 and Blender GPU backends"
+    },
     "heightGrid_billboard": {
       "max_abs_diff": 6,
       "mean_abs_diff": 0.0002,

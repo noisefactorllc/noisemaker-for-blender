@@ -250,3 +250,13 @@ filter_vaseline
 filter_warp
 filter_waves
 filter_zoomBlur
+_kRK7A
+billboard_smoke
+flock_smoke
+int_ns
+integration_target
+ns145
+ns_smoke
+points_smoke
+wobble
+filter_wormhole
