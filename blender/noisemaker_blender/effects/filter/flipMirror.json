@@ -5,7 +5,6 @@
   "tags": [
     "transform"
   ],
-  "paramAliases": {},
   "globals": {
     "mode": {
       "type": "int",

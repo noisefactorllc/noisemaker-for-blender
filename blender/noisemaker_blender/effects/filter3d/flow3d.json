@@ -6,7 +6,6 @@
     "3d",
     "sim"
   ],
-  "paramAliases": {},
   "outputTex3d": "global_flow3d_blended",
   "outputGeo": "geoBuffer",
   "globals": {

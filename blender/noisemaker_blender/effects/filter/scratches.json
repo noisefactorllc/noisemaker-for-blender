@@ -5,7 +5,6 @@
   "tags": [
     "noise"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nsolid(color: #2b2b2b)\n.scratches()\n.write(o0)",
   "globals": {
     "density": {

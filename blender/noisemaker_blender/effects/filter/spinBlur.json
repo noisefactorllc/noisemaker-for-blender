@@ -6,7 +6,6 @@
     "blur",
     "artist"
   ],
-  "paramAliases": {},
   "globals": {
     "amount": {
       "type": "float",

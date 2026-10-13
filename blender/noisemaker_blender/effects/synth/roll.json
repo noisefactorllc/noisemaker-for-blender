@@ -5,7 +5,6 @@
   "tags": [
     "midi"
   ],
-  "paramAliases": {},
   "globals": {
     "color": {
       "type": "color",

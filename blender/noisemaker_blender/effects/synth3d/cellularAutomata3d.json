@@ -6,7 +6,6 @@
     "3d",
     "sim"
   ],
-  "paramAliases": {},
   "defaultProgram": "search synth3d, filter3d, render\n\ncellularAutomata3d(ruleIndex: diamoeba)\n.render3d()\n.write(o0)",
   "outputTex3d": "global_ca_state",
   "outputGeo": "geoBuffer",

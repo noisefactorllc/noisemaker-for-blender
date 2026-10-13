@@ -5,7 +5,6 @@
   "tags": [
     "distort"
   ],
-  "paramAliases": {},
   "globals": {
     "blendMode": {
       "type": "int",

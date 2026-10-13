@@ -5,7 +5,6 @@
   "tags": [
     "color"
   ],
-  "paramAliases": {},
   "globals": {
     "preset": {
       "type": "int",

@@ -5,7 +5,6 @@
   "tags": [
     "edges"
   ],
-  "paramAliases": {},
   "globals": {
     "shape": {
       "type": "int",

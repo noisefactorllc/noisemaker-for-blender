@@ -6,7 +6,6 @@
     "geometric",
     "pattern"
   ],
-  "paramAliases": {},
   "globals": {
     "scale": {
       "type": "float",

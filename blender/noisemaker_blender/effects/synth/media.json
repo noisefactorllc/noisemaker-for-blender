@@ -6,7 +6,6 @@
     "image",
     "video"
   ],
-  "paramAliases": {},
   "externalTexture": "imageTex",
   "uniformLayout": {
     "resolution": {

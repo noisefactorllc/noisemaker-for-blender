@@ -6,7 +6,6 @@
     "edges",
     "util"
   ],
-  "paramAliases": {},
   "globals": {
     "threshold": {
       "type": "float",

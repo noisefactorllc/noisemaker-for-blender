@@ -5,7 +5,6 @@
   "tags": [
     "distort"
   ],
-  "paramAliases": {},
   "globals": {
     "displacement": {
       "type": "float",

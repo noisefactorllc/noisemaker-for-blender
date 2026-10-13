@@ -5,7 +5,6 @@
   "tags": [
     "transform"
   ],
-  "paramAliases": {},
   "globals": {
     "x": {
       "type": "float",

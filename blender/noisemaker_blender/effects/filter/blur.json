@@ -5,7 +5,6 @@
   "tags": [
     "blur"
   ],
-  "paramAliases": {},
   "globals": {
     "radiusX": {
       "type": "float",

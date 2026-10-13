@@ -5,7 +5,6 @@
   "tags": [
     "util"
   ],
-  "paramAliases": {},
   "globals": {
     "pattern": {
       "type": "int",

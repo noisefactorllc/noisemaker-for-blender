@@ -5,7 +5,6 @@
   "tags": [
     "transform"
   ],
-  "paramAliases": {},
   "globals": {
     "rotation": {
       "type": "float",

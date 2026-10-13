@@ -5,7 +5,6 @@
   "tags": [
     "audio"
   ],
-  "paramAliases": {},
   "globals": {
     "color": {
       "type": "color",

@@ -6,7 +6,6 @@
     "distort",
     "glitch"
   ],
-  "paramAliases": {},
   "globals": {
     "glitchiness": {
       "type": "float",

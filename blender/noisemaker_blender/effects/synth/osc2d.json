@@ -5,7 +5,6 @@
   "tags": [
     "geometric"
   ],
-  "paramAliases": {},
   "globals": {
     "oscType": {
       "type": "member",

@@ -5,7 +5,6 @@
   "tags": [
     "agents"
   ],
-  "paramAliases": {},
   "globals": {
     "shapeMode": {
       "type": "int",

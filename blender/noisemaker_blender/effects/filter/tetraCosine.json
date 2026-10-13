@@ -6,7 +6,6 @@
     "color",
     "palette"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise()\n  .tetraCosine()\n  .write(o0)",
   "uniformLayout": {
     "offsetR": {

@@ -6,7 +6,6 @@
     "noise",
     "artist"
   ],
-  "paramAliases": {},
   "globals": {
     "radius": {
       "type": "float",

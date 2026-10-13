@@ -6,7 +6,6 @@
     "color",
     "lens"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise(ridges: true)\n.prismaticAberration(modulate: true)\n.write(o0)",
   "globals": {
     "aberration": {

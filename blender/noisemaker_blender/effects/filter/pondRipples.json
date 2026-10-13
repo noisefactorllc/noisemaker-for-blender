@@ -6,7 +6,6 @@
     "distort",
     "artist"
   ],
-  "paramAliases": {},
   "globals": {
     "amount": {
       "type": "float",

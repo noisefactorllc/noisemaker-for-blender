@@ -5,7 +5,6 @@
   "tags": [
     "sim"
   ],
-  "paramAliases": {},
   "defaultProgram": "search synth\n\nnoise(\n  type: hermite,\n  ridges: true,\n  speed: 30,\n  colorMode: mono\n)\n  .write(o0)\n\nnavierStokes(\n  tex: read(o0),\n  dyeDecay: 98,\n  inputForce: 0.5,\n  inputIntensity: 10\n)\n  .write(o1)\n\nrender(o1)",
   "uniformLayouts": {
     "nsSplat": {

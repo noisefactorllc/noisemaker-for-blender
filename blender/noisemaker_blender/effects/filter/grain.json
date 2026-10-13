@@ -5,7 +5,6 @@
   "tags": [
     "noise"
   ],
-  "paramAliases": {},
   "globals": {
     "alpha": {
       "type": "float",

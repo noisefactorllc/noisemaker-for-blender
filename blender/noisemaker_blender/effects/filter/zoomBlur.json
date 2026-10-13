@@ -5,7 +5,6 @@
   "tags": [
     "blur"
   ],
-  "paramAliases": {},
   "globals": {
     "strength": {
       "type": "float",

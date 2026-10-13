@@ -5,7 +5,6 @@
   "tags": [
     "noise"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nsolid(color: #2d78f0)\n.clouds(scale: 0.55)\n.write(o0)",
   "globals": {
     "seed": {

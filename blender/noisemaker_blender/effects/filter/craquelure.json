@@ -7,7 +7,6 @@
     "edges",
     "artist"
   ],
-  "paramAliases": {},
   "globals": {
     "spacing": {
       "type": "float",

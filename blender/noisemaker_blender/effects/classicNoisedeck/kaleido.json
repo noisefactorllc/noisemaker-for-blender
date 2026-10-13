@@ -6,7 +6,6 @@
     "geometric",
     "transform"
   ],
-  "paramAliases": {},
   "globals": {
     "sides": {
       "type": "int",

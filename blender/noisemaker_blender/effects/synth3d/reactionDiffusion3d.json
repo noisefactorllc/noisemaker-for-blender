@@ -6,7 +6,6 @@
     "3d",
     "sim"
   ],
-  "paramAliases": {},
   "outputTex3d": "global_rd_state",
   "outputGeo": "geoBuffer",
   "globals": {

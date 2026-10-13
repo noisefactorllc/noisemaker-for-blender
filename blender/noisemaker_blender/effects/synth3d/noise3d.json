@@ -6,7 +6,6 @@
     "3d",
     "noise"
   ],
-  "paramAliases": {},
   "outputTex3d": "volumeCache",
   "outputGeo": "geoBuffer",
   "globals": {

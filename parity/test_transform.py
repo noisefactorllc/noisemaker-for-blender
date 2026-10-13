@@ -257,41 +257,27 @@ class PredictionTests(unittest.TestCase):
         self.assertTrue(result["prediction"]["available"], "Prediction should mark the effect available")
         self.assertIsNotNone(result["prediction"]["samplerTopology"])
 
-    def test_prediction_registered_param_alias_is_accepted_with_canonical_checks(self):
-        # The lang-level alias registry is intentionally empty (Stage-1 golden
-        # contract, see compiler/ops.py); mirror the reference test's
-        # registerParamAliases by injecting a temporary map.
-        from noisemaker_blender.compiler import ops as ops_mod
+    def test_prediction_retired_param_alias_is_unknown(self):
+        # Upstream a1a3fa2a retired parameter aliases (paramAliases.js deleted):
+        # a deprecated name is predicted unknown and refused under preflight;
+        # the canonical name compiles and is checked canonically.
+        via_alias = replace_effect(self.compiled, self._step(1)["stepIndex"], "grain", {"amt": 0.9})
+        self.assertTrue(via_alias["success"], "Replacement itself should succeed (prediction-only refusal)")
+        self.assertEqual(
+            via_alias["prediction"]["arguments"]["unknown"], ["amt"], "Retired alias name should be predicted unknown"
+        )
 
-        ops_mod._ensure_built()
-        ops_mod._PARAM_ALIASES["filter.grain"] = {"amt": "alpha"}
-        try:
-            # Supplied via deprecated alias: not unknown, range/type checked canonically
-            via_alias = replace_effect(self.compiled, self._step(1)["stepIndex"], "grain", {"amt": 0.9})
-            self.assertTrue(via_alias["success"], "Alias-supplied replacement should succeed without opt-in")
-            self.assertEqual(
-                via_alias["prediction"]["arguments"]["unknown"], [], "Alias name should not be predicted unknown"
-            )
-            self.assertEqual(
-                via_alias["prediction"]["arguments"]["missing"], [], "No missing-argument issue for grain"
-            )
+        via_alias_preflight = replace_effect(
+            self.compiled, self._step(1)["stepIndex"], "grain", {"amt": 0.9}, {"preflight": True}
+        )
+        self.assertFalse(via_alias_preflight["success"], "Retired alias name should be refused under preflight")
+        self.assertIn("amt", via_alias_preflight["error"], "Preflight error should name the retired alias")
 
-            via_alias_preflight = replace_effect(
-                self.compiled, self._step(1)["stepIndex"], "grain", {"amt": 0.9}, {"preflight": True}
-            )
-            self.assertTrue(via_alias_preflight["success"], "Alias-supplied replacement should pass preflight")
-            self.assertEqual(
-                via_alias_preflight["prediction"]["ranges"], [], "Alias value within range should not be flagged"
-            )
-
-            # Range violation through the alias still fires canonically
-            out_of_range = replace_effect(
-                self.compiled, self._step(1)["stepIndex"], "grain", {"amt": 5}, {"preflight": True}
-            )
-            self.assertFalse(out_of_range["success"], "Out-of-range value via alias should be refused under preflight")
-            self.assertIn("alpha", out_of_range["error"], "Range error should name the canonical argument")
-        finally:
-            del ops_mod._PARAM_ALIASES["filter.grain"]
+        canonical = replace_effect(self.compiled, self._step(1)["stepIndex"], "grain", {"alpha": 0.9})
+        self.assertTrue(canonical["success"], "Canonical replacement should succeed")
+        self.assertEqual(
+            canonical["prediction"]["arguments"]["unknown"], [], "Canonical name should not be predicted unknown"
+        )
 
     def test_preflight_moves_unavailable_candidates_to_blocked(self):
         # Simulate a never-registered effect definition by hiding one from the

@@ -7,7 +7,6 @@
     "edges",
     "transform"
   ],
-  "paramAliases": {},
   "globals": {
     "effect": {
       "type": "int",

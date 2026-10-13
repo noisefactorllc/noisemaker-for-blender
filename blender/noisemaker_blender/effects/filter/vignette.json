@@ -5,7 +5,6 @@
   "tags": [
     "lens"
   ],
-  "paramAliases": {},
   "globals": {
     "brightness": {
       "type": "float",

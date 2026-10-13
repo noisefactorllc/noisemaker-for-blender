@@ -5,7 +5,6 @@
   "tags": [
     "color"
   ],
-  "paramAliases": {},
   "defaultProgram": "search mixer, synth, filter\n\nnoise(ridges: true, colorMode: mono)\n.write(o0)\n\nperlin(colorMode: mono)\n.write(o1)\n\ngradient(type: linear)\n.write(o2)\n\nchannelCombine(rTex: read(o0), gTex: read(o1), bTex: read(o2))\n.write(o3)",
   "globals": {
     "rTex": {

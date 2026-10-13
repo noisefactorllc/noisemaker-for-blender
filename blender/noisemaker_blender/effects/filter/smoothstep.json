@@ -6,7 +6,6 @@
     "edges",
     "util"
   ],
-  "paramAliases": {},
   "defaultProgram": "search synth, filter\n\ncell()\n  .smoothstep(edge1: 0.51)\n  .write(o0)",
   "globals": {
     "edge0": {

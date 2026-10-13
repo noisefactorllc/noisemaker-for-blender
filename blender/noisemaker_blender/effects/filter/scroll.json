@@ -5,7 +5,6 @@
   "tags": [
     "transform"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\ntestPattern()\n.scroll(speedX: 1, speedY: 1)\n.write(o0)",
   "globals": {
     "x": {

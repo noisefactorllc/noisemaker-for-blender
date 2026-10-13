@@ -6,7 +6,6 @@
     "glitch",
     "pixel"
   ],
-  "paramAliases": {},
   "globals": {
     "angled": {
       "type": "float",

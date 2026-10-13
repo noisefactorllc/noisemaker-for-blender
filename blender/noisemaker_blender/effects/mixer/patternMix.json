@@ -6,7 +6,6 @@
     "blend",
     "pattern"
   ],
-  "paramAliases": {},
   "defaultProgram": "search mixer, synth\n\nnoise(ridges: true, colorMode: mono)\n.write(o0)\n\nnoise(ridges: true)\n.patternMix(tex: read(o0))\n.write(o1)",
   "globals": {
     "tex": {

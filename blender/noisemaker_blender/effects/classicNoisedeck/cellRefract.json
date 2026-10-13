@@ -6,7 +6,6 @@
     "distort",
     "noise"
   ],
-  "paramAliases": {},
   "globals": {
     "amount": {
       "type": "float",

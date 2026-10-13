@@ -5,7 +5,6 @@
   "tags": [
     "sim"
   ],
-  "paramAliases": {},
   "globals": {
     "sharpenRadius": {
       "type": "int",

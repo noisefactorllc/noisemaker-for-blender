@@ -6,7 +6,6 @@
     "blend",
     "distort"
   ],
-  "paramAliases": {},
   "globals": {
     "tex": {
       "type": "surface",

@@ -8,8 +8,10 @@ stages depend on, with NO behavioral change:
     oscKind/midiMode/audioBand/palette)
   * ``shaders/src/lang/enumPaths.js``    -> ``normalize_member_path`` /
     ``path_starts_with`` / ``apply_enum_prefix`` / ``strip_enum_prefix``
-  * ``shaders/src/lang/paramAliases.js`` constant ``ALIAS_EOL_DATE`` and the
-    deprecation-warning string format.
+  * ``shaders/src/lang/effectAliases.js`` deprecation-warning string format
+    (``S008``). Upstream a1a3fa2a retired parameter aliases: ``paramAliases.js``
+    (``S007``/``ALIAS_EOL_DATE``) was deleted upstream, so no S007 data is
+    ported; S008's warning no longer carries an EOL date.
 
 The reference builds ``stdEnums.palette`` from ``palettes.js`` (i.e.
 ``share/palettes.json``) with ``value`` == the palette's index in insertion
@@ -47,34 +49,22 @@ DIAGNOSTICS = {
     "S004": {"stage": "semantic", "severity": "error", "message": "Cannot assign null or undefined"},
     "S005": {"stage": "semantic", "severity": "error", "message": "Illegal chain structure"},
     "S006": {"stage": "semantic", "severity": "error", "message": "Starter chain missing write() call"},
-    "S007": {"stage": "semantic", "severity": "warning", "message": "Deprecated parameter alias"},
+    # Upstream a1a3fa2a retired parameter aliases and removed the S007
+    # "Deprecated parameter alias" diagnostic (paramAliases.js deleted).
     "S008": {"stage": "semantic", "severity": "warning", "message": "Deprecated effect"},
     "R001": {"stage": "runtime", "severity": "error", "message": "Runtime error"},
 }
-
-# --- paramAliases.js ----------------------------------------------------------
-ALIAS_EOL_DATE = "2026-09-01"
-
-
-def param_alias_warning(old_name: str, new_name: str) -> str:
-    """The exact deprecation-warning string the reference produces (S007)."""
-    return (
-        "param '%s' is deprecated, use '%s' instead. "
-        "Aliases will be removed on %s." % (old_name, new_name, ALIAS_EOL_DATE)
-    )
 
 
 def effect_alias_warning(old_op_name: str, new_name: str) -> str:
     """The exact deprecation-warning string for a deprecated effect (S008).
 
-    Mirrors ``effectAliases.checkEffectAlias``: the displayed old name is the
-    bare func (last dotted segment) when the op is namespaced.
+    Mirrors ``effectAliases.checkEffectAlias`` (post-a1a3fa2a): the displayed
+    old name is the bare func (last dotted segment) when the op is namespaced;
+    the message no longer carries an alias EOL date.
     """
     bare = old_op_name.split(".")[-1] if "." in old_op_name else old_op_name
-    return (
-        "effect '%s' is deprecated, use '%s' instead. "
-        "Aliases will be removed on %s." % (bare, new_name, ALIAS_EOL_DATE)
-    )
+    return "effect '%s' is deprecated, use '%s' instead." % (bare, new_name)
 
 
 # --- std_enums.js -------------------------------------------------------------

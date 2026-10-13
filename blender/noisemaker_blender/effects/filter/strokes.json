@@ -7,7 +7,6 @@
     "edges",
     "artist"
   ],
-  "paramAliases": {},
   "globals": {
     "mode": {
       "type": "int",

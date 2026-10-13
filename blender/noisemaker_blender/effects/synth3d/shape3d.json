@@ -6,7 +6,6 @@
     "3d",
     "geometric"
   ],
-  "paramAliases": {},
   "defaultProgram": "search synth3d, filter3d, render\n\nshape3d(speedA: -2, speedB: 2)\n.render3d(threshold: 0.75)\n.write(o0)",
   "outputTex3d": "volumeCache",
   "outputGeo": "geoBuffer",

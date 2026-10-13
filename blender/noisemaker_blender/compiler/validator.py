@@ -7,10 +7,11 @@ program that ``compile()`` returns and the expander consumes:
 
 It flattens each chain statement into a list of steps with temporary surface
 indices, resolves params against each effect's arg spec (enum/choice/member
-resolution, surface refs, color/vec/boolean coercion, default injection,
-deprecated-alias remap), expands subchains into begin/end markers, injects
+resolution, surface refs, color/vec/boolean coercion, default injection),
+expands subchains into begin/end markers, injects
 built-in ``_read``/``_write``/``_read3d``/``_write3d``/``prev`` steps, and emits
-diagnostics (S001/S002/S003/S004/S005/S006/S007/S008).
+diagnostics (S001/S002/S003/S004/S005/S006/S008). Upstream a1a3fa2a retired
+parameter aliases (paramAliases.js deleted, S007 removed).
 
 This is a faithful, behavior-preserving translation of the reference. The only
 branches that cannot be reproduced 1:1 are the ones that build a live runtime
@@ -717,10 +718,8 @@ def validate(ast):
                 args = {}
                 arg_sources = [None]  # boxed: lazily-created dict
                 kw = call.get("kwargs")
-                if kw:
-                    alias_warnings = _ops_mod.resolve_param_aliases(op_name, kw)
-                    for w in alias_warnings:
-                        push_diag("S007", call, w)
+                # Upstream a1a3fa2a retired parameter aliases (paramAliases.js
+                # deleted, S007 removed); validator.js no longer resolves aliases.
                 seen = set()
                 spec_args = spec.get("args") or []
                 _resolve_args(

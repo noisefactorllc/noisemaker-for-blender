@@ -5,7 +5,6 @@
   "tags": [
     "color"
   ],
-  "paramAliases": {},
   "globals": {
     "levels": {
       "type": "int",

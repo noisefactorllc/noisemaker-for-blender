@@ -112,9 +112,10 @@ def _type_matches(value, type_):
     return True
 
 
-def _collect_accepted_arg_names(spec, instance, aliases):
-    """Port of ``collectAcceptedArgNames``: spec args, instance globals, and
-    both sides of the registered param-alias map."""
+def _collect_accepted_arg_names(spec, instance):
+    """Port of ``collectAcceptedArgNames`` (post-a1a3fa2a): spec args and
+    instance globals. Upstream retired parameter aliases, so there is no
+    alias-map contribution."""
     accepted = set()
     for def_ in (spec.get("args") or []) if spec else []:
         if def_ and def_.get("name"):
@@ -122,10 +123,6 @@ def _collect_accepted_arg_names(spec, instance, aliases):
     if instance:
         for key in (instance.get("globals") or {}).keys():
             accepted.add(key)
-    for name in aliases.keys():
-        accepted.add(name)
-    for name in aliases.values():
-        accepted.add(name)
     return accepted
 
 
@@ -233,14 +230,14 @@ def predict_replacement(resolved_name, spec, new_args, old_instance, options=Non
             }
         )
 
-    aliases = _ops_mod.get_param_aliases(resolved_name)
-    accepted = _collect_accepted_arg_names(spec, instance, aliases)
+    # Upstream a1a3fa2a retired parameter aliases: prediction checks canonical
+    # names only (no alias-map awareness).
+    accepted = _collect_accepted_arg_names(spec, instance)
 
     provided = new_args or {}
-    provided_canonical = set(aliases.get(key, key) for key in provided.keys())
+    provided_canonical = set(provided.keys())
     for key in provided.keys():
-        canonical = aliases.get(key, key)
-        if canonical not in accepted:
+        if key not in accepted:
             prediction["arguments"]["unknown"].append(key)
     known_defs = {}
     for def_ in (spec.get("args") or []) if spec else []:
@@ -264,8 +261,7 @@ def predict_replacement(resolved_name, spec, new_args, old_instance, options=Non
 
     # Type and range checks
     for key, value in provided.items():
-        canonical = aliases.get(key, key)
-        def_ = known_defs.get(canonical)
+        def_ = known_defs.get(key)
         if not def_:
             continue
         declared_type = def_.get("type")
@@ -276,18 +272,18 @@ def predict_replacement(resolved_name, spec, new_args, old_instance, options=Non
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             if def_.get("min") is not None and value < def_["min"]:
                 prediction["ranges"].append(
-                    {"arg": canonical, "value": value, "min": def_.get("min"), "max": def_.get("max")}
+                    {"arg": key, "value": value, "min": def_.get("min"), "max": def_.get("max")}
                 )
             if def_.get("max") is not None and value > def_["max"]:
                 prediction["ranges"].append(
-                    {"arg": canonical, "value": value, "min": def_.get("min"), "max": def_.get("max")}
+                    {"arg": key, "value": value, "min": def_.get("min"), "max": def_.get("max")}
                 )
         choices = def_.get("choices")
         if choices and isinstance(value, (int, float)) and not isinstance(value, bool):
             allowed = list(choices.values())
             if value not in allowed:
                 prediction["ranges"].append(
-                    {"arg": canonical, "value": value, "choices": allowed}
+                    {"arg": key, "value": value, "choices": allowed}
                 )
     if prediction["types"]:
         prediction["issues"].append(

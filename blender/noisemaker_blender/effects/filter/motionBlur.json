@@ -6,7 +6,6 @@
     "lens",
     "blur"
   ],
-  "paramAliases": {},
   "globals": {
     "amount": {
       "type": "float",

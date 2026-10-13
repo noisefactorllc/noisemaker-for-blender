@@ -1291,18 +1291,13 @@ class CompilerTests(unittest.TestCase):
                         isinstance(v.get("type"), str) and v["type"],
                         msg=f"Effect {eff_name} global '{k}' missing valid 'type'",
                     )
-            if "paramAliases" in defn:
-                self.assertIsInstance(
-                    defn["paramAliases"],
-                    dict,
-                    msg=f"Effect {eff_name} 'paramAliases' not a dict",
-                )
-                for alias, target in defn["paramAliases"].items():
-                    self.assertIn(
-                        target,
-                        globals_dict,
-                        msg=f"Effect {eff_name} alias '{alias}' -> '{target}' not found in globals",
-                    )
+            # Upstream a1a3fa2a retired parameter aliases: no catalog effect may
+            # carry a ``paramAliases`` field anymore.
+            self.assertNotIn(
+                "paramAliases",
+                defn,
+                msg=f"Effect {eff_name} still carries retired 'paramAliases'",
+            )
 
     def test_gap005_pass_field_propagation_and_viewport_resolution(self):
         from noisemaker_blender.runtime.pipeline import resolve_dimension, resolve_pass_viewport

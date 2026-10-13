@@ -202,14 +202,10 @@ def _register_effect(definition: dict) -> None:
     # (canvas.js DOES register both at runtime, but that path did not produce the
     # goldens.) Populating ``_PARAM_ALIASES``/``_EFFECT_ALIASES`` here would make
     # ``resolve_param_aliases``/``check_effect_alias`` diverge from the contract,
-    # so they are deliberately left empty for the built-in catalog. Portable
-    # (``user.*``) registrations are the one exception: upstream's
-    # ``registerPortableEffect`` goes through ``registerEffectWithRuntime`` and
-    # therefore DOES register the definition's ``paramAliases`` (upstream
-    # cb22a05e); no golden exercises ``user.*`` ops, so the Stage-1 contract is
-    # untouched.
-    if namespace == "user" and isinstance(definition.get("paramAliases"), dict):
-        _PARAM_ALIASES[op_key] = dict(definition["paramAliases"])
+    # so they are deliberately left empty for the built-in catalog. Upstream
+    # a1a3fa2a retired parameter aliases entirely: ``paramAliases`` is no longer
+    # a supported definition field (portable registration fails outright), so no
+    # registration path can populate ``_PARAM_ALIASES`` anymore.
 
     # --- starter ops ----------------------------------------------------------
     # An explicit boolean ``starter`` on the definition wins (portable
@@ -314,24 +310,14 @@ def get_param_aliases(op_name: str) -> dict:
 def resolve_param_aliases(op_name: str, kwargs: dict):
     """Port of ``paramAliases.resolveParamAliases`` (mutates ``kwargs``).
 
-    Returns the list of deprecation-warning strings.
+    Upstream a1a3fa2a deleted paramAliases.js and retired parameter aliases
+    entirely: no registration path can populate ``_PARAM_ALIASES``, so this
+    always returns no warnings and never rewrites kwargs. Kept as a no-op so
+    the validator's call site stays a verbatim port of the post-retirement
+    reference (validator.js no longer calls it at all upstream).
     """
-    from .lang_data import param_alias_warning
-
     _ensure_built()
-    warnings = []
-    aliases = _PARAM_ALIASES.get(op_name)
-    if not aliases:
-        return warnings
-    for old_name in list(aliases.keys()):
-        if old_name not in kwargs:
-            continue
-        new_name = aliases[old_name]
-        if new_name not in kwargs:
-            kwargs[new_name] = kwargs[old_name]
-        del kwargs[old_name]
-        warnings.append(param_alias_warning(old_name, new_name))
-    return warnings
+    return []
 
 
 def check_effect_alias(op_name: str):
@@ -357,11 +343,11 @@ def rebuild() -> None:
 # plus loaded shader sources) and registers them into the shared effect/op/enum
 # registries as ``user.<func>``. The port's equivalent surface is this module:
 # the same validation contract, the same registry keys (``user.func`` /
-# ``user/func``, with a built-in bare-name lookup preserved), the same op/arg/
-# enum/starter registration, and the same paramAliases registration. As upstream
-# documents, this checks registration inputs only -- not shader compilation or
-# backend support; the Blender backend still needs the referenced programs
-# installed under the addon's shaders/ tree to actually draw.
+# ``user/func``, with a built-in bare-name lookup preserved), and the same
+# op/arg/enum/starter registration. As upstream documents, this checks
+# registration inputs only -- not shader compilation or backend support; the
+# Blender backend still needs the referenced programs installed under the
+# addon's shaders/ tree to actually draw.
 
 # JS Object.getOwnPropertyNames(Object.prototype) plus the literal 'prototype'
 # that upstream adds to the list: JSON keys controlling object prototypes must
@@ -473,13 +459,10 @@ def _validate_portable(definition) -> str:
                 ):
                     _fail("choices for %s must map names to %s or null" % (
                         key, "strings" if spec.get("type") == "string" else "numbers"))
-    param_aliases = definition.get("paramAliases")
+    # Upstream a1a3fa2a retired parameter aliases: ``paramAliases`` is no longer
+    # a supported definition field and registration fails outright.
     if "paramAliases" in definition:
-        if not _is_record(param_aliases) or not all(
-            isinstance(target, str) and target in (globals_ or {})
-            for target in param_aliases.values()
-        ):
-            _fail("paramAliases must map names to declared globals")
+        _fail("paramAliases is no longer supported")
     if registry.get_effect("user.%s" % func) or registry.get_effect("user/%s" % func):
         _fail("user.%s is already registered" % func)
     return func
@@ -492,7 +475,7 @@ def register_portable_effect(definition) -> dict:
     not shader compilation or backend support), registers it into the effect
     registry under ``user.<func>`` and ``user/<func>`` while preserving any
     built-in's bare-name lookup, and registers the op/args/choice-enums/starter
-    (and ``paramAliases``) exactly as ``registerEffectWithRuntime`` would.
+    exactly as ``registerEffectWithRuntime`` would.
 
     Returns the registered definition dict (namespace normalized to ``user``).
     Raises :class:`PortableEffectError` without registering anything on invalid

@@ -5,7 +5,6 @@
   "tags": [
     "text"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nsolid(color: #101820)\n  .spookyTicker()\n  .write(o0)",
   "globals": {
     "rows": {

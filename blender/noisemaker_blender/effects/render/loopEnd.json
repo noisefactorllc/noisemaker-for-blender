@@ -6,7 +6,6 @@
     "util",
     "sim"
   ],
-  "paramAliases": {},
   "globals": {},
   "passes": [
     {

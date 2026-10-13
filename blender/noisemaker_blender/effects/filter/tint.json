@@ -5,7 +5,6 @@
   "tags": [
     "color"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise(ridges: true, colorMode: mono)\n.tint(color: #ff0000, alpha: 0.5, mode: overlay)\n.write(o0)",
   "globals": {
     "color": {

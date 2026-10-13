@@ -6,7 +6,6 @@
     "blend",
     "blur"
   ],
-  "paramAliases": {},
   "globals": {
     "tex": {
       "type": "surface",

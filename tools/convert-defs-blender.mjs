@@ -132,7 +132,6 @@ async function collectEffects (filter) {
 // {
 //   name, namespace, func,            // identity
 //   tags,                             // [string] (optional)
-//   paramAliases,                     // { aliasName: realName } (validator: resolveParamAliases)
 //   externalTexture,                  // string (expander: media/text/meshLoader external input)
 //   defaultProgram,                   // string (optional, informational)
 //   hidden, deprecatedBy,             // optional flags
@@ -279,8 +278,8 @@ function normalizeEffect (instance, namespace, name) {
     func
   }
   if (instance.tags !== undefined) def.tags = instance.tags
-  // paramAliases: validator.resolveParamAliases() rewrites deprecated kwarg names.
-  def.paramAliases = instance.paramAliases || {}
+  // paramAliases: upstream a1a3fa2a retired parameter aliases — the field is no
+  // longer part of the definition schema, so it is NOT extracted.
   // externalTexture: expander binds `${texRef}_step_${i}` for media/text/meshLoader.
   if (instance.externalTexture !== undefined) def.externalTexture = instance.externalTexture
   if (instance.defaultProgram !== undefined) def.defaultProgram = instance.defaultProgram

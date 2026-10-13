@@ -5,7 +5,6 @@
   "tags": [
     "sim"
   ],
-  "paramAliases": {},
   "globals": {
     "separation": {
       "type": "float",

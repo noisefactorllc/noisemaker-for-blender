@@ -5,7 +5,6 @@
   "tags": [
     "pixel"
   ],
-  "paramAliases": {},
   "globals": {
     "size": {
       "type": "int",

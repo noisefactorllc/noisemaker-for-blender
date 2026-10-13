@@ -5,7 +5,6 @@
   "tags": [
     "blend"
   ],
-  "paramAliases": {},
   "defaultProgram": "search mixer, synth\n\nnoise(\n  type: constant,\n  octaves: 4,\n  ridges: true,\n  loopScale: 100,\n  speed: 100\n)\n  .write(o0)\n\nsolid(color: #006d4c)\n  .write(o1)\n\nperlin(ridges: true)\n  .write(o2)\n\ngradient(\n  type: noiseGradient,\n  color1: #ffffffff,\n  color2: #a9a9a9ff,\n  color3: #515151ff,\n  color4: #000000ff,\n  colorCount: 3\n)\n  .write(o3)\n\nmashup(\n  source: read(o3),\n  layers: 3,\n  smoothness: 0.22,\n  layer0_tex: read(o0),\n  layer1_tex: read(o1),\n  layer2_tex: read(o2)\n)\n  .write(o4)",
   "uniformLayout": {
     "layers": {

@@ -6,7 +6,6 @@
     "color",
     "palette"
   ],
-  "paramAliases": {},
   "globals": {
     "index": {
       "type": "member",

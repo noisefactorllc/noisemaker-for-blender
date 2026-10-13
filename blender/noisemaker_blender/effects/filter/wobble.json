@@ -5,7 +5,6 @@
   "tags": [
     "transform"
   ],
-  "paramAliases": {},
   "globals": {
     "speed": {
       "type": "float",

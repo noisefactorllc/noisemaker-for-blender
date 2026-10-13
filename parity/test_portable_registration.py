@@ -62,7 +62,7 @@ class PortableRegistrationTests(unittest.TestCase):
                     "uniformLayout", "uniformLayouts", "passes", "defaultProgram"]:
             self.assertEqual(registered[key], raw[key], key)
 
-    def test_aliases_choice_names_and_explicit_enum_paths_compile_to_uniforms(self):
+    def test_choice_names_and_explicit_enum_paths_compile_to_uniforms(self):
         ops.merge_enums({"portableExplicit": {"Keep": {"type": "Number", "value": 7}}})
         register_portable_effect(definition("portableParams", {
             "globals": {
@@ -74,10 +74,9 @@ class PortableRegistrationTests(unittest.TestCase):
                             "enum": "portableExplicit", "enumPath": "missing",
                             "choices": {"Keep": 99}},
             },
-            "paramAliases": {"oldMode": "mode"},
         }))
         compiled = compile(
-            "search user\nportableParams(oldMode: SoftLight, pinned: Keep, primary: Keep)"
+            "search user\nportableParams(mode: SoftLight, pinned: Keep, primary: Keep)"
             ".write(o0)\nrender(o0)")
         graph = expand(compiled)
         passes = [p for p in graph["passes"] if p.get("effectKey") == "user.portableParams"]
@@ -90,6 +89,17 @@ class PortableRegistrationTests(unittest.TestCase):
         self.assertEqual(uniforms.get("primaryUniform"), 7)
         soft_light = ops.enums()["user"]["portableParams"]["mode"]["SoftLight"]
         self.assertEqual(soft_light.get("value", soft_light), 3)
+
+    def test_retired_param_aliases_fail_registration(self):
+        # Upstream a1a3fa2a retired parameter aliases: ``paramAliases`` is no
+        # longer a supported definition field and registration fails outright.
+        raw = definition("retiredAliasProbe", {
+            "globals": {"scaleX": {"type": "float", "default": 1}},
+            "paramAliases": {"xScale": "scaleX"},
+        })
+        with self.assertRaisesRegex(PortableEffectError, "paramAliases"):
+            register_portable_effect(raw)
+        self.assertIsNone(registry.get_effect("user.retiredAliasProbe"))
 
     def test_starter_inference_covers_every_pipeline_input_and_honors_overrides(self):
         bindings = ["inputTex", "inputTex3d", "inputGeo", "inputXyz", "inputVel",
@@ -135,6 +145,7 @@ class PortableRegistrationTests(unittest.TestCase):
             definition("portableInvalid", {"paramAliases": "bad"}),
             definition("portableInvalid", {"paramAliases": {"old": 42}}),
             definition("portableInvalid", {"paramAliases": {"old": "absent"}}),
+            definition("portableInvalid", {"paramAliases": {"old": "mode"}}),
             definition("portableInvalid", {"globals": {"mode": {"type": "int", "choices": "abc"}}}),
             definition("portableInvalid", {"globals": {"mode": {"type": "int", "choices": {"Broken": {}}}}}),
         ]

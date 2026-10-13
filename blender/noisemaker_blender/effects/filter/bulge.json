@@ -5,7 +5,6 @@
   "tags": [
     "distort"
   ],
-  "paramAliases": {},
   "defaultProgram": "search synth, filter\ntestPattern(gridSize: 8)\n.bulge()\n.write(o0)",
   "globals": {
     "strength": {

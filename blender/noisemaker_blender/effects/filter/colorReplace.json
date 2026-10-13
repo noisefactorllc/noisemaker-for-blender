@@ -6,7 +6,6 @@
     "color",
     "util"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise(ridges: true, colorMode: mono)\n.colorReplace(targetColor: #000000, replaceColor: #ff0000, sensitivity: 0.4, smoothing: 0.2)\n.write(o0)",
   "globals": {
     "targetColor": {

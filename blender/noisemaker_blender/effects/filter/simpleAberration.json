@@ -5,7 +5,6 @@
   "tags": [
     "color"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise(ridges: true, colorMode: mono)\n.simpleAberration()\n.write(o0)",
   "globals": {
     "displacement": {

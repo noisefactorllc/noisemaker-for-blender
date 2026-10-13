@@ -6,7 +6,6 @@
     "distort",
     "glitch"
   ],
-  "paramAliases": {},
   "uniformLayout": {
     "time": {
       "slot": 0,

@@ -5,7 +5,6 @@
   "tags": [
     "distort"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise(ridges: true)\n.parallax()\n.write(o0)",
   "globals": {
     "heightMap": {

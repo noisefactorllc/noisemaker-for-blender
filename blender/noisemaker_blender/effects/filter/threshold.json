@@ -6,7 +6,6 @@
     "color",
     "edges"
   ],
-  "paramAliases": {},
   "globals": {
     "level": {
       "type": "float",

@@ -6,7 +6,6 @@
     "color",
     "util"
   ],
-  "paramAliases": {},
   "globals": {
     "channel": {
       "type": "member",

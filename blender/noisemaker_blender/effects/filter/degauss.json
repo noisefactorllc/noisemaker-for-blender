@@ -5,7 +5,6 @@
   "tags": [
     "distort"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\ntestPattern()\n.degauss()\n.write(o0)",
   "uniformLayout": {
     "resolution": {

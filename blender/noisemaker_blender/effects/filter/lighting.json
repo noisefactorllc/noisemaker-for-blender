@@ -5,7 +5,6 @@
   "tags": [
     "color"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise(ridges: true)\n.lighting(normalStrength: 2)\n.write(o0)",
   "globals": {
     "normalStrength": {

@@ -6,7 +6,6 @@
     "color",
     "pixel"
   ],
-  "paramAliases": {},
   "globals": {
     "type": {
       "type": "int",

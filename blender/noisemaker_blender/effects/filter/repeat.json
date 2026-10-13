@@ -6,7 +6,6 @@
     "tiling",
     "transform"
   ],
-  "paramAliases": {},
   "globals": {
     "x": {
       "type": "float",

@@ -7,7 +7,6 @@
     "color",
     "palette"
   ],
-  "paramAliases": {},
   "outputTex3d": "volumeCache",
   "outputGeo": "inputGeo",
   "globals": {

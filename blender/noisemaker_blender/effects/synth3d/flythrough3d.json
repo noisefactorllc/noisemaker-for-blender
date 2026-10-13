@@ -6,7 +6,6 @@
     "3d",
     "fractal"
   ],
-  "paramAliases": {},
   "outputTex3d": "volumeCache",
   "outputGeo": "geoBuffer",
   "globals": {

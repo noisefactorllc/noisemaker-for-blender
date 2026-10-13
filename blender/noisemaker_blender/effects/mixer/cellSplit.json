@@ -6,7 +6,6 @@
     "blend",
     "noise"
   ],
-  "paramAliases": {},
   "defaultProgram": "search mixer, synth\n\nsolid(color: #000000)\n.write(o0)\n\nnoise()\n.cellSplit(invert: sourceB)\n.write(o1)\n",
   "globals": {
     "tex": {

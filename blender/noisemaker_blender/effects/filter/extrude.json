@@ -7,7 +7,6 @@
     "geometric",
     "artist"
   ],
-  "paramAliases": {},
   "globals": {
     "type": {
       "type": "int",

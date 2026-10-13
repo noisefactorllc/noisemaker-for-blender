@@ -6,7 +6,6 @@
     "color",
     "lens"
   ],
-  "paramAliases": {},
   "defaultProgram": "search filter, synth\n\nnoise(\n  speed: 40,\n  colorMode: mono,\n  ridges: true\n)\n  .temporalAberration()\n  .write(o0)",
   "uniformLayouts": {
     "temporalAberration": {

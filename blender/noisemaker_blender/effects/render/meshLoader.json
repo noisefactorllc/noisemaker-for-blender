@@ -7,7 +7,6 @@
     "geometry",
     "3d"
   ],
-  "paramAliases": {},
   "defaultProgram": "search render\n\nmeshLoader()\n.meshRender()\n.write(o0)",
   "globals": {},
   "passes": [

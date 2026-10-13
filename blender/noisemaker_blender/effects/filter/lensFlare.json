@@ -6,7 +6,6 @@
     "lens",
     "artist"
   ],
-  "paramAliases": {},
   "globals": {
     "brightness": {
       "type": "float",
