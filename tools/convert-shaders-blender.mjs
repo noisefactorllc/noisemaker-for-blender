@@ -456,6 +456,19 @@ function transpileVertFrag (vertSrc, fragSrc) {
 // Reference commit a0d8ea14/77e45a5e now `clamp(...)`s that output natively, so the host override
 // is no longer needed; the generic transform carries the reference clamp through verbatim.)
 const PROGRAM_OVERRIDES = {
+  'render/render3d/render3d': (frag) => {
+    const mixes = [
+      ['c000', 'c100', 'x'], ['c010', 'c110', 'x'],
+      ['c001', 'c101', 'x'], ['c011', 'c111', 'x'],
+      ['c00', 'c10', 'y'], ['c01', 'c11', 'y'], ['c0', 'c1', 'z'],
+    ]
+    for (const [a, b, axis] of mixes) {
+      const before = `mix(${a}, ${b}, frac.${axis})`
+      if (frag.split(before).length !== 2) throw new Error('render3d volume interpolation no longer matches reference source')
+      frag = frag.replace(before, `fma((${b})-(${a}), vec4(frac.${axis}), (${a}))`)
+    }
+    return frag
+  },
   'filter/craquelure/craquelure': (frag) => {
     const before = `    for (int y = -1; y <= 1; y++) {
         for (int x = -1; x <= 1; x++) {

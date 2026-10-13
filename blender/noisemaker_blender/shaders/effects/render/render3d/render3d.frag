@@ -61,15 +61,15 @@ vec4 sampleVolume(vec3 worldPos) {
     vec4 c111 = texelFetch(volumeCache, atlasTexel(ivec3(i1.x, i1.y, i1.z), volSize), 0);
     
     // Trilinear interpolation
-    vec4 c00 = mix(c000, c100, frac.x);
-    vec4 c10 = mix(c010, c110, frac.x);
-    vec4 c01 = mix(c001, c101, frac.x);
-    vec4 c11 = mix(c011, c111, frac.x);
+    vec4 c00 = fma((c100)-(c000), vec4(frac.x), (c000));
+    vec4 c10 = fma((c110)-(c010), vec4(frac.x), (c010));
+    vec4 c01 = fma((c101)-(c001), vec4(frac.x), (c001));
+    vec4 c11 = fma((c111)-(c011), vec4(frac.x), (c011));
     
-    vec4 c0 = mix(c00, c10, frac.y);
-    vec4 c1 = mix(c01, c11, frac.y);
+    vec4 c0 = fma((c10)-(c00), vec4(frac.y), (c00));
+    vec4 c1 = fma((c11)-(c01), vec4(frac.y), (c01));
     
-    return mix(c0, c1, frac.z);
+    return fma((c1)-(c0), vec4(frac.z), (c0));
 }
 
 // Get the scalar field value at a point. INVERT is a compile-time #define;

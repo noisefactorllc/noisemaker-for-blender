@@ -53,7 +53,7 @@ class FixtureCoverage3dTests(unittest.TestCase):
         # measured cross-GPU divergence must have an explicit, exact policy
         # entry; nothing may ride along unbounded.
         self.assertEqual(
-            {"flythrough3d", "fractal3d", "heightmap3d_landscape",
+            {"flythrough3d", "heightmap3d_landscape",
              "heightmap3d_landscape_isosurface"},
             set(document["cases"]),
         )
@@ -63,14 +63,6 @@ class FixtureCoverage3dTests(unittest.TestCase):
         self.assertEqual(0.0103, flythrough["mean_abs_diff"])
         self.assertEqual(0.999, flythrough["ssim_min"])
         self.assertIn("raymarch surface-boundary", flythrough["mechanism"])
-        # fractal3d's measured cross-GPU residual on the reference-render3d
-        # volume after upstream 10001d79/700ac32e: one boundary texel of the
-        # lit surface, deterministic per engine pair (measured 14.0/0.0002/1.0).
-        fractal = document["cases"]["fractal3d"]
-        self.assertEqual(15.0, fractal["max_abs_diff"])
-        self.assertEqual(0.001, fractal["mean_abs_diff"])
-        self.assertEqual(0.999, fractal["ssim_min"])
-        self.assertIn("surface-boundary", fractal["mechanism"])
         # GAP-002 landscape filtering choices (voxel/default class and isosurface):
         # bounds sit above the measured values (2026-09-26:
         # 242.0/0.1403/0.99756 and 244.0/0.2583/0.99407) with explicit headroom
