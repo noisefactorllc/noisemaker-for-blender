@@ -213,3 +213,15 @@ pondRipples_speedNeg5
 renderLit3d
 heightGrid_billboard_alpha
 heightGrid_pointsRender_perspective
+default_convolutionFeedback
+default_corrupt
+default_glyphMap
+default_lensWarp
+default_lightLeak
+default_osd
+default_pixelSort
+default_reindex
+default_reverb
+default_ridge
+default_scale
+default_scanlineError
