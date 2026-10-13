@@ -112,17 +112,103 @@ vec2 voronoiF1F2(vec2 p, float jitter, float seedVal) {
     vec2 f = p - g;
     float best = 1e9;
     float second = 1e9;
-    for (int y = -1; y <= 1; y++) {
-        for (int x = -1; x <= 1; x++) {
-            vec2 cell = vec2(float(x), float(y));
-            vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
-            float d = dot(pt - f, pt - f);
-            if (d < best) {
-                second = best;
-                best = d;
-            } else if (d < second) {
-                second = d;
-            }
+    {
+        vec2 cell = vec2(-1.0, -1.0);
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
+        }
+    }
+    {
+        vec2 cell = vec2(0.0, -1.0);
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
+        }
+    }
+    {
+        vec2 cell = vec2(1.0, -1.0);
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
+        }
+    }
+    {
+        vec2 cell = vec2(-1.0, 0.0);
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
+        }
+    }
+    {
+        vec2 cell = vec2(0.0, 0.0);
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
+        }
+    }
+    {
+        vec2 cell = vec2(1.0, 0.0);
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
+        }
+    }
+    {
+        vec2 cell = vec2(-1.0, 1.0);
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
+        }
+    }
+    {
+        vec2 cell = vec2(0.0, 1.0);
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
+        }
+    }
+    {
+        vec2 cell = vec2(1.0, 1.0);
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
         }
     }
     return vec2(sqrt(best), sqrt(second));

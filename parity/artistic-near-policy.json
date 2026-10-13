@@ -7,12 +7,6 @@
       "ssim_min": 0.994,
       "mechanism": "multi-cycle sin tone curve plus pow(v, 8) rim highlight amplifies translator-level rounding"
     },
-    "craquelure": {
-      "max_abs_diff": 4,
-      "mean_abs_diff": 0.03,
-      "ssim_min": 0.9999,
-      "mechanism": "Voronoi F1/F2 nearest-rank tie feeds the smoothstep crack ridge"
-    },
     "oilPaint_dryBrush": {
       "max_abs_diff": 45,
       "mean_abs_diff": 0.35,

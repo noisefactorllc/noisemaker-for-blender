@@ -456,6 +456,36 @@ function transpileVertFrag (vertSrc, fragSrc) {
 // Reference commit a0d8ea14/77e45a5e now `clamp(...)`s that output natively, so the host override
 // is no longer needed; the generic transform carries the reference clamp through verbatim.)
 const PROGRAM_OVERRIDES = {
+  'filter/craquelure/craquelure': (frag) => {
+    const before = `    for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+            vec2 cell = vec2(float(x), float(y));
+            vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+            float d = dot(pt - f, pt - f);
+            if (d < best) {
+                second = best;
+                best = d;
+            } else if (d < second) {
+                second = d;
+            }
+        }
+    }`
+    if (frag.split(before).length !== 2) throw new Error('craquelure Voronoi loop no longer matches reference source')
+    // Literal neighbors keep Metal's distance arithmetic aligned with the
+    // reference shader; a dynamic loop changes 4,763 output pixels here.
+    const after = [-1, 0, 1].flatMap(y => [-1, 0, 1].map(x => `    {
+        vec2 cell = vec2(${x.toFixed(1)}, ${y.toFixed(1)});
+        vec2 pt = cell + 0.5 + (hash22(g + cell + seedVal * 101.7) - 0.5) * jitter;
+        float d = dot(pt - f, pt - f);
+        if (d < best) {
+            second = best;
+            best = d;
+        } else if (d < second) {
+            second = d;
+        }
+    }`)).join('\n')
+    return frag.replace(before, after)
+  },
   'render/renderLandscape3d/landscape': (frag) => {
     const before = 'vec3 origin = vec3(size * 2.5) + right * (uv.x + panX) * span + up * (uv.y + panY) * span;'
     const after = 'vec3 origin = vec3(size * 2.5) + (right * (uv.x + panX) + up * (uv.y + panY)) * span;'
