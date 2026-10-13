@@ -572,11 +572,29 @@ def default_engine(size, time, frame, delta_time=0.0, *, width=None, height=None
 
 
 def collect_default_uniforms(graph):
-    """Merge every pass.uniforms (last-write-wins) — used for dimension/repeat resolution."""
+    """Reconcile particle scopes, then merge uniforms for dimensions and repeats."""
+    _broadcast_particle_state_sizes(graph)
     out = {}
     for p in graph.passes:
         out.update(p.get("uniforms", {}))
     return out
+
+
+def _broadcast_particle_state_sizes(graph):
+    """Use the state size authored by each emitter for its scoped state surface."""
+    authored = {}
+    for render_pass in graph.passes:
+        node_id = render_pass.get("nodeId")
+        scoped_key = (render_pass.get("scopedParams") or {}).get("stateSize")
+        if (scoped_key == "stateSize_" + str(node_id) and
+                node_id is not None and
+                "stateSize" in (render_pass.get("uniforms") or {})):
+            authored[scoped_key] = render_pass["uniforms"]["stateSize"]
+    for render_pass in graph.passes:
+        uniforms = render_pass.get("uniforms") or {}
+        for scoped_key, value in authored.items():
+            if scoped_key in uniforms:
+                uniforms[scoped_key] = value
 
 
 def _is_volume_size_uniform(name):
