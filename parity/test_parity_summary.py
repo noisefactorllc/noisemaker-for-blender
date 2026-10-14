@@ -213,6 +213,7 @@ class MintAndGradeTests(unittest.TestCase):
         for overrides in ({"NM_SIZE": "128"}, {"NM_TIME": "0.75"},
                           {"NM_FRAMES": "1"}, {"NM_TIMESTEP": "0.0125"}):
             with self.subTest(overrides=overrides):
+                (self.cand_dir / "provenance.json").unlink(missing_ok=True)
                 run, counts = self.grade(overrides)
                 self.assertEqual((counts["executed"], counts["missing"]), (0, 1), run.stdout)
                 self.assertNotEqual(run.returncode, 0, run.stdout)
