@@ -31,7 +31,7 @@ Environment:
   NM_SERVE_PORT (8777)  — golden generation
   --reuse          reuse existing candidate PNGs (resumable sweeps); the default
                    renders EVERY case fresh. Goldens are graded only with a
-                   provenance.json entry matching their sha256 and capture protocol, minted at the
+                   provenance.json entry matching their sha256, fixture DSL and capture protocol, minted at the
                    revision pinned in parity/reference-revision, on the renderer
                    declared in parity/authority-renderer, so stale or foreign
                    work directories can never be counted as executed
@@ -215,9 +215,9 @@ def is_authority_renderer(renderer, declared):
     return isinstance(renderer, str) and "swiftshader" not in renderer.lower() and declared in renderer
 
 
-def golden_state(gold, gold_dir, pin, protocol, declared=None):
+def golden_state(gold, gold_dir, pin, protocol, dsl_path, declared=None):
     """'ok' only for a golden whose provenance.json entry matches its sha256 and
-    capture protocol, was minted at the pinned revision and records a renderer that is the
+    fixture DSL and capture protocol, was minted at the pinned revision and records a renderer that is the
     declared authority; 'missing', 'stale' or 'wrong-renderer' otherwise, so a
     stale or foreign golden in a reused work directory is never graded."""
     if not gold.exists():
@@ -234,6 +234,11 @@ def golden_state(gold, gold_dir, pin, protocol, declared=None):
     if not is_authority_renderer(entry.get("renderer"), declared or declared_renderer()):
         return "wrong-renderer"
     if entry.get("protocol") != protocol:
+        return "stale"
+    try:
+        if entry.get("dsl_sha256") != sha256(dsl_path):
+            return "stale"
+    except OSError:
         return "stale"
     return "ok"
 
@@ -405,7 +410,8 @@ def main():
     declared = declared_renderer()
 
     if auto:
-        need = [n for n in ready if golden_state(gold_dir / f"{n}.golden.png", gold_dir, pin, protocol, declared) != "ok"]
+        need = [n for n in ready if golden_state(gold_dir / f"{n}.golden.png", gold_dir, pin, protocol,
+                                                 ROOT / "parity" / "programs" / f"{n}.dsl", declared) != "ok"]
         if need:
             err = generate_goldens(need, gold_dir, Path(os.environ["NM_REFERENCE_ROOT"]),
                                    120 * max(1, len(need)))
@@ -424,7 +430,8 @@ def main():
             cand_snapshot = snapshots / "cand" / cand.name
             try:
                 shutil.copyfile(gold, gold_snapshot)
-                state = golden_state(gold_snapshot, gold_dir, pin, protocol, declared)
+                state = golden_state(gold_snapshot, gold_dir, pin, protocol,
+                                     ROOT / "parity" / "programs" / f"{name}.dsl", declared)
             except FileNotFoundError:
                 state = "missing"
             if state != "ok":
@@ -435,7 +442,7 @@ def main():
                     why = ("golden minted on %s, not the declared authority %r (parity/authority-renderer); "
                            "regenerate with NM_GOLDEN_AUTO=1" % (recorded_renderer(gold, gold_dir) or "an unrecorded renderer", declared))
                 else:
-                    why = "golden present but unprovenanced, sha256-mismatched, wrong protocol or not minted at the pinned revision (stale); regenerate with NM_GOLDEN_AUTO=1"
+                    why = "golden present but unprovenanced, sha256-mismatched, wrong fixture DSL, wrong protocol or not minted at the pinned revision (stale); regenerate with NM_GOLDEN_AUTO=1"
                 print(f"[missing] {name}: {why}")
                 continue
             try:

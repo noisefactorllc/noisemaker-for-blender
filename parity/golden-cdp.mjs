@@ -20,6 +20,7 @@
 // --headless=new --use-angle=metal --no-sandbox.
 import fs from 'node:fs'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import zlib from 'node:zlib'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { declaredRenderer, isAuthorityRenderer, recordGolden } from './golden-provenance.mjs'
@@ -95,7 +96,12 @@ async function waitFor (cdp, expr, timeoutMs = 300000) {
   }
 }
 
-const PAIR = process.argv.slice(2).map(s => { const i = s.indexOf('='); return { name: s.slice(0, i), dsl: fs.readFileSync(s.slice(i + 1), 'utf8') } })
+const PAIR = process.argv.slice(2).map(s => {
+  const i = s.indexOf('=')
+  const source = fs.readFileSync(s.slice(i + 1))
+  return { name: s.slice(0, i), dsl: source.toString('utf8'),
+    dslSha256: crypto.createHash('sha256').update(source).digest('hex') }
+})
 if (!PAIR.length) { console.error('usage: node golden-cdp.mjs name=dslPath ...'); process.exit(2) }
 
 const { exportGraph } = await import(pathToFileURL(EXPORT_GRAPH).href)
@@ -221,7 +227,7 @@ async function main () {
     // on, so a stale or foreign golden in a reused work directory cannot pass
     // as the authority image.
     recordGolden(OUT, it.name, { referenceRevision: process.env.NM_GOLDEN_REF_REV || null, renderer,
-      protocol: { size: SIZE, time: TIME, frames: FRAMES, timestep: TIMESTEP } })
+      protocol: { size: SIZE, time: TIME, frames: FRAMES, timestep: TIMESTEP }, dslSha256: it.dslSha256 })
     console.log('OK', it.name, width + 'x' + height, renderer)
   }
   console.log('DONE')

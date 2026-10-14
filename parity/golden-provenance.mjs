@@ -5,7 +5,8 @@
 // parity/authority-renderer declares the renderer the authority goldens are
 // minted on: a golden counts only when the WebGL2 renderer string it was
 // minted on contains that declaration and is not SwiftShader. provenance.json
-// binds each golden to its sha256, reference revision, renderer, and capture protocol.
+// binds each golden to its sha256, fixture DSL, reference revision, renderer,
+// and capture protocol.
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
@@ -26,7 +27,7 @@ export function isAuthorityRenderer (renderer, declared = declaredRenderer()) {
 // Record <outDir>/<name>.golden.png in <outDir>/provenance.json. Refuses a
 // renderer that is not the declared authority, so no golden from another
 // renderer can be attributed to it.
-export function recordGolden (outDir, name, { referenceRevision, renderer, protocol }) {
+export function recordGolden (outDir, name, { referenceRevision, renderer, protocol, dslSha256 }) {
   const declared = declaredRenderer()
   if (!isAuthorityRenderer(renderer, declared)) {
     throw new Error(`${name}: renderer ${JSON.stringify(renderer ?? null)} is not the declared authority ` +
@@ -35,6 +36,9 @@ export function recordGolden (outDir, name, { referenceRevision, renderer, proto
   if (!protocol || !Number.isInteger(protocol.size) || !Number.isFinite(protocol.time) ||
       !Number.isInteger(protocol.frames) || !Number.isFinite(protocol.timestep)) {
     throw new Error(`${name}: missing or invalid render protocol`)
+  }
+  if (typeof dslSha256 !== 'string' || !/^[0-9a-f]{64}$/.test(dslSha256)) {
+    throw new Error(`${name}: missing or invalid fixture DSL SHA-256`)
   }
   const png = fs.readFileSync(path.join(outDir, `${name}.golden.png`))
   const pvPath = path.join(outDir, 'provenance.json')
@@ -49,6 +53,7 @@ export function recordGolden (outDir, name, { referenceRevision, renderer, proto
     reference_revision: referenceRevision || null,
     renderer,
     protocol,
+    dsl_sha256: dslSha256,
   }
   fs.writeFileSync(pvPath, JSON.stringify(pv, null, 2) + '\n')
   return pv.files[name]

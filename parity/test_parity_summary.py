@@ -52,6 +52,8 @@ class GoldenStateTests(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self._tmp.name)
         self.gold = self.dir / "case.golden.png"
+        self.dsl = self.dir / "case.dsl"
+        self.dsl.write_text("original fixture")
 
     def tearDown(self):
         self._tmp.cleanup()
@@ -63,7 +65,8 @@ class GoldenStateTests(unittest.TestCase):
 
     def state(self):
         return parity_summary.golden_state(self.gold, self.dir, PIN,
-                                           {"size": 256, "time": 0.25, "frames": 8, "timestep": 0})
+                                           {"size": 256, "time": 0.25, "frames": 8, "timestep": 0},
+                                           self.dsl)
 
     def test_absent_golden_is_missing(self):
         self.assertEqual(self.state(), "missing")
@@ -91,8 +94,11 @@ class GoldenStateTests(unittest.TestCase):
         self.write()
         self.write(entry={"sha256": parity_summary.sha256(self.gold), "reference_revision": PIN,
                           "renderer": METAL,
-                          "protocol": {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}})
+                          "protocol": {"size": 256, "time": 0.25, "frames": 8, "timestep": 0},
+                          "dsl_sha256": parity_summary.sha256(self.dsl)})
         self.assertEqual(self.state(), "ok")
+        self.dsl.write_text("edited fixture")
+        self.assertEqual(self.state(), "stale")
 
     def test_golden_without_a_recorded_renderer_is_refused(self):
         self.write()
@@ -166,10 +172,11 @@ class MintAndGradeTests(unittest.TestCase):
         script = ("import { recordGolden } from %s;"
                   "recordGolden(process.argv[1], process.argv[2],"
                   " { referenceRevision: process.argv[3], renderer: process.argv[4],"
-                  " protocol: JSON.parse(process.argv[5]) })" % json.dumps(module))
+                  " protocol: JSON.parse(process.argv[5]), dslSha256: process.argv[6] })" % json.dumps(module))
         return subprocess.run([NODE, "--input-type=module", "-e", script, str(self.gold_dir), self.case,
                                parity_summary.pinned_revision(), renderer,
-                               json.dumps(protocol or {"size": 256, "time": 0.25, "frames": 8, "timestep": 0})],
+                               json.dumps(protocol or {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}),
+                               parity_summary.sha256(ROOT / "parity" / "programs" / f"{self.case}.dsl")],
                               capture_output=True, text=True, timeout=60)
 
     def grade(self, overrides=None, candidate_protocol=None):
@@ -203,9 +210,28 @@ class MintAndGradeTests(unittest.TestCase):
         self.assertEqual(pv["files"][self.case]["reference_revision"], parity_summary.pinned_revision())
         self.assertEqual(pv["files"][self.case]["protocol"],
                          {"size": 256, "time": 0.25, "frames": 8, "timestep": 0})
+        self.assertEqual(pv["files"][self.case]["dsl_sha256"],
+                         parity_summary.sha256(ROOT / "parity" / "programs" / f"{self.case}.dsl"))
         run, counts = self.grade()
         self.assertEqual((counts["executed"], counts["exact"], counts["missing"]), (1, 1, 0), run.stdout)
         self.assertEqual(run.returncode, 0, run.stdout)
+
+    def test_grading_refuses_a_golden_for_another_fixture_revision(self):
+        run = self.record(METAL)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        provenance_path = self.gold_dir / "provenance.json"
+        original = json.loads(provenance_path.read_text())
+        for wrong_hash in (None, "0" * 64):
+            with self.subTest(wrong_hash=wrong_hash):
+                provenance = json.loads(json.dumps(original))
+                if wrong_hash is None:
+                    provenance["files"][self.case].pop("dsl_sha256", None)
+                else:
+                    provenance["files"][self.case]["dsl_sha256"] = wrong_hash
+                provenance_path.write_text(json.dumps(provenance))
+                run, counts = self.grade()
+                self.assertEqual((counts["executed"], counts["missing"]), (0, 1), run.stdout)
+                self.assertNotEqual(run.returncode, 0, run.stdout)
 
     def test_grading_refuses_golden_from_another_render_protocol(self):
         run = self.record(METAL)
