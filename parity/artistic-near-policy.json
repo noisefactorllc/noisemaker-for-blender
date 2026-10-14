@@ -7,12 +7,6 @@
       "ssim_min": 0.994,
       "mechanism": "multi-cycle sin tone curve plus pow(v, 8) rim highlight amplifies translator-level rounding"
     },
-    "default_rotate": {
-      "max_abs_diff": 40,
-      "mean_abs_diff": 0.0034,
-      "ssim_min": 0.99998,
-      "mechanism": "45-degree repeated-texture rotation crosses the wrap seam on diagonal x+y=255; finite-precision UV interpolation selects different seam samples at 27 pixels"
-    },
     "filter_wormhole": {
       "max_abs_diff": 189,
       "mean_abs_diff": 0.023,

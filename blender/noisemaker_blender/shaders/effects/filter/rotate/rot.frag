@@ -5,12 +5,6 @@
 
 const float TAU = 6.283185307179586;
 
-mat2 rotate2D(float angle) {
-    float c = cos(angle);
-    float s = sin(angle);
-    return mat2(c, -s, s, c);
-}
-
 void main() {
     ivec2 texSize = textureSize(inputTex, 0);
     vec2 uv = gl_FragCoord.xy / vec2(texSize);
@@ -26,7 +20,10 @@ void main() {
     vec2 center = vec2(0.5);
     uv -= center;
     uv.x *= aspect;
-    uv = rotate2D(-angle * TAU / 360.0) * uv;
+    float rotateAngle = -angle * TAU / 360.0;
+    float c = cos(rotateAngle);
+    float s = sin(rotateAngle);
+    uv = vec2(c * uv.x + s * uv.y, -s * uv.x + c * uv.y);
     uv.x /= aspect;
     uv += center;
     
