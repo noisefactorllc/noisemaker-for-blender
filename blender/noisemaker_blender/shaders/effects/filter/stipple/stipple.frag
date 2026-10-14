@@ -126,7 +126,7 @@ vec2 rotate2D(vec2 v, float angleDeg) {
     float a = radians(angleDeg);
     float co = cos(a);
     float si = sin(a);
-    return mat2(co, -si, si, co) * v;
+    return vec2(co * v.x + si * v.y, -si * v.x + co * v.y);
 }
 
 void main() {
