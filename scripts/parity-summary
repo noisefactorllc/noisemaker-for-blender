@@ -24,14 +24,14 @@ Environment:
   NM_BLENDER       blender executable (default `blender`)
   NM_PARITY_WORK   work dir for gold/ and cand/ (default parity/out/parity-summary)
   NM_CASE_TIMEOUT  per-case blender render timeout seconds (default 300)
-  NM_SIZE/NM_TIME/NM_FRAMES  capture parameters (defaults 256 / 0.25 / 8)
+  NM_SIZE/NM_TIME/NM_FRAMES/NM_TIMESTEP  capture parameters (defaults 256 / 0.25 / 8 / 0)
   NM_SKIP          comma-separated case ids to count as skip (never rendered)
   NM_GOLDEN_AUTO   when set, generate missing/stale goldens from NM_REFERENCE_ROOT
   NM_REFERENCE_ROOT, NM_CHROME (default `chromium`), NM_CDP_PORT (9222),
   NM_SERVE_PORT (8777)  — golden generation
   --reuse          reuse existing candidate PNGs (resumable sweeps); the default
                    renders EVERY case fresh. Goldens are graded only with a
-                   provenance.json entry matching their sha256, minted at the
+                   provenance.json entry matching their sha256 and capture protocol, minted at the
                    revision pinned in parity/reference-revision, on the renderer
                    declared in parity/authority-renderer, so stale or foreign
                    work directories can never be counted as executed
@@ -47,6 +47,7 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
 import zlib
 from pathlib import Path
 
@@ -91,7 +92,7 @@ def compare(gold_path, cand_path, policy):
     g, gshape = load_rgba(gold_path)
     c, cshape = load_rgba(cand_path)
     if gshape != cshape:
-        return {"cls": "FAIL", "reason": "size_mismatch", "gshape": gshape, "cshape": cshape}
+        return {"cls": "fail", "reason": "size_mismatch", "gshape": gshape, "cshape": cshape}
     # exact is byte identity of the PNG files themselves (the contract's
     # "byte-identical"), decided before any decoded-pixel grading; decoded
     # metrics only classify strict/near/fail.
@@ -142,6 +143,58 @@ def sha256(path):
     return h.hexdigest()
 
 
+def source_fingerprint():
+    """Identify the checkout used by candidate renders, including tracked edits.
+
+    Untracked files can affect a render but are not in the Git diff. In that
+    case, refuse reuse rather than attribute a candidate to an incomplete id.
+    """
+    try:
+        rev = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                             capture_output=True, check=True).stdout
+        diff = subprocess.run(["git", "diff", "--binary", "HEAD", "--"], cwd=ROOT,
+                              capture_output=True, check=True).stdout
+        untracked = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"],
+                                   cwd=ROOT, capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    if untracked:
+        return None
+    return hashlib.sha256(rev + diff).hexdigest()
+
+
+def candidate_state(cand, cand_dir, protocol, source):
+    if not cand.exists() or source is None:
+        return "stale"
+    try:
+        files = json.loads((cand_dir / "provenance.json").read_text()).get("files", {})
+        entry = files.get(cand.name[:-len(".png")])
+    except (OSError, ValueError, AttributeError):
+        return "stale"
+    if not isinstance(entry, dict):
+        return "stale"
+    if (entry.get("sha256") != sha256(cand) or entry.get("protocol") != protocol
+            or entry.get("source_fingerprint") != source):
+        return "stale"
+    return "ok"
+
+
+def record_candidate(cand, cand_dir, protocol, source):
+    if source is None:
+        return
+    path = cand_dir / "provenance.json"
+    try:
+        provenance = json.loads(path.read_text())
+    except (OSError, ValueError):
+        provenance = {"files": {}}
+    files = provenance.get("files")
+    if not isinstance(files, dict):
+        files = provenance["files"] = {}
+    files[cand.stem] = {"sha256": sha256(cand), "protocol": protocol,
+                        "source_fingerprint": source}
+    path.write_text(json.dumps(provenance, indent=2) + "\n")
+
+
 def pinned_revision():
     """The reference revision this checkout pins (parity/reference-revision)."""
     return REFERENCE_REVISION.read_text().strip()
@@ -162,9 +215,9 @@ def is_authority_renderer(renderer, declared):
     return isinstance(renderer, str) and "swiftshader" not in renderer.lower() and declared in renderer
 
 
-def golden_state(gold, gold_dir, pin, declared=None):
-    """'ok' only for a golden whose provenance.json entry matches its sha256, was
-    minted at the pinned reference revision and records a renderer that is the
+def golden_state(gold, gold_dir, pin, protocol, declared=None):
+    """'ok' only for a golden whose provenance.json entry matches its sha256 and
+    capture protocol, was minted at the pinned revision and records a renderer that is the
     declared authority; 'missing', 'stale' or 'wrong-renderer' otherwise, so a
     stale or foreign golden in a reused work directory is never graded."""
     if not gold.exists():
@@ -180,6 +233,8 @@ def golden_state(gold, gold_dir, pin, declared=None):
         return "stale"
     if not is_authority_renderer(entry.get("renderer"), declared or declared_renderer()):
         return "wrong-renderer"
+    if entry.get("protocol") != protocol:
+        return "stale"
     return "ok"
 
 
@@ -272,7 +327,8 @@ def generate_goldens(missing, gold_dir, ref_root, timeout):
                    NM_SERVE_PORT=serve_port, NM_GOLDEN_REF_REV=ref_rev or "",
                    NM_GOLDEN_SIZE=os.environ.get("NM_SIZE", "256"),
                    NM_GOLDEN_TIME=os.environ.get("NM_TIME", "0.25"),
-                   NM_GOLDEN_FRAMES=os.environ.get("NM_FRAMES", "8"))
+                   NM_GOLDEN_FRAMES=os.environ.get("NM_FRAMES", "8"),
+                   NM_GOLDEN_TIMESTEP=os.environ.get("NM_TIMESTEP", "0"))
         try:
             run = subprocess.run([node, str(ROOT / "parity" / "golden-cdp.mjs")] + pairs,
                                  cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=timeout)
@@ -293,6 +349,9 @@ def main():
     size = int(os.environ.get("NM_SIZE", "256"))
     time = float(os.environ.get("NM_TIME", "0.25"))
     frames = int(os.environ.get("NM_FRAMES", "8"))
+    timestep = float(os.environ.get("NM_TIMESTEP", "0"))
+    protocol = {"size": size, "time": time, "frames": frames, "timestep": timestep}
+    source = source_fingerprint()
     timeout = int(os.environ.get("NM_CASE_TIMEOUT", "300"))
     work = Path(os.environ.get("NM_PARITY_WORK", ROOT / "parity" / "out" / "parity-summary"))
     gold_dir = work / "gold"
@@ -314,6 +373,7 @@ def main():
     # Pass 1 — render port candidates (one blender run per case; a hang costs only
     # its own NM_CASE_TIMEOUT and the loop continues).
     ready = []
+    candidate_hashes = {}
     for name in selected:
         dsl = ROOT / "parity" / "programs" / f"{name}.dsl"
         if name in skip:
@@ -325,7 +385,7 @@ def main():
             print(f"[missing] {name}: no fixture DSL parity/programs/{name}.dsl")
             continue
         cand = cand_dir / f"{name}.png"
-        if not reuse and cand.exists():
+        if cand.exists() and (not reuse or candidate_state(cand, cand_dir, protocol, source) != "ok"):
             cand.unlink()
         if not cand.exists():
             err = render_candidate(name, dsl, cand, size, time, frames, timeout)
@@ -333,6 +393,8 @@ def main():
                 counts["fail"] += 1
                 print(f"[  fail] {name}: {err['reason'][:200]}")
                 continue
+            record_candidate(cand, cand_dir, protocol, source)
+        candidate_hashes[name] = sha256(cand)
         ready.append(name)
 
     # Pass 2 — authority goldens: goldens are trusted only with a provenance.json
@@ -343,7 +405,7 @@ def main():
     declared = declared_renderer()
 
     if auto:
-        need = [n for n in ready if golden_state(gold_dir / f"{n}.golden.png", gold_dir, pin, declared) != "ok"]
+        need = [n for n in ready if golden_state(gold_dir / f"{n}.golden.png", gold_dir, pin, protocol, declared) != "ok"]
         if need:
             err = generate_goldens(need, gold_dir, Path(os.environ["NM_REFERENCE_ROOT"]),
                                    120 * max(1, len(need)))
@@ -351,27 +413,50 @@ def main():
                 print(f"[golden] generation unavailable: {err}")
 
     # Pass 3 — grade every case that has a verified golden and a candidate.
-    for name in ready:
-        gold = gold_dir / f"{name}.golden.png"
-        cand = cand_dir / f"{name}.png"
-        state = golden_state(gold, gold_dir, pin, declared)
-        if state != "ok":
-            counts["missing"] += 1
-            if state == "missing":
-                why = "no authority golden"
-            elif state == "wrong-renderer":
-                why = ("golden minted on %s, not the declared authority %r (parity/authority-renderer); "
-                       "regenerate with NM_GOLDEN_AUTO=1" % (recorded_renderer(gold, gold_dir) or "an unrecorded renderer", declared))
-            else:
-                why = "golden present but unprovenanced, sha256-mismatched or not minted at the pinned revision (stale); regenerate with NM_GOLDEN_AUTO=1"
-            print(f"[missing] {name}: {why}")
-            continue
-        rec = compare(gold, cand, policies.get(name))
-        cls = rec.pop("cls")
-        counts[cls] += 1
-        counts["executed"] += 1
-        extra = " ".join(f"{k}={v}" for k, v in rec.items() if k != "policy")
-        print(f"[{cls:>5}] {name}: {extra}")
+    with tempfile.TemporaryDirectory(prefix="nm-parity-grade-") as scratch:
+        snapshots = Path(scratch)
+        (snapshots / "gold").mkdir()
+        (snapshots / "cand").mkdir()
+        for name in ready:
+            gold = gold_dir / f"{name}.golden.png"
+            cand = cand_dir / f"{name}.png"
+            gold_snapshot = snapshots / "gold" / gold.name
+            cand_snapshot = snapshots / "cand" / cand.name
+            try:
+                shutil.copyfile(gold, gold_snapshot)
+                state = golden_state(gold_snapshot, gold_dir, pin, protocol, declared)
+            except FileNotFoundError:
+                state = "missing"
+            if state != "ok":
+                counts["missing"] += 1
+                if state == "missing":
+                    why = "no authority golden"
+                elif state == "wrong-renderer":
+                    why = ("golden minted on %s, not the declared authority %r (parity/authority-renderer); "
+                           "regenerate with NM_GOLDEN_AUTO=1" % (recorded_renderer(gold, gold_dir) or "an unrecorded renderer", declared))
+                else:
+                    why = "golden present but unprovenanced, sha256-mismatched, wrong protocol or not minted at the pinned revision (stale); regenerate with NM_GOLDEN_AUTO=1"
+                print(f"[missing] {name}: {why}")
+                continue
+            try:
+                shutil.copyfile(cand, cand_snapshot)
+            except FileNotFoundError:
+                counts["fail"] += 1
+                print(f"[  fail] {name}: candidate disappeared before grading")
+                continue
+            current_source = source_fingerprint()
+            if current_source != source or (source is not None and
+                    candidate_state(cand_snapshot, cand_dir, protocol, source) != "ok") or (
+                    source is None and sha256(cand_snapshot) != candidate_hashes[name]):
+                counts["fail"] += 1
+                print(f"[  fail] {name}: candidate or source changed before grading")
+                continue
+            rec = compare(gold_snapshot, cand_snapshot, policies.get(name))
+            cls = rec.pop("cls")
+            counts[cls] += 1
+            counts["executed"] += 1
+            extra = " ".join(f"{k}={v}" for k, v in rec.items() if k != "policy")
+            print(f"[{cls:>5}] {name}: {extra}")
 
     print("PARITY-SUMMARY " + json.dumps(counts, separators=(",", ":")))
     return 0 if counts["fail"] == 0 and counts["missing"] == 0 else 1

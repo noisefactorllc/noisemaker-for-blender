@@ -220,7 +220,8 @@ async function main () {
     // reference revision it was rendered from and the renderer it was minted
     // on, so a stale or foreign golden in a reused work directory cannot pass
     // as the authority image.
-    recordGolden(OUT, it.name, { referenceRevision: process.env.NM_GOLDEN_REF_REV || null, renderer })
+    recordGolden(OUT, it.name, { referenceRevision: process.env.NM_GOLDEN_REF_REV || null, renderer,
+      protocol: { size: SIZE, time: TIME, frames: FRAMES, timestep: TIMESTEP } })
     console.log('OK', it.name, width + 'x' + height, renderer)
   }
   console.log('DONE')

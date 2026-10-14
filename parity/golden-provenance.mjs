@@ -5,8 +5,7 @@
 // parity/authority-renderer declares the renderer the authority goldens are
 // minted on: a golden counts only when the WebGL2 renderer string it was
 // minted on contains that declaration and is not SwiftShader. provenance.json
-// binds each golden to its sha256, the reference revision it was rendered from
-// and that renderer string.
+// binds each golden to its sha256, reference revision, renderer, and capture protocol.
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
@@ -27,11 +26,15 @@ export function isAuthorityRenderer (renderer, declared = declaredRenderer()) {
 // Record <outDir>/<name>.golden.png in <outDir>/provenance.json. Refuses a
 // renderer that is not the declared authority, so no golden from another
 // renderer can be attributed to it.
-export function recordGolden (outDir, name, { referenceRevision, renderer }) {
+export function recordGolden (outDir, name, { referenceRevision, renderer, protocol }) {
   const declared = declaredRenderer()
   if (!isAuthorityRenderer(renderer, declared)) {
     throw new Error(`${name}: renderer ${JSON.stringify(renderer ?? null)} is not the declared authority ` +
       `"${declared}" (parity/authority-renderer)`)
+  }
+  if (!protocol || !Number.isInteger(protocol.size) || !Number.isFinite(protocol.time) ||
+      !Number.isInteger(protocol.frames) || !Number.isFinite(protocol.timestep)) {
+    throw new Error(`${name}: missing or invalid render protocol`)
   }
   const png = fs.readFileSync(path.join(outDir, `${name}.golden.png`))
   const pvPath = path.join(outDir, 'provenance.json')
@@ -45,6 +48,7 @@ export function recordGolden (outDir, name, { referenceRevision, renderer }) {
     bytes: png.length,
     reference_revision: referenceRevision || null,
     renderer,
+    protocol,
   }
   fs.writeFileSync(pvPath, JSON.stringify(pv, null, 2) + '\n')
   return pv.files[name]

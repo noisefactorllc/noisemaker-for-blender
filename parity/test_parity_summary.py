@@ -10,6 +10,8 @@ executed.
 
 import importlib.machinery
 import importlib.util
+import contextlib
+import io
 import json
 import os
 import re
@@ -19,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 import zlib
 from pathlib import Path
 
@@ -59,7 +62,8 @@ class GoldenStateTests(unittest.TestCase):
             (self.dir / "provenance.json").write_text(json.dumps({"files": {"case": entry}}))
 
     def state(self):
-        return parity_summary.golden_state(self.gold, self.dir, PIN)
+        return parity_summary.golden_state(self.gold, self.dir, PIN,
+                                           {"size": 256, "time": 0.25, "frames": 8, "timestep": 0})
 
     def test_absent_golden_is_missing(self):
         self.assertEqual(self.state(), "missing")
@@ -86,7 +90,8 @@ class GoldenStateTests(unittest.TestCase):
     def test_golden_minted_at_the_pin_on_the_authority_renderer_is_ok(self):
         self.write()
         self.write(entry={"sha256": parity_summary.sha256(self.gold), "reference_revision": PIN,
-                          "renderer": METAL})
+                          "renderer": METAL,
+                          "protocol": {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}})
         self.assertEqual(self.state(), "ok")
 
     def test_golden_without_a_recorded_renderer_is_refused(self):
@@ -110,6 +115,16 @@ class GoldenStateTests(unittest.TestCase):
 class PinTests(unittest.TestCase):
     def test_the_pin_is_a_full_commit_sha(self):
         self.assertRegex(parity_summary.pinned_revision(), re.compile(r"^[0-9a-f]{40}$"))
+
+
+class CompareTests(unittest.TestCase):
+    def test_size_mismatch_is_a_countable_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            gold = Path(tmp) / "gold.png"
+            cand = Path(tmp) / "cand.png"
+            gold.write_bytes(png_bytes(width=2))
+            cand.write_bytes(png_bytes(width=3))
+            self.assertEqual(parity_summary.compare(gold, cand, None)["cls"], "fail")
 
 
 class AuthorityRendererTests(unittest.TestCase):
@@ -142,7 +157,7 @@ class MintAndGradeTests(unittest.TestCase):
     def tearDown(self):
         self._tmp.cleanup()
 
-    def record(self, renderer):
+    def record(self, renderer, protocol=None):
         """Record a golden through parity/golden-provenance.mjs, as golden-cdp.mjs does."""
         if NODE is None:
             self.fail("node is required (scripts/test needs it)")
@@ -150,16 +165,30 @@ class MintAndGradeTests(unittest.TestCase):
         module = (ROOT / "parity" / "golden-provenance.mjs").as_uri()
         script = ("import { recordGolden } from %s;"
                   "recordGolden(process.argv[1], process.argv[2],"
-                  " { referenceRevision: process.argv[3], renderer: process.argv[4] })" % json.dumps(module))
+                  " { referenceRevision: process.argv[3], renderer: process.argv[4],"
+                  " protocol: JSON.parse(process.argv[5]) })" % json.dumps(module))
         return subprocess.run([NODE, "--input-type=module", "-e", script, str(self.gold_dir), self.case,
-                               parity_summary.pinned_revision(), renderer],
+                               parity_summary.pinned_revision(), renderer,
+                               json.dumps(protocol or {"size": 256, "time": 0.25, "frames": 8, "timestep": 0})],
                               capture_output=True, text=True, timeout=60)
 
-    def grade(self):
+    def grade(self, overrides=None, candidate_protocol=None):
         """Grade the case with scripts/parity-summary on a reused candidate (no Blender)."""
-        (self.cand_dir / f"{self.case}.png").write_bytes(png_bytes())
+        cand = self.cand_dir / f"{self.case}.png"
+        cand.write_bytes(png_bytes())
         env = dict(os.environ, NM_PARITY_WORK=str(self.work))
         env.pop("NM_GOLDEN_AUTO", None)
+        env.update(overrides or {})
+        if not (self.cand_dir / "provenance.json").exists():
+            protocol = candidate_protocol or {
+                "size": int(env.get("NM_SIZE", "256")),
+                "time": float(env.get("NM_TIME", "0.25")),
+                "frames": int(env.get("NM_FRAMES", "8")),
+                "timestep": float(env.get("NM_TIMESTEP", "0")),
+            }
+            source = parity_summary.source_fingerprint()
+            self.assertIsNotNone(source)
+            parity_summary.record_candidate(cand, self.cand_dir, protocol, source)
         run = subprocess.run([sys.executable, str(ROOT / "scripts" / "parity-summary"), "--reuse", self.case],
                              capture_output=True, text=True, timeout=120, env=env)
         lines = [ln for ln in run.stdout.splitlines() if ln.startswith("PARITY-SUMMARY ")]
@@ -172,9 +201,76 @@ class MintAndGradeTests(unittest.TestCase):
         pv = json.loads((self.gold_dir / "provenance.json").read_text())
         self.assertEqual(pv["files"][self.case]["renderer"], METAL)
         self.assertEqual(pv["files"][self.case]["reference_revision"], parity_summary.pinned_revision())
+        self.assertEqual(pv["files"][self.case]["protocol"],
+                         {"size": 256, "time": 0.25, "frames": 8, "timestep": 0})
         run, counts = self.grade()
         self.assertEqual((counts["executed"], counts["exact"], counts["missing"]), (1, 1, 0), run.stdout)
         self.assertEqual(run.returncode, 0, run.stdout)
+
+    def test_grading_refuses_golden_from_another_render_protocol(self):
+        run = self.record(METAL)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        for overrides in ({"NM_SIZE": "128"}, {"NM_TIME": "0.75"},
+                          {"NM_FRAMES": "1"}, {"NM_TIMESTEP": "0.0125"}):
+            with self.subTest(overrides=overrides):
+                run, counts = self.grade(overrides)
+                self.assertEqual((counts["executed"], counts["missing"]), (0, 1), run.stdout)
+                self.assertNotEqual(run.returncode, 0, run.stdout)
+
+    def test_reuse_rerenders_candidate_from_another_protocol(self):
+        run = self.record(METAL, {"size": 256, "time": 0.75, "frames": 8, "timestep": 0})
+        self.assertEqual(run.returncode, 0, run.stderr)
+        run, counts = self.grade({"NM_TIME": "0.75", "NM_BLENDER": "/usr/bin/false"},
+                                 candidate_protocol={"size": 256, "time": 0.25,
+                                                     "frames": 8, "timestep": 0})
+        self.assertEqual((counts["executed"], counts["fail"]), (0, 1), run.stdout)
+
+    def test_reuse_rerenders_candidate_from_another_source(self):
+        run = self.record(METAL)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        cand = self.cand_dir / f"{self.case}.png"
+        cand.write_bytes(png_bytes())
+        (self.cand_dir / "provenance.json").write_text(json.dumps({"files": {self.case: {
+            "sha256": parity_summary.sha256(cand),
+            "protocol": {"size": 256, "time": 0.25, "frames": 8, "timestep": 0},
+            "source_fingerprint": "different-source",
+        }}}))
+        run, counts = self.grade({"NM_BLENDER": "/usr/bin/false"})
+        self.assertEqual((counts["executed"], counts["fail"]), (0, 1), run.stdout)
+
+    def test_grading_refuses_candidate_replaced_during_golden_generation(self):
+        run = self.record(METAL)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        gold_provenance = (self.gold_dir / "provenance.json").read_text()
+        (self.gold_dir / "provenance.json").write_text("{}")
+        cand = self.cand_dir / f"{self.case}.png"
+        cand.write_bytes(png_bytes())
+        source = parity_summary.source_fingerprint()
+        self.assertIsNotNone(source)
+        protocol = {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}
+        parity_summary.record_candidate(cand, self.cand_dir, protocol, source)
+
+        def regenerate(*_args):
+            (self.gold_dir / "provenance.json").write_text(gold_provenance)
+            cand.write_bytes(png_bytes(value=129))
+            parity_summary.record_candidate(cand, self.cand_dir,
+                                            {**protocol, "time": 0.75}, source)
+            return None
+
+        output = io.StringIO()
+        env = {"NM_PARITY_WORK": str(self.work), "NM_GOLDEN_AUTO": "1",
+               "NM_REFERENCE_ROOT": str(self.work)}
+        with mock.patch.dict(os.environ, env), \
+             mock.patch.object(sys, "argv", ["parity-summary", "--reuse", self.case]), \
+             mock.patch.object(parity_summary, "generate_goldens", side_effect=regenerate), \
+             contextlib.redirect_stdout(output):
+            status = parity_summary.main()
+        summary = [line for line in output.getvalue().splitlines()
+                   if line.startswith("PARITY-SUMMARY ")]
+        self.assertEqual(len(summary), 1, output.getvalue())
+        counts = json.loads(summary[0][len("PARITY-SUMMARY "):])
+        self.assertEqual((counts["executed"], counts["fail"]), (0, 1), output.getvalue())
+        self.assertNotEqual(status, 0)
 
     def test_minting_refuses_to_record_a_golden_from_another_renderer(self):
         run = self.record(SWIFTSHADER)
