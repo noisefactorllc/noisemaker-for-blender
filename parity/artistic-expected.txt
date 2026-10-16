@@ -305,3 +305,5 @@ points_emit_center
 points_emit_ring
 points_emit_clusters
 points_emit_spiral
+heightGrid_pointsRender_ortho
+heightGrid_billboard_ortho
