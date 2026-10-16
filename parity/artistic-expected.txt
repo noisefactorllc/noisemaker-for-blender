@@ -300,3 +300,8 @@ loop_feedback
 adjust_hsv
 adjust_oklab
 adjust_oklch
+points_emit_grid
+points_emit_center
+points_emit_ring
+points_emit_clusters
+points_emit_spiral
