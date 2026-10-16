@@ -158,9 +158,29 @@ class ArtisticMatrixTests(unittest.TestCase):
                     and render_pass["uniforms"]["refractAmt"] > 0}
         self.assertEqual(required, observed)
 
+    def test_all_grade_presets_are_graded_with_active_parameters(self):
+        definition = Path(__file__).resolve().parents[1] / "blender" / "noisemaker_blender" / "effects" / "filter" / "grade.json"
+        choices = json.loads(definition.read_text())["globals"]["preset"]["choices"]
+        names = {line.strip() for line in EXPECTED.read_text().splitlines() if line.strip()}
+        observed = set()
+        for choice, value in choices.items():
+            name = "filter_grade" if choice == "none" else f"filter_grade_preset_{choice}"
+            self.assertIn(name, names)
+            passes = [render_pass for render_pass in compile_graph((PROGRAMS / f"{name}.dsl").read_text())["passes"]
+                      if render_pass.get("effectKey") == "filter.grade"]
+            self.assertTrue(passes, name)
+            for render_pass in passes:
+                uniforms = render_pass["uniforms"]
+                self.assertEqual(value, uniforms["preset"], name)
+                self.assertEqual(1, uniforms["alpha"], name)
+                self.assertGreater(uniforms["exposure"], 0, name)
+                self.assertGreater(uniforms["contrast"], 0, name)
+                observed.add(uniforms["preset"])
+        self.assertEqual(set(choices.values()), observed)
+
     def test_expected_parity_manifest_is_unique_and_resolves(self):
         names = [line.strip() for line in EXPECTED.read_text().splitlines() if line.strip()]
-        self.assertEqual(347, len(names))
+        self.assertEqual(368, len(names))
         self.assertEqual(len(names), len(set(names)))
         self.assertEqual([], [name for name in names if not (PROGRAMS / f"{name}.dsl").exists()])
         # The lens and bloom filters and the north_star chain are graded cases,
