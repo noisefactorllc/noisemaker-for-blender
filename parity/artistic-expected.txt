@@ -272,3 +272,6 @@ int_o0
 io0_nobb
 motionBlur
 remap
+filter_temporalAberration
+synth_polygon
+synth_mnca
