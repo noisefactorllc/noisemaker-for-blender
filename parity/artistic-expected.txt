@@ -275,3 +275,11 @@ remap
 filter_temporalAberration
 synth_polygon
 synth_mnca
+cnd_cellNoise
+cnd_cellRefract
+cnd_colorLab
+cnd_glitch
+cnd_kaleido
+cnd_lensDistortion
+cnd_shapes3d
+cnd_splat
