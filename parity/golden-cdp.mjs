@@ -206,15 +206,25 @@ async function main () {
     await cdp.evaluate(`(() => {
       const r = window.__noisemakerCanvasRenderer; const p = window.__noisemakerRenderingPipeline
       if (r && r.canvas) { r.canvas.width = ${WIDTH}; r.canvas.height = ${HEIGHT}; if (r.canvas.style) { r.canvas.style.width = ${WIDTH} + 'px'; r.canvas.style.height = ${HEIGHT} + 'px' } }
-      if (p && typeof p.resize === 'function') p.resize(${WIDTH}, ${HEIGHT})
+      if (p && typeof r?.resize === 'function') {
+        r.resize(${WIDTH}, ${HEIGHT})
+        r.applyStepParameterValues(window.__noisemakerGetEffectParams())
+      }
       return true
     })()`)
-    const res = await cdp.evaluate(`(() => {
+    const res = await cdp.evaluate(`(async () => {
       const p = window.__noisemakerRenderingPipeline
       if (window.__noisemakerSetPausedTime) window.__noisemakerSetPausedTime(${TIME})
       if (p) {
         const backend = p.backend
-        if (backend?.textures && typeof backend.clearTexture === 'function') { for (const texId of backend.textures.keys()) backend.clearTexture(texId) }
+        await p.whenAsyncInitsSettled()
+        const overlays = new Set(p.graph.passes.flatMap(pass =>
+          pass.inputs?.overlayTex ? [pass.inputs.overlayTex] : []))
+        if (backend?.textures && typeof backend.clearTexture === 'function') {
+          for (const texId of backend.textures.keys()) {
+            if (!overlays.has(texId)) backend.clearTexture(texId)
+          }
+        }
         if (p.surfaces) {
           for (const [name, surface] of p.surfaces.entries()) {
             const readId = 'global_' + name + '_read', writeId = 'global_' + name + '_write'
