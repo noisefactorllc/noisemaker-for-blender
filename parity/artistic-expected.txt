@@ -127,6 +127,9 @@ cnd_caustic
 cnd_fractal
 cnd_moodscape
 cnd_noise
+cnd_noise_refract_color
+cnd_noise_refract_topology
+cnd_noise_refract_colorTopology
 cnd_noise3d
 cnd_shapes
 crt

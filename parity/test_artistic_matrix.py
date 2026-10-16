@@ -147,9 +147,20 @@ class ArtisticMatrixTests(unittest.TestCase):
                     if render_pass.get("effectKey") == "synth.noise"}
         self.assertEqual(required, observed)
 
+    def test_all_classic_noise_refract_modes_are_graded_with_refraction(self):
+        definition = Path(__file__).resolve().parents[1] / "blender" / "noisemaker_blender" / "effects" / "classicNoisedeck" / "noise.json"
+        required = set(json.loads(definition.read_text())["globals"]["refractMode"]["choices"].values())
+        names = [line.strip() for line in EXPECTED.read_text().splitlines() if line.strip()]
+        observed = {render_pass["defines"]["REFRACT_MODE"]
+                    for name in names
+                    for render_pass in compile_graph((PROGRAMS / f"{name}.dsl").read_text())["passes"]
+                    if render_pass.get("effectKey") == "classicNoisedeck.noise"
+                    and render_pass["uniforms"]["refractAmt"] > 0}
+        self.assertEqual(required, observed)
+
     def test_expected_parity_manifest_is_unique_and_resolves(self):
         names = [line.strip() for line in EXPECTED.read_text().splitlines() if line.strip()]
-        self.assertEqual(344, len(names))
+        self.assertEqual(347, len(names))
         self.assertEqual(len(names), len(set(names)))
         self.assertEqual([], [name for name in names if not (PROGRAMS / f"{name}.dsl").exists()])
         # The lens and bloom filters and the north_star chain are graded cases,
