@@ -139,6 +139,16 @@ class CompareTests(unittest.TestCase):
         self.assertIsNotNone(parity_summary.policy_for_protocol(policy, reviewed))
         self.assertIsNone(parity_summary.policy_for_protocol(policy, unreviewed))
 
+    def test_evolving_state_near_bounds_apply_only_to_reviewed_protocol(self):
+        reviewed = {"size": 128, "time": 0.25, "frames": 8, "timestep": 0.01}
+        unreviewed = {"size": 128, "time": 0.25, "frames": 8, "timestep": 0.02}
+        policies = parity_summary.load_policies()
+        for name in ("north_star", "integration_target"):
+            self.assertIsNotNone(parity_summary.policy_for_protocol(policies[name], reviewed))
+            self.assertIsNone(parity_summary.policy_for_protocol(policies[name], unreviewed))
+        self.assertEqual(parity_summary.policy_for_protocol(policies["flock_smoke"], reviewed)["ssim_min"], 0.99970)
+        self.assertEqual(parity_summary.policy_for_protocol(policies["flock_smoke"], unreviewed)["ssim_min"], 0.99993)
+
 
 class AuthorityRendererTests(unittest.TestCase):
     def test_the_declared_authority_is_angle_over_metal_on_apple_silicon(self):

@@ -25,13 +25,22 @@
       "mean_abs_diff": 0.0095,
       "ssim_min": 0.99993,
       "mechanism": "eight-frame flock steering and point deposition differ at 16 sparse output pixels across WebGL2 and Blender GPU backends",
-      "protocol_overrides": [{
-        "protocol": {"size": 256, "time": 0.75, "frames": 8, "timestep": 0},
-        "max_abs_diff": 198,
-        "mean_abs_diff": 0.014,
-        "ssim_min": 0.9998,
-        "mechanism": "same cross-GPU steering and deposition mechanism at time 0.75; 15 output pixels differ"
-      }]
+      "protocol_overrides": [
+        {
+          "protocol": {"size": 256, "time": 0.75, "frames": 8, "timestep": 0},
+          "max_abs_diff": 198,
+          "mean_abs_diff": 0.014,
+          "ssim_min": 0.9998,
+          "mechanism": "same cross-GPU steering and deposition mechanism at time 0.75; 15 output pixels differ"
+        },
+        {
+          "protocol": {"size": 128, "time": 0.25, "frames": 8, "timestep": 0.01},
+          "max_abs_diff": 154,
+          "mean_abs_diff": 0.0069,
+          "ssim_min": 0.99970,
+          "mechanism": "one point-deposition pixel differs under the reviewed evolving-state protocol"
+        }
+      ]
     },
     "heightGrid_billboard": {
       "max_abs_diff": 6,
@@ -40,22 +49,40 @@
       "mechanism": "perspective billboard additive deposit rasterization and blending differ at 19 sparse fragments across WebGL2 and Blender GPU backends"
     },
     "integration_target": {
-      "protocol_overrides": [{
-        "protocol": {"size": 128, "time": 0.25, "frames": 8, "timestep": 0},
-        "max_abs_diff": 12,
-        "mean_abs_diff": 0.0024,
-        "ssim_min": 0.99999,
-        "mechanism": "one nsAdvect half-float output differs after identical input and uniforms; later solver frames amplify it"
-      }]
+      "protocol_overrides": [
+        {
+          "protocol": {"size": 128, "time": 0.25, "frames": 8, "timestep": 0},
+          "max_abs_diff": 12,
+          "mean_abs_diff": 0.0024,
+          "ssim_min": 0.99999,
+          "mechanism": "one nsAdvect half-float output differs after identical input and uniforms; later solver frames amplify it"
+        },
+        {
+          "protocol": {"size": 128, "time": 0.25, "frames": 8, "timestep": 0.01},
+          "max_abs_diff": 12,
+          "mean_abs_diff": 0.0024,
+          "ssim_min": 0.99999,
+          "mechanism": "both backend output PNGs are byte-identical to the reviewed timestep-zero capture; the same 99 final-image pixels differ"
+        }
+      ]
     },
     "north_star": {
-      "protocol_overrides": [{
-        "protocol": {"size": 128, "time": 0.25, "frames": 8, "timestep": 0},
-        "max_abs_diff": 12,
-        "mean_abs_diff": 0.0024,
-        "ssim_min": 0.99999,
-        "mechanism": "one nsAdvect half-float output differs after identical input and uniforms; later solver frames amplify it"
-      }]
+      "protocol_overrides": [
+        {
+          "protocol": {"size": 128, "time": 0.25, "frames": 8, "timestep": 0},
+          "max_abs_diff": 12,
+          "mean_abs_diff": 0.0024,
+          "ssim_min": 0.99999,
+          "mechanism": "one nsAdvect half-float output differs after identical input and uniforms; later solver frames amplify it"
+        },
+        {
+          "protocol": {"size": 128, "time": 0.25, "frames": 8, "timestep": 0.01},
+          "max_abs_diff": 12,
+          "mean_abs_diff": 0.0024,
+          "ssim_min": 0.99999,
+          "mechanism": "both backend output PNGs are byte-identical to the reviewed timestep-zero capture; the same 99 final-image pixels differ"
+        }
+      ]
     },
     "oilPaint_dryBrush": {
       "max_abs_diff": 45,
