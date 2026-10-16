@@ -61,6 +61,19 @@
       "ssim_min": 0.9999999,
       "mechanism": "orthographic billboard additive deposit rasterization and blending differ at 23 sparse pixels across WebGL2 and Blender GPU backends; one-frame and eight-frame captures have identical PNG hashes"
     },
+    "heightGrid_billboard_ortho_alpha": {
+      "protocol_overrides": [
+        {
+          "protocol": {"size": 256, "time": 0.25, "frames": 8, "timestep": 0},
+          "max_abs_diff": 7,
+          "max_rgb_abs_diff": 1,
+          "max_alpha_abs_diff": 7,
+          "mean_abs_diff": 0.00013,
+          "ssim_min": 0.99999999,
+          "mechanism": "orthographic alpha billboard output differs at 20 sparse pixels across WebGL2 and Blender GPU backends; RGB channels differ by at most 1 and alpha by at most 7, while the full captures look the same side by side"
+        }
+      ]
+    },
     "integration_target": {
       "protocol_overrides": [
         {

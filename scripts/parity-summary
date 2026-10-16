@@ -112,6 +112,8 @@ def compare(gold_path, cand_path, policy):
     byte_identical = sha256(gold_path) == sha256(cand_path)
     n = len(g)
     mad = 0
+    rgb_mad = 0
+    alpha_mad = 0
     total = 0
     for i in range(n):
         d = g[i] - c[i]
@@ -119,6 +121,11 @@ def compare(gold_path, cand_path, policy):
             d = -d
         if d > mad:
             mad = d
+        if i % 4 == 3:
+            if d > alpha_mad:
+                alpha_mad = d
+        elif d > rgb_mad:
+            rgb_mad = d
         total += d
     mean = total / n
     # global_ssim on the /255 normalized luma (batch-compare.py math)
@@ -140,7 +147,10 @@ def compare(gold_path, cand_path, policy):
         cls = "exact"
     elif mad <= TOLERANCE + 0.001 and ssim >= SSIM_MIN:
         cls = "strict"
-    elif policy and (mad <= float(policy["max_abs_diff"]) and mean <= float(policy["mean_abs_diff"])
+    elif policy and (mad <= float(policy["max_abs_diff"])
+                     and rgb_mad <= float(policy.get("max_rgb_abs_diff", mad))
+                     and alpha_mad <= float(policy.get("max_alpha_abs_diff", mad))
+                     and mean <= float(policy["mean_abs_diff"])
                      and ssim >= float(policy["ssim_min"]) and bool(policy.get("mechanism"))):
         cls = "near"
     else:

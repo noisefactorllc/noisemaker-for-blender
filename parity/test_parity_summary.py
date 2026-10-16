@@ -37,12 +37,17 @@ SWIFTSHADER = "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000
 OTHER_GPU = "ANGLE (NVIDIA, NVIDIA GeForce RTX 4090 Direct3D11 vs_5_0 ps_5_0, D3D11)"
 
 
-def png_bytes(width=2, height=2, value=128):
+def png_bytes(width=2, height=2, value=128, overrides=None):
     """A minimal 8-bit RGBA PNG."""
     def chunk(kind, data):
         body = kind + data
         return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
-    raw = b"".join(b"\x00" + bytes([value, value, value, 255]) * width for _ in range(height))
+    overrides = overrides or {}
+    raw = b"".join(
+        b"\x00" + b"".join(bytes(overrides.get((x, y), (value, value, value, 255)))
+                         for x in range(width))
+        for y in range(height)
+    )
     return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
             + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
 
@@ -124,6 +129,28 @@ class PinTests(unittest.TestCase):
 
 
 class CompareTests(unittest.TestCase):
+    def test_reviewed_ortho_alpha_policy_only_matches_its_protocol(self):
+        policy = parity_summary.load_policies()["heightGrid_billboard_ortho_alpha"]
+        reviewed = {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}
+        unreviewed = {"size": 128, "time": 0.25, "frames": 8, "timestep": 0}
+        self.assertIsNotNone(parity_summary.policy_for_protocol(policy, reviewed))
+        self.assertIsNone(parity_summary.policy_for_protocol(policy, unreviewed))
+
+    def test_near_policy_enforces_separate_rgb_and_alpha_bounds(self):
+        policy = {"max_abs_diff": 7, "max_rgb_abs_diff": 1, "max_alpha_abs_diff": 7,
+                  "mean_abs_diff": 0.00013, "ssim_min": 0.98,
+                  "mechanism": "measured sparse channel differences"}
+        with tempfile.TemporaryDirectory() as tmp:
+            gold = Path(tmp) / "gold.png"
+            cand = Path(tmp) / "cand.png"
+            gold.write_bytes(png_bytes(width=256, height=256))
+            cand.write_bytes(png_bytes(width=256, height=256,
+                                       overrides={(0, 0): (134, 128, 128, 255)}))
+            self.assertEqual(parity_summary.compare(gold, cand, policy)["cls"], "fail")
+            cand.write_bytes(png_bytes(width=256, height=256,
+                                       overrides={(0, 0): (128, 128, 128, 248)}))
+            self.assertEqual(parity_summary.compare(gold, cand, policy)["cls"], "near")
+
     def test_size_mismatch_is_a_countable_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
             gold = Path(tmp) / "gold.png"
