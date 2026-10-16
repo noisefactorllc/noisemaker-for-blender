@@ -291,3 +291,8 @@ points_lenia
 points_life
 points_physarum
 points_physical
+cnd_coalesce
+cnd_composite
+cnd_refract
+renderCubemap3d
+renderCubemapSurface
