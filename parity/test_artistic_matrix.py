@@ -134,7 +134,7 @@ class ArtisticMatrixTests(unittest.TestCase):
 
     def test_expected_parity_manifest_is_unique_and_resolves(self):
         names = [line.strip() for line in EXPECTED.read_text().splitlines() if line.strip()]
-        self.assertEqual(285, len(names))
+        self.assertEqual(293, len(names))
         self.assertEqual(len(names), len(set(names)))
         self.assertEqual([], [name for name in names if not (PROGRAMS / f"{name}.dsl").exists()])
         # The lens and bloom filters and the north_star chain are graded cases,

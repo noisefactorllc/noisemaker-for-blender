@@ -283,3 +283,11 @@ cnd_kaleido
 cnd_lensDistortion
 cnd_shapes3d
 cnd_splat
+points_attractor
+points_buddhabrot
+points_dla
+points_hydraulic
+points_lenia
+points_life
+points_physarum
+points_physical
