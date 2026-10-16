@@ -335,3 +335,10 @@ text_host_mask
 mesh_host_preview
 mesh_host_render
 roll_host_notes
+noise_type_constant
+noise_type_linear
+noise_type_catmullRom3x3
+noise_type_catmullRom4x4
+noise_type_bSpline3x3
+noise_type_bSpline4x4
+noise_type_sine

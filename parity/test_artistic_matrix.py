@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Require parity fixtures for every interacting artistic-release branch."""
 
+import json
 import re
+import sys
 import unittest
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "blender"))
+from noisemaker_blender.compiler import compile_graph  # noqa: E402
 
 PROGRAMS = Path(__file__).with_name("programs")
 EXPECTED = Path(__file__).with_name("artistic-expected.txt")
@@ -132,9 +137,19 @@ REFERENCE_CASES = {
 
 class ArtisticMatrixTests(unittest.TestCase):
 
+    def test_all_noise_types_are_graded(self):
+        definition = Path(__file__).resolve().parents[1] / "blender" / "noisemaker_blender" / "effects" / "synth" / "noise.json"
+        required = set(json.loads(definition.read_text())["globals"]["type"]["choices"].values())
+        names = [line.strip() for line in EXPECTED.read_text().splitlines() if line.strip()]
+        observed = {render_pass["defines"]["NOISE_TYPE"]
+                    for name in names
+                    for render_pass in compile_graph((PROGRAMS / f"{name}.dsl").read_text())["passes"]
+                    if render_pass.get("effectKey") == "synth.noise"}
+        self.assertEqual(required, observed)
+
     def test_expected_parity_manifest_is_unique_and_resolves(self):
         names = [line.strip() for line in EXPECTED.read_text().splitlines() if line.strip()]
-        self.assertEqual(337, len(names))
+        self.assertEqual(344, len(names))
         self.assertEqual(len(names), len(set(names)))
         self.assertEqual([], [name for name in names if not (PROGRAMS / f"{name}.dsl").exists()])
         # The lens and bloom filters and the north_star chain are graded cases,
