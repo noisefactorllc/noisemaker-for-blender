@@ -329,3 +329,4 @@ dither_palette_cgaPalette1
 dither_palette_zxSpectrum
 dither_palette_appleII
 dither_palette_ega
+noise_rectangular

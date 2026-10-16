@@ -8,6 +8,7 @@
 //   NM_GOLDEN_OUT   output dir (required) — writes <name>.golden.png + <name>.graph.json
 //   NM_GOLDEN_FRAMES  frames per case (default 8; 0 timestep => every frame at the same time)
 //   NM_GOLDEN_SIZE    render size (default 256)
+//   NM_GOLDEN_WIDTH/NM_GOLDEN_HEIGHT optional axis overrides
 //   NM_GOLDEN_TIME    normalized time (default 0.25)
 //   NM_GOLDEN_TIMESTEP per-frame timestep (default 0; tt=(time+i*ts)%1 like batch-golden.mjs)
 //   NM_CDP_PORT       Chromium DevTools port (default 9222)
@@ -32,6 +33,11 @@ if (!REFERENCE_ROOT) { console.error('NM_REFERENCE_ROOT is required'); process.e
 const CDP_PORT = process.env.NM_CDP_PORT || '9222'
 const DEMO_URL = process.env.NM_DEMO_URL || `http://127.0.0.1:${process.env.NM_SERVE_PORT || '8777'}/demo/shaders/`
 const SIZE = parseInt(process.env.NM_GOLDEN_SIZE || '256', 10)
+const WIDTH = Number(process.env.NM_GOLDEN_WIDTH || SIZE)
+const HEIGHT = Number(process.env.NM_GOLDEN_HEIGHT || SIZE)
+if (!Number.isInteger(WIDTH) || WIDTH <= 0 || !Number.isInteger(HEIGHT) || HEIGHT <= 0) {
+  throw new Error('capture dimensions must be positive integers')
+}
 const TIME = parseFloat(process.env.NM_GOLDEN_TIME || '0.25')
 const FRAMES = parseInt(process.env.NM_GOLDEN_FRAMES || '8', 10)
 const TIMESTEP = parseFloat(process.env.NM_GOLDEN_TIMESTEP || '0')
@@ -174,8 +180,8 @@ async function main () {
     await cdp.evaluate(`(() => { if (window.__noisemakerSetPaused) window.__noisemakerSetPaused(true); return true })()`)
     await cdp.evaluate(`(() => {
       const r = window.__noisemakerCanvasRenderer; const p = window.__noisemakerRenderingPipeline
-      if (r && r.canvas) { r.canvas.width = ${SIZE}; r.canvas.height = ${SIZE}; if (r.canvas.style) { r.canvas.style.width = ${SIZE} + 'px'; r.canvas.style.height = ${SIZE} + 'px' } }
-      if (p && typeof p.resize === 'function') p.resize(${SIZE}, ${SIZE})
+      if (r && r.canvas) { r.canvas.width = ${WIDTH}; r.canvas.height = ${HEIGHT}; if (r.canvas.style) { r.canvas.style.width = ${WIDTH} + 'px'; r.canvas.style.height = ${HEIGHT} + 'px' } }
+      if (p && typeof p.resize === 'function') p.resize(${WIDTH}, ${HEIGHT})
       return true
     })()`)
     const res = await cdp.evaluate(`(() => {
@@ -216,6 +222,7 @@ async function main () {
     })()`)
     if (out.error) throw new Error(it.name + ' readback: ' + out.error)
     const { width, height, pixels } = out
+    if (width !== WIDTH || height !== HEIGHT) throw new Error(`${it.name}: capture dimensions ${width}x${height} differ from ${WIDTH}x${HEIGHT}`)
     const topDown = Buffer.alloc(width * height * 4)
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
       const s = ((height - 1 - y) * width + x) * 4, d = (y * width + x) * 4
@@ -227,7 +234,8 @@ async function main () {
     // on, so a stale or foreign golden in a reused work directory cannot pass
     // as the authority image.
     recordGolden(OUT, it.name, { referenceRevision: process.env.NM_GOLDEN_REF_REV || null, renderer,
-      protocol: { size: SIZE, time: TIME, frames: FRAMES, timestep: TIMESTEP }, dslSha256: it.dslSha256 })
+      protocol: { ...(WIDTH === HEIGHT ? { size: WIDTH } : { width: WIDTH, height: HEIGHT }),
+        time: TIME, frames: FRAMES, timestep: TIMESTEP }, dslSha256: it.dslSha256 })
     console.log('OK', it.name, width + 'x' + height, renderer)
   }
   console.log('DONE')

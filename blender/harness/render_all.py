@@ -4,6 +4,7 @@ and writes candidate PNGs. GUI mode (macOS GPU needs a context); self-quits.
 Driven by env:
   NM_JOBS   JSON list of {"graph": <path>, "out": <path>}
   NM_SIZE   render size (default 256)
+  NM_WIDTH/NM_HEIGHT optional axis overrides
   NM_TIME   normalized time (default 0.25)
   NM_FRAMES settle frames (default 1; stateful effects use more)
 
@@ -21,11 +22,33 @@ ADDON = os.path.join(os.path.dirname(HARNESS), "noisemaker_blender")
 sys.path.insert(0, os.path.dirname(ADDON))
 from noisemaker_blender.backend.gpu_backend import GpuBackend          # noqa: E402
 from noisemaker_blender.runtime import graph_loader, pipeline, pngio   # noqa: E402
+from noisemaker_blender.runtime.session import Program, RenderSession  # noqa: E402
 from noisemaker_blender.compiler import compile_graph                  # noqa: E402
+
+
+def render_rectangular(graph, shaders_root, width, height, time, frames, timestep, samples):
+    # The legacy FrameStepper supplies square engine uniforms. The existing
+    # session frame driver supplies both axes without changing add-on code.
+    program = Program.from_graph("parity capture", graph.data)
+    captured = {}
+    previous_time = None
+    with RenderSession(program, width=width, height=height, shaders_root=shaders_root) as session:
+        for frame in range(frames):
+            tt = (time + frame * timestep) % 1.0 if timestep else time
+            delta = 0.0 if previous_time is None else tt - previous_time
+            session._render_at(tt, frame, delta)
+            previous_time = tt
+            if samples is not None and frame in samples:
+                captured[frame] = session.backend.read_surface(graph.render_surface)
+            elif timestep and frame % 30 == 29:
+                session.backend.read_surface(graph.render_surface)
+        return captured if samples is not None else session.backend.read_surface(graph.render_surface)
 
 
 def run():
     size = int(os.environ.get("NM_SIZE", "256"))
+    width = int(os.environ.get("NM_WIDTH", size))
+    height = int(os.environ.get("NM_HEIGHT", size))
     time = float(os.environ.get("NM_TIME", "0.25"))
     frames = int(os.environ.get("NM_FRAMES", "1"))
     # NM_TIMESTEP>0 evolves continuous solvers / agent sims to steady state, matching the
@@ -44,24 +67,29 @@ def run():
                 graph = graph_loader.Graph(compile_graph(open(job["dsl"]).read()))
             else:
                 graph = graph_loader.load(job["graph"])
-            be = GpuBackend(shaders_root, size)
-            if sample_every:
-                sample_idx = set(range(sample_every - 1, frames, sample_every)) | {frames - 1}
+            sample_idx = (set(range(sample_every - 1, frames, sample_every)) | {frames - 1}
+                          if sample_every else None)
+            if width != height:
+                res = render_rectangular(graph, shaders_root, width, height,
+                                         time, frames, timestep, sample_idx)
+            else:
+                be = GpuBackend(shaders_root, width)
                 res = pipeline.render(be, graph, time=time, frames=frames,
                                       timestep=timestep, samples=sample_idx)
+                be.free()
+            if sample_every:
                 for f, arr in sorted(res.items()):
                     out = job["out"].replace(".png", ".f%d.png" % (f + 1))
                     pngio.write_png(out, arr)
                     print("NMR OK", os.path.basename(out),
                           "mean=%s" % arr.reshape(-1, 4).mean(0).round(1).tolist())
             else:
-                arr = pipeline.render(be, graph, time=time, frames=frames, timestep=timestep)
+                arr = res
                 pngio.write_png(job["out"], arr)
                 print("NMR OK", os.path.basename(job["out"]),
                       "mean=%s px00=%s pxCtr=%s"
                       % (arr.reshape(-1, 4).mean(0).round(1).tolist(),
                          arr[0, 0].tolist(), arr[arr.shape[0] // 2, arr.shape[1] // 2].tolist()))
-            be.free()
         except Exception as e:
             print("NMR FAIL", job.get("graph"), "::", repr(e))
             traceback.print_exc()

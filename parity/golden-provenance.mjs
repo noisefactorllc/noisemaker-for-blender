@@ -33,7 +33,11 @@ export function recordGolden (outDir, name, { referenceRevision, renderer, proto
     throw new Error(`${name}: renderer ${JSON.stringify(renderer ?? null)} is not the declared authority ` +
       `"${declared}" (parity/authority-renderer)`)
   }
-  if (!protocol || !Number.isInteger(protocol.size) || !Number.isFinite(protocol.time) ||
+  const square = protocol && Number.isInteger(protocol.size) && protocol.size > 0 &&
+    !('width' in protocol) && !('height' in protocol)
+  const rectangular = protocol && Number.isInteger(protocol.width) && protocol.width > 0 &&
+    Number.isInteger(protocol.height) && protocol.height > 0 && !('size' in protocol)
+  if ((!square && !rectangular) || !Number.isFinite(protocol.time) ||
       !Number.isInteger(protocol.frames) || !Number.isFinite(protocol.timestep)) {
     throw new Error(`${name}: missing or invalid render protocol`)
   }
@@ -41,6 +45,10 @@ export function recordGolden (outDir, name, { referenceRevision, renderer, proto
     throw new Error(`${name}: missing or invalid fixture DSL SHA-256`)
   }
   const png = fs.readFileSync(path.join(outDir, `${name}.golden.png`))
+  if (rectangular && (png.length < 24 || png.readUInt32BE(16) !== protocol.width ||
+      png.readUInt32BE(20) !== protocol.height)) {
+    throw new Error(`${name}: PNG dimensions do not match render protocol`)
+  }
   const pvPath = path.join(outDir, 'provenance.json')
   let pv
   try { pv = JSON.parse(fs.readFileSync(pvPath, 'utf8')) } catch (e) { pv = { files: {} } }

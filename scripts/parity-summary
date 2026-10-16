@@ -13,7 +13,7 @@ decoded pixels); near the per-case policy-bounded mismatches
 defer, skip, fail and missing the rest. Given case ids as arguments, only those
 are rendered and counted.
 
-Render protocol (both engines, unchanged): 256x256, time 0.25, 8 frames from a
+Default render protocol (both engines): 256x256, time 0.25, 8 frames from a
 zeroed state — the port side via `blender/harness/render_all.py` (NM_BLENDER,
 default `blender`), the authority side via `parity/golden-cdp.mjs` against the
 reference engine (NM_REFERENCE_ROOT + headless Chromium over CDP, WebGL2 on
@@ -25,6 +25,8 @@ Environment:
   NM_PARITY_WORK   work dir for gold/ and cand/ (default parity/out/parity-summary)
   NM_CASE_TIMEOUT  per-case blender render timeout seconds (default 300)
   NM_SIZE/NM_TIME/NM_FRAMES/NM_TIMESTEP  capture parameters (defaults 256 / 0.25 / 8 / 0)
+  NM_WIDTH/NM_HEIGHT  optional axis overrides; parity/capture-sizes.json supplies
+                     dimensions for named rectangular cases when unset
   NM_SKIP          comma-separated case ids to count as skip (never rendered)
   NM_GOLDEN_AUTO   when set, generate missing/stale goldens from NM_REFERENCE_ROOT
   NM_REFERENCE_ROOT, NM_CHROME (default `chromium`), NM_CDP_PORT (9222),
@@ -59,6 +61,7 @@ MANIFESTS = [ROOT / "parity" / "3d-expected.txt", ROOT / "parity" / "artistic-ex
 POLICIES = [ROOT / "parity" / "3d-near-policy.json", ROOT / "parity" / "artistic-near-policy.json"]
 REFERENCE_REVISION = ROOT / "parity" / "reference-revision"
 AUTHORITY_RENDERER = ROOT / "parity" / "authority-renderer"
+CAPTURE_SIZES = ROOT / "parity" / "capture-sizes.json"
 TOLERANCE = 2.0
 SSIM_MIN = 0.98
 
@@ -71,6 +74,44 @@ def manifest_cases():
             if line and not line.startswith("#") and line not in names:
                 names.append(line)
     return names
+
+
+def capture_protocols(cases, size, time, frames, timestep):
+    sizes = json.loads(CAPTURE_SIZES.read_text())
+    for name, dimensions in sizes.items():
+        if (name not in cases or not isinstance(dimensions, dict)
+                or set(dimensions) != {"width", "height"}
+                or any(type(value) is not int or value <= 0 for value in dimensions.values())):
+            raise SystemExit("invalid capture dimensions for %s" % name)
+    protocols = {}
+    for name in cases:
+        dimensions = sizes.get(name, {})
+        width = int(os.environ.get("NM_WIDTH", os.environ.get("NM_SIZE", dimensions.get("width", size))))
+        height = int(os.environ.get("NM_HEIGHT", os.environ.get("NM_SIZE", dimensions.get("height", size))))
+        if width <= 0 or height <= 0:
+            raise SystemExit("capture dimensions must be positive integers")
+        shape = {"size": width} if width == height else {"width": width, "height": height}
+        protocols[name] = {**shape, "time": time, "frames": frames, "timestep": timestep}
+    return protocols
+
+
+def protocol_dimensions(protocol):
+    if "size" in protocol:
+        return protocol["size"], protocol["size"]
+    return protocol["width"], protocol["height"]
+
+
+def rectangular_png_matches(path, protocol):
+    if "width" not in protocol:
+        return True
+    try:
+        with path.open("rb") as stream:
+            header = stream.read(24)
+        return (header[:8] == b"\x89PNG\r\n\x1a\n"
+                and len(header) == 24
+                and struct.unpack(">II", header[16:24]) == protocol_dimensions(protocol))
+    except OSError:
+        return False
 
 
 def load_policies():
@@ -187,7 +228,7 @@ def source_fingerprint():
 
 
 def candidate_state(cand, cand_dir, protocol, source):
-    if not cand.exists() or source is None:
+    if not cand.exists() or source is None or not rectangular_png_matches(cand, protocol):
         return "stale"
     try:
         files = json.loads((cand_dir / "provenance.json").read_text()).get("files", {})
@@ -245,6 +286,8 @@ def golden_state(gold, gold_dir, pin, protocol, dsl_path, declared=None):
     stale or foreign golden in a reused work directory is never graded."""
     if not gold.exists():
         return "missing"
+    if not rectangular_png_matches(gold, protocol):
+        return "stale"
     try:
         pv = json.loads((gold_dir / "provenance.json").read_text())
     except (OSError, ValueError):
@@ -275,9 +318,12 @@ def recorded_renderer(gold, gold_dir):
     return (pv.get("files", {}).get(gold.name[:-len(".golden.png")]) or {}).get("renderer")
 
 
-def render_candidate(name, dsl, out_png, size, time, frames, timeout):
+def render_candidate(name, dsl, out_png, protocol, timeout):
     jobs = json.dumps([{"dsl": str(dsl), "out": str(out_png)}])
-    env = dict(os.environ, NM_JOBS=jobs, NM_SIZE=str(size), NM_TIME=str(time), NM_FRAMES=str(frames))
+    width, height = protocol_dimensions(protocol)
+    env = dict(os.environ, NM_JOBS=jobs, NM_SIZE=str(width), NM_WIDTH=str(width), NM_HEIGHT=str(height),
+               NM_TIME=str(protocol["time"]), NM_FRAMES=str(protocol["frames"]),
+               NM_TIMESTEP=str(protocol["timestep"]))
     blender = os.environ.get("NM_BLENDER", "blender")
     try:
         proc = subprocess.run([blender, "--factory-startup", "--python", str(ROOT / "blender" / "harness" / "render_all.py")],
@@ -333,7 +379,7 @@ def work_profile_dir():
     return Path(tempfile.gettempdir()) / "nm-parity-summary-chrome"
 
 
-def generate_goldens(missing, gold_dir, ref_root, timeout):
+def generate_goldens(missing, gold_dir, ref_root, timeout, protocol):
     node = shutil.which("node")
     chrome = os.environ.get("NM_CHROME", "chromium")
     serve_port = os.environ.get("NM_SERVE_PORT", "8777")
@@ -351,12 +397,12 @@ def generate_goldens(missing, gold_dir, ref_root, timeout):
         return "NM_REFERENCE_ROOT is at %s, not the pinned revision %s" % (ref_rev, pin)
     procs = ensure_golden_infra(ref_root, serve_port, cdp_port, chrome)
     try:
+        width, height = protocol_dimensions(protocol)
         env = dict(os.environ, NM_GOLDEN_OUT=str(gold_dir), NM_CDP_PORT=str(cdp_port),
                    NM_SERVE_PORT=serve_port, NM_GOLDEN_REF_REV=ref_rev or "",
-                   NM_GOLDEN_SIZE=os.environ.get("NM_SIZE", "256"),
-                   NM_GOLDEN_TIME=os.environ.get("NM_TIME", "0.25"),
-                   NM_GOLDEN_FRAMES=os.environ.get("NM_FRAMES", "8"),
-                   NM_GOLDEN_TIMESTEP=os.environ.get("NM_TIMESTEP", "0"))
+                   NM_GOLDEN_SIZE=str(width), NM_GOLDEN_WIDTH=str(width), NM_GOLDEN_HEIGHT=str(height),
+                   NM_GOLDEN_TIME=str(protocol["time"]), NM_GOLDEN_FRAMES=str(protocol["frames"]),
+                   NM_GOLDEN_TIMESTEP=str(protocol["timestep"]))
         try:
             run = subprocess.run([node, str(ROOT / "parity" / "golden-cdp.mjs")] + pairs,
                                  cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=timeout)
@@ -378,7 +424,6 @@ def main():
     time = float(os.environ.get("NM_TIME", "0.25"))
     frames = int(os.environ.get("NM_FRAMES", "8"))
     timestep = float(os.environ.get("NM_TIMESTEP", "0"))
-    protocol = {"size": size, "time": time, "frames": frames, "timestep": timestep}
     source = source_fingerprint()
     timeout = int(os.environ.get("NM_CASE_TIMEOUT", "300"))
     work = Path(os.environ.get("NM_PARITY_WORK", ROOT / "parity" / "out" / "parity-summary"))
@@ -389,6 +434,7 @@ def main():
     skip = {s.strip() for s in os.environ.get("NM_SKIP", "").split(",") if s.strip()}
 
     expected = manifest_cases()
+    protocols = capture_protocols(expected, size, time, frames, timestep)
     selected = [c for c in expected if not argv or c in set(argv)]
     policies = load_policies()
 
@@ -403,6 +449,7 @@ def main():
     ready = []
     candidate_hashes = {}
     for name in selected:
+        protocol = protocols[name]
         dsl = ROOT / "parity" / "programs" / f"{name}.dsl"
         if name in skip:
             counts["skip"] += 1
@@ -416,7 +463,7 @@ def main():
         if cand.exists() and (not reuse or candidate_state(cand, cand_dir, protocol, source) != "ok"):
             cand.unlink()
         if not cand.exists():
-            err = render_candidate(name, dsl, cand, size, time, frames, timeout)
+            err = render_candidate(name, dsl, cand, protocol, timeout)
             if err:
                 counts["fail"] += 1
                 print(f"[  fail] {name}: {err['reason'][:200]}")
@@ -433,11 +480,15 @@ def main():
     declared = declared_renderer()
 
     if auto:
-        need = [n for n in ready if golden_state(gold_dir / f"{n}.golden.png", gold_dir, pin, protocol,
+        need = [n for n in ready if golden_state(gold_dir / f"{n}.golden.png", gold_dir, pin, protocols[n],
                                                  ROOT / "parity" / "programs" / f"{n}.dsl", declared) != "ok"]
-        if need:
-            err = generate_goldens(need, gold_dir, Path(os.environ["NM_REFERENCE_ROOT"]),
-                                   120 * max(1, len(need)))
+        groups = {}
+        for name in need:
+            key = json.dumps(protocols[name], sort_keys=True)
+            groups.setdefault(key, []).append(name)
+        for group in groups.values():
+            err = generate_goldens(group, gold_dir, Path(os.environ["NM_REFERENCE_ROOT"]),
+                                   120 * max(1, len(group)), protocols[group[0]])
             if err:
                 print(f"[golden] generation unavailable: {err}")
 
@@ -447,6 +498,7 @@ def main():
         (snapshots / "gold").mkdir()
         (snapshots / "cand").mkdir()
         for name in ready:
+            protocol = protocols[name]
             gold = gold_dir / f"{name}.golden.png"
             cand = cand_dir / f"{name}.png"
             gold_snapshot = snapshots / "gold" / gold.name

@@ -207,11 +207,11 @@ class MintAndGradeTests(unittest.TestCase):
     def tearDown(self):
         self._tmp.cleanup()
 
-    def record(self, renderer, protocol=None):
+    def record(self, renderer, protocol=None, pixels=None):
         """Record a golden through parity/golden-provenance.mjs, as golden-cdp.mjs does."""
         if NODE is None:
             self.fail("node is required (scripts/test needs it)")
-        (self.gold_dir / f"{self.case}.golden.png").write_bytes(png_bytes())
+        (self.gold_dir / f"{self.case}.golden.png").write_bytes(pixels or png_bytes())
         module = (ROOT / "parity" / "golden-provenance.mjs").as_uri()
         script = ("import { recordGolden } from %s;"
                   "recordGolden(process.argv[1], process.argv[2],"
@@ -223,10 +223,10 @@ class MintAndGradeTests(unittest.TestCase):
                                parity_summary.sha256(ROOT / "parity" / "programs" / f"{self.case}.dsl")],
                               capture_output=True, text=True, timeout=60)
 
-    def grade(self, overrides=None, candidate_protocol=None):
+    def grade(self, overrides=None, candidate_protocol=None, pixels=None):
         """Grade the case with scripts/parity-summary on a reused candidate (no Blender)."""
         cand = self.cand_dir / f"{self.case}.png"
-        cand.write_bytes(png_bytes())
+        cand.write_bytes(pixels or png_bytes())
         env = dict(os.environ, NM_PARITY_WORK=str(self.work))
         env.pop("NM_GOLDEN_AUTO", None)
         env.update(overrides or {})
@@ -259,6 +259,47 @@ class MintAndGradeTests(unittest.TestCase):
         run, counts = self.grade()
         self.assertEqual((counts["executed"], counts["exact"], counts["missing"]), (1, 1, 0), run.stdout)
         self.assertEqual(run.returncode, 0, run.stdout)
+
+    def test_rectangular_protocol_mints_grades_and_rejects_swapped_axes(self):
+        protocol = {"width": 3, "height": 2, "time": 0.25, "frames": 8, "timestep": 0}
+        pixels = png_bytes(3, 2, overrides={(2, 1): (12, 34, 56, 255)})
+        run = self.record(METAL, protocol, pixels)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        run, counts = self.grade({"NM_WIDTH": "3", "NM_HEIGHT": "2", "NM_BLENDER": "/usr/bin/false"},
+                                 candidate_protocol=protocol, pixels=pixels)
+        self.assertEqual((counts["executed"], counts["exact"], counts["missing"]), (1, 1, 0), run.stdout)
+        self.assertEqual(run.returncode, 0, run.stdout)
+        swapped = {**protocol, "width": 2, "height": 3}
+        (self.cand_dir / "provenance.json").unlink()
+        run, counts = self.grade({"NM_WIDTH": "2", "NM_HEIGHT": "3", "NM_BLENDER": "/usr/bin/false"},
+                                 candidate_protocol=swapped, pixels=png_bytes(2, 3))
+        self.assertEqual((counts["executed"], counts["missing"]), (0, 1), run.stdout)
+        self.assertNotEqual(run.returncode, 0, run.stdout)
+
+    def test_rectangular_fixture_runs_at_its_declared_default_dimensions(self):
+        self.case = "noise_rectangular"
+        protocol = {"width": 257, "height": 129, "time": 0.25, "frames": 8, "timestep": 0}
+        pixels = png_bytes(257, 129, overrides={(256, 128): (12, 34, 56, 255)})
+        run = self.record(METAL, protocol, pixels)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        run, counts = self.grade({"NM_BLENDER": "/usr/bin/false"},
+                                 candidate_protocol=protocol, pixels=pixels)
+        self.assertEqual((counts["executed"], counts["exact"], counts["missing"]), (1, 1, 0), run.stdout)
+        self.assertEqual(run.returncode, 0, run.stdout)
+
+    def test_minting_refuses_png_dimensions_that_disagree_with_rectangular_protocol(self):
+        protocol = {"width": 3, "height": 2, "time": 0.25, "frames": 8, "timestep": 0}
+        run = self.record(METAL, protocol, png_bytes(2, 2))
+        self.assertNotEqual(run.returncode, 0)
+        self.assertIn("PNG dimensions do not match render protocol", run.stderr)
+
+    def test_minting_refuses_invalid_rectangular_dimensions(self):
+        for dimensions in ({"width": 3}, {"width": 0, "height": 2},
+                           {"width": 3, "height": -2}, {"width": 3.5, "height": 2}):
+            with self.subTest(dimensions=dimensions):
+                run = self.record(METAL, {**dimensions, "time": 0.25, "frames": 8, "timestep": 0})
+                self.assertNotEqual(run.returncode, 0)
+                self.assertIn("invalid render protocol", run.stderr)
 
     def test_grading_refuses_a_golden_for_another_fixture_revision(self):
         run = self.record(METAL)
