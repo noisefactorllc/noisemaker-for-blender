@@ -20,6 +20,8 @@ import bpy
 HARNESS = os.path.dirname(os.path.abspath(__file__))
 ADDON = os.path.join(os.path.dirname(HARNESS), "noisemaker_blender")
 sys.path.insert(0, os.path.dirname(ADDON))
+sys.path.insert(0, HARNESS)
+from fixture_inputs import make_frames                                # noqa: E402
 from noisemaker_blender.backend.gpu_backend import GpuBackend          # noqa: E402
 from noisemaker_blender.runtime import graph_loader, pipeline, pngio   # noqa: E402
 from noisemaker_blender.runtime.session import Program, RenderSession  # noqa: E402
@@ -58,6 +60,7 @@ def run():
     # Optional diagnostic: NM_SAMPLE_EVERY (in frames) -> <out>.f<frame>.png snapshots.
     sample_every = int(os.environ.get("NM_SAMPLE_EVERY", "0"))
     jobs = json.loads(os.environ["NM_JOBS"])
+    bindings = json.loads(os.environ.get("NM_INPUT_BINDINGS", "{}"))
     shaders_root = os.path.join(ADDON, "shaders", "effects")
     for job in jobs:
         try:
@@ -70,10 +73,14 @@ def run():
             sample_idx = (set(range(sample_every - 1, frames, sample_every)) | {frames - 1}
                           if sample_every else None)
             if width != height:
+                if bindings:
+                    raise ValueError("supplied parity inputs require square captures")
                 res = render_rectangular(graph, shaders_root, width, height,
                                          time, frames, timestep, sample_idx)
             else:
                 be = GpuBackend(shaders_root, width)
+                if bindings:
+                    be.set_external_inputs(make_frames(bindings, graph))
                 res = pipeline.render(be, graph, time=time, frames=frames,
                                       timestep=timestep, samples=sample_idx)
                 be.free()

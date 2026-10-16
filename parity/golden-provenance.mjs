@@ -44,6 +44,10 @@ export function recordGolden (outDir, name, { referenceRevision, renderer, proto
   if (typeof dslSha256 !== 'string' || !/^[0-9a-f]{64}$/.test(dslSha256)) {
     throw new Error(`${name}: missing or invalid fixture DSL SHA-256`)
   }
+  if ('inputs_sha256' in protocol && (typeof protocol.inputs_sha256 !== 'string' ||
+      !/^[0-9a-f]{64}$/.test(protocol.inputs_sha256))) {
+    throw new Error(`${name}: invalid input fixture SHA-256`)
+  }
   const png = fs.readFileSync(path.join(outDir, `${name}.golden.png`))
   if (rectangular && (png.length < 24 || png.readUInt32BE(16) !== protocol.width ||
       png.readUInt32BE(20) !== protocol.height)) {

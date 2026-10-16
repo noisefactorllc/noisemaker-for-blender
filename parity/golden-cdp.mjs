@@ -42,6 +42,27 @@ const TIME = parseFloat(process.env.NM_GOLDEN_TIME || '0.25')
 const FRAMES = parseInt(process.env.NM_GOLDEN_FRAMES || '8', 10)
 const TIMESTEP = parseFloat(process.env.NM_GOLDEN_TIMESTEP || '0')
 const EXPORT_GRAPH = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'tools', 'export-graph.mjs')
+const INPUT_BYTES = fs.readFileSync(new URL('./input-fixtures.json', import.meta.url))
+const INPUT_FIXTURES = JSON.parse(INPUT_BYTES)
+const INPUTS_SHA256 = crypto.createHash('sha256').update(INPUT_BYTES).digest('hex')
+if (!INPUT_FIXTURES || Array.isArray(INPUT_FIXTURES) || typeof INPUT_FIXTURES !== 'object') {
+  throw new Error('input fixtures must be a mapping')
+}
+for (const [name, bindings] of Object.entries(INPUT_FIXTURES)) {
+  if (!name || !bindings || Array.isArray(bindings) || typeof bindings !== 'object' || !Object.keys(bindings).length) {
+    throw new Error('invalid input fixture bindings')
+  }
+  for (const [binding, spec] of Object.entries(bindings)) {
+    if (!binding || !spec || Object.keys(spec).some(key => !['width', 'height', 'pixels', 'vertex_count'].includes(key)) ||
+        !Number.isInteger(spec.width) || spec.width < 1 || !Number.isInteger(spec.height) || spec.height < 1 ||
+        !Array.isArray(spec.pixels) || spec.pixels.length !== spec.width * spec.height * 4 ||
+        !spec.pixels.every(value => typeof value === 'number' && Number.isFinite(value)) ||
+        ('vertex_count' in spec && (!Number.isInteger(spec.vertex_count) || spec.vertex_count < 1 ||
+          spec.vertex_count % 3 || spec.vertex_count > spec.width * spec.height))) {
+      throw new Error(`invalid input pixels for ${name}: ${binding}`)
+    }
+  }
+}
 
 fs.mkdirSync(OUT, { recursive: true })
 
@@ -157,6 +178,10 @@ async function main () {
   await cdp.send('Page.navigate', { url: DEMO_URL })
   await waitFor(cdp, `!!window.__noisemakerRenderingPipeline && !!document.getElementById('dsl-editor')`)
   for (const it of PAIR) {
+    const bindings = INPUT_FIXTURES[it.name] || {}
+    if (Object.keys(bindings).length && WIDTH !== HEIGHT) {
+      throw new Error('supplied parity inputs require square captures')
+    }
     // Determinism: reload between effects so every WebGL context starts from a
     // zero-initialized texture state (batch-golden.mjs renderOne contract).
     if (it !== PAIR[0]) {
@@ -197,6 +222,18 @@ async function main () {
           }
         }
         p.frameIndex = 0; p.lastTime = 0
+        const bindings = ${JSON.stringify(bindings)}
+        const declared = new Set(p.graph.passes.flatMap(pass => Object.values(pass.inputs || {})))
+        for (const [binding, spec] of Object.entries(bindings)) {
+          if (!declared.has(binding)) throw new Error('fixture supplies undeclared graph input: ' + binding)
+          const pixels = new Float32Array(spec.pixels)
+          backend.uploadDataTexture(binding, pixels, spec.width, spec.height)
+          const media = /^imageTex_step_([0-9]+)$/.exec(binding)
+          if (media) window.__noisemakerCanvasRenderer.applyStepParameterValues({
+            ['step_' + media[1]]: { imageSize: [spec.width, spec.height] }
+          })
+          if (binding === 'midiNoteGrid') p.externalState.midi = { noteGrid: pixels, updateNoteGrid () {} }
+        }
       }
       for (let i = 0; i < ${FRAMES}; i++) { const tt = (${TIME} + i * ${TIMESTEP}) % 1; if (p && p.render) p.render(tt); else if (window.__noisemakerCanvasRenderer && window.__noisemakerCanvasRenderer.render) window.__noisemakerCanvasRenderer.render(tt) }
       return true
@@ -235,7 +272,8 @@ async function main () {
     // as the authority image.
     recordGolden(OUT, it.name, { referenceRevision: process.env.NM_GOLDEN_REF_REV || null, renderer,
       protocol: { ...(WIDTH === HEIGHT ? { size: WIDTH } : { width: WIDTH, height: HEIGHT }),
-        time: TIME, frames: FRAMES, timestep: TIMESTEP }, dslSha256: it.dslSha256 })
+        time: TIME, frames: FRAMES, timestep: TIMESTEP,
+        ...(Object.keys(bindings).length ? { inputs_sha256: INPUTS_SHA256 } : {}) }, dslSha256: it.dslSha256 })
     console.log('OK', it.name, width + 'x' + height, renderer)
   }
   console.log('DONE')

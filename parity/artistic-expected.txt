@@ -330,3 +330,8 @@ dither_palette_zxSpectrum
 dither_palette_appleII
 dither_palette_ega
 noise_rectangular
+media_host_pattern
+text_host_mask
+mesh_host_preview
+mesh_host_render
+roll_host_notes

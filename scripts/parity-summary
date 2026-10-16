@@ -56,12 +56,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "blender" / "harness"))
 import pngread  # noqa: E402
+import fixture_inputs  # noqa: E402
 
 MANIFESTS = [ROOT / "parity" / "3d-expected.txt", ROOT / "parity" / "artistic-expected.txt"]
 POLICIES = [ROOT / "parity" / "3d-near-policy.json", ROOT / "parity" / "artistic-near-policy.json"]
 REFERENCE_REVISION = ROOT / "parity" / "reference-revision"
 AUTHORITY_RENDERER = ROOT / "parity" / "authority-renderer"
 CAPTURE_SIZES = ROOT / "parity" / "capture-sizes.json"
+INPUT_FIXTURES = ROOT / "parity" / "input-fixtures.json"
 TOLERANCE = 2.0
 SSIM_MIN = 0.98
 
@@ -78,6 +80,10 @@ def manifest_cases():
 
 def capture_protocols(cases, size, time, frames, timestep):
     sizes = json.loads(CAPTURE_SIZES.read_text())
+    inputs = fixture_inputs.load(INPUT_FIXTURES)
+    if set(inputs) - set(cases):
+        raise ValueError("input fixtures name unknown manifest cases")
+    inputs_sha256 = sha256(INPUT_FIXTURES)
     for name, dimensions in sizes.items():
         if (name not in cases or not isinstance(dimensions, dict)
                 or set(dimensions) != {"width", "height"}
@@ -92,6 +98,8 @@ def capture_protocols(cases, size, time, frames, timestep):
             raise SystemExit("capture dimensions must be positive integers")
         shape = {"size": width} if width == height else {"width": width, "height": height}
         protocols[name] = {**shape, "time": time, "frames": frames, "timestep": timestep}
+        if name in inputs:
+            protocols[name]["inputs_sha256"] = inputs_sha256
     return protocols
 
 
@@ -323,7 +331,9 @@ def render_candidate(name, dsl, out_png, protocol, timeout):
     width, height = protocol_dimensions(protocol)
     env = dict(os.environ, NM_JOBS=jobs, NM_SIZE=str(width), NM_WIDTH=str(width), NM_HEIGHT=str(height),
                NM_TIME=str(protocol["time"]), NM_FRAMES=str(protocol["frames"]),
-               NM_TIMESTEP=str(protocol["timestep"]))
+               NM_TIMESTEP=str(protocol["timestep"]),
+               NM_INPUT_BINDINGS=json.dumps(fixture_inputs.load(INPUT_FIXTURES)[name]
+                                            if "inputs_sha256" in protocol else {}))
     blender = os.environ.get("NM_BLENDER", "blender")
     try:
         proc = subprocess.run([blender, "--factory-startup", "--python", str(ROOT / "blender" / "harness" / "render_all.py")],

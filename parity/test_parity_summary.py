@@ -260,6 +260,50 @@ class MintAndGradeTests(unittest.TestCase):
         self.assertEqual((counts["executed"], counts["exact"], counts["missing"]), (1, 1, 0), run.stdout)
         self.assertEqual(run.returncode, 0, run.stdout)
 
+    def test_texture_fixture_bytes_are_part_of_the_capture_protocol(self):
+        cases = parity_summary.manifest_cases()
+        protocols = parity_summary.capture_protocols(cases, 256, 0.25, 8, 0)
+        self.assertEqual(protocols["media_host_pattern"].get("inputs_sha256"),
+                         parity_summary.sha256(ROOT / "parity" / "input-fixtures.json"))
+        self.assertNotIn("inputs_sha256", protocols["noise"])
+
+    def test_grading_refuses_an_input_golden_without_its_fixture_hash(self):
+        self.case = "media_host_pattern"
+        protocol = {"size": 256, "time": 0.25, "frames": 8, "timestep": 0,
+                    "inputs_sha256": parity_summary.sha256(ROOT / "parity" / "input-fixtures.json")}
+        run = self.record(METAL, protocol)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        run, counts = self.grade({"NM_BLENDER": "/usr/bin/false"}, candidate_protocol=protocol)
+        self.assertEqual((counts["executed"], counts["exact"]), (1, 1), run.stdout)
+        self.assertEqual(run.returncode, 0, run.stdout)
+        provenance_path = self.gold_dir / "provenance.json"
+        provenance = json.loads(provenance_path.read_text())
+        provenance["files"][self.case]["protocol"].pop("inputs_sha256")
+        provenance_path.write_text(json.dumps(provenance))
+        run, counts = self.grade({"NM_BLENDER": "/usr/bin/false"}, candidate_protocol=protocol)
+        self.assertEqual((counts["executed"], counts["missing"]), (0, 1), run.stdout)
+        self.assertNotEqual(run.returncode, 0, run.stdout)
+
+    def test_invalid_input_pixels_are_rejected_before_capture(self):
+        cases = parity_summary.manifest_cases()
+        for dimensions, pixels in (({"width": 2, "height": 1}, [0, 0, 0, 1]),
+                                    ({"width": True, "height": 1}, [0, 0, 0, 1]),
+                                    ({"width": 1, "height": 1}, [float("nan"), 0, 0, 1])):
+            with self.subTest(dimensions=dimensions, pixels=pixels):
+                fixture_path = self.work / "invalid-inputs.json"
+                fixture_path.write_text(json.dumps({cases[0]: {"inputTex": {
+                    **dimensions, "pixels": pixels}}}))
+                with mock.patch.object(parity_summary, "INPUT_FIXTURES", fixture_path, create=True):
+                    with self.assertRaises(ValueError):
+                        parity_summary.capture_protocols(cases, 256, 0.25, 8, 0)
+
+    def test_minting_refuses_an_invalid_input_fixture_hash(self):
+        protocol = {"size": 256, "time": 0.25, "frames": 8, "timestep": 0,
+                    "inputs_sha256": "invalid"}
+        run = self.record(METAL, protocol)
+        self.assertNotEqual(run.returncode, 0)
+        self.assertIn("invalid input fixture SHA-256", run.stderr)
+
     def test_rectangular_protocol_mints_grades_and_rejects_swapped_axes(self):
         protocol = {"width": 3, "height": 2, "time": 0.25, "frames": 8, "timestep": 0}
         pixels = png_bytes(3, 2, overrides={(2, 1): (12, 34, 56, 255)})
