@@ -307,3 +307,9 @@ points_emit_clusters
 points_emit_spiral
 heightGrid_pointsRender_ortho
 heightGrid_billboard_ortho
+billboard_shape_ring
+billboard_shape_square
+billboard_shape_diamond
+billboard_shape_triangle
+billboard_shape_star
+billboard_shape_soft
