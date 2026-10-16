@@ -314,3 +314,9 @@ billboard_shape_triangle
 billboard_shape_star
 billboard_shape_soft
 heightGrid_billboard_ortho_alpha
+dither_bayer2x2
+dither_bayer8x8
+dither_dot
+dither_line
+dither_crosshatch
+dither_noise
