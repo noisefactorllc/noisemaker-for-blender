@@ -320,3 +320,12 @@ dither_dot
 dither_line
 dither_crosshatch
 dither_noise
+dither_palette_monochrome
+dither_palette_dotMatrixGreen
+dither_palette_amberMonitor
+dither_palette_pico8
+dither_palette_commodore64
+dither_palette_cgaPalette1
+dither_palette_zxSpectrum
+dither_palette_appleII
+dither_palette_ega
