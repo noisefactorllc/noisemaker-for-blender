@@ -297,3 +297,6 @@ cnd_refract
 renderCubemap3d
 renderCubemapSurface
 loop_feedback
+adjust_hsv
+adjust_oklab
+adjust_oklch
