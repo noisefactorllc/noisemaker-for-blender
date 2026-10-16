@@ -296,3 +296,4 @@ cnd_composite
 cnd_refract
 renderCubemap3d
 renderCubemapSurface
+loop_feedback
