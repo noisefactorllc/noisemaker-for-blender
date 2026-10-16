@@ -132,6 +132,13 @@ class CompareTests(unittest.TestCase):
             cand.write_bytes(png_bytes(width=3))
             self.assertEqual(parity_summary.compare(gold, cand, None)["cls"], "fail")
 
+    def test_reviewed_near_bound_applies_only_to_its_protocol(self):
+        policy = parity_summary.load_policies()["north_star"]
+        reviewed = {"size": 128, "time": 0.25, "frames": 8, "timestep": 0}
+        unreviewed = {"size": 64, "time": 0.25, "frames": 8, "timestep": 0}
+        self.assertIsNotNone(parity_summary.policy_for_protocol(policy, reviewed))
+        self.assertIsNone(parity_summary.policy_for_protocol(policy, unreviewed))
+
 
 class AuthorityRendererTests(unittest.TestCase):
     def test_the_declared_authority_is_angle_over_metal_on_apple_silicon(self):

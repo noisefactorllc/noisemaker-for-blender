@@ -5,7 +5,14 @@
       "max_abs_diff": 87.001,
       "mean_abs_diff": 0.0103,
       "ssim_min": 0.999,
-      "mechanism": "sub-ULP cross-GPU divergence flips a discrete fractal raymarch surface-boundary hit or miss"
+      "mechanism": "sub-ULP cross-GPU divergence flips a discrete fractal raymarch surface-boundary hit or miss",
+      "protocol_overrides": [{
+        "protocol": {"size": 256, "time": 0.75, "frames": 8, "timestep": 0},
+        "max_abs_diff": 180,
+        "mean_abs_diff": 0.142,
+        "ssim_min": 0.995,
+        "mechanism": "cross-GPU volume precompute divergence changes fractal raymarch surface-boundary hits at time 0.75"
+      }]
     },
     "heightmap3d_landscape": {
       "max_abs_diff": 260.0,

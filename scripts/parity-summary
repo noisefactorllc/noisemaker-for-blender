@@ -83,6 +83,19 @@ def load_policies():
     return cases
 
 
+def policy_for_protocol(policy, protocol):
+    if not policy:
+        return None
+    matches = [entry for entry in policy.get("protocol_overrides", [])
+               if entry.get("protocol") == protocol]
+    if len(matches) > 1:
+        raise SystemExit("duplicate near policy for protocol %s" % protocol)
+    if matches:
+        return matches[0]
+    required = {"max_abs_diff", "mean_abs_diff", "ssim_min", "mechanism"}
+    return policy if required.issubset(policy) else None
+
+
 def load_rgba(path):
     flat, width, height = pngread.read_png_rgba(str(path))
     return flat, (height, width, 4)
@@ -458,7 +471,8 @@ def main():
                 counts["fail"] += 1
                 print(f"[  fail] {name}: candidate or source changed before grading")
                 continue
-            rec = compare(gold_snapshot, cand_snapshot, policies.get(name))
+            rec = compare(gold_snapshot, cand_snapshot,
+                          policy_for_protocol(policies.get(name), protocol))
             cls = rec.pop("cls")
             counts[cls] += 1
             counts["executed"] += 1
