@@ -129,6 +129,54 @@ class PinTests(unittest.TestCase):
 
 
 class CompareTests(unittest.TestCase):
+    def test_near_policy_enforces_changed_pixel_budget(self):
+        policy = {"max_abs_diff": 6, "mean_abs_diff": 255, "ssim_min": 0,
+                  "max_changed_pixels": 1, "max_changed_channels": 6,
+                  "mechanism": "reviewed sparse differences"}
+        with tempfile.TemporaryDirectory() as tmp:
+            gold = Path(tmp) / "gold.png"
+            cand = Path(tmp) / "cand.png"
+            gold.write_bytes(png_bytes(width=2, height=1))
+            cand.write_bytes(png_bytes(width=2, height=1,
+                                       overrides={(0, 0): (134, 134, 134, 255)}))
+            self.assertEqual(parity_summary.compare(gold, cand, policy)["cls"], "near")
+            cand.write_bytes(png_bytes(width=2, height=1,
+                                       overrides={(0, 0): (134, 128, 128, 255),
+                                                  (1, 0): (134, 128, 128, 255)}))
+            result = parity_summary.compare(gold, cand, policy)
+            self.assertEqual(result["cls"], "fail")
+            self.assertEqual(result["changed_pixels"], 2)
+            self.assertEqual(result["changed_channels"], 2)
+
+    def test_near_policy_enforces_changed_channel_budget(self):
+        policy = {"max_abs_diff": 6, "mean_abs_diff": 255, "ssim_min": 0,
+                  "max_changed_pixels": 1, "max_changed_channels": 2,
+                  "mechanism": "reviewed sparse differences"}
+        with tempfile.TemporaryDirectory() as tmp:
+            gold = Path(tmp) / "gold.png"
+            cand = Path(tmp) / "cand.png"
+            gold.write_bytes(png_bytes(width=2, height=1))
+            cand.write_bytes(png_bytes(width=2, height=1,
+                                       overrides={(0, 0): (134, 134, 128, 255)}))
+            self.assertEqual(parity_summary.compare(gold, cand, policy)["cls"], "near")
+            cand.write_bytes(png_bytes(width=2, height=1,
+                                       overrides={(0, 0): (134, 134, 134, 255)}))
+            result = parity_summary.compare(gold, cand, policy)
+            self.assertEqual(result["cls"], "fail")
+            self.assertEqual(result["changed_pixels"], 1)
+            self.assertEqual(result["changed_channels"], 3)
+
+    def test_stray_hair_policy_only_matches_its_reviewed_protocol(self):
+        policy = parity_summary.load_policies().get("strayHair")
+        self.assertIsNotNone(policy)
+        reviewed = {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}
+        self.assertIsNotNone(parity_summary.policy_for_protocol(policy, reviewed))
+        for field, value in (("size", 128), ("time", 0.75), ("frames", 1),
+                             ("timestep", 0.01)):
+            with self.subTest(field=field):
+                self.assertIsNone(parity_summary.policy_for_protocol(
+                    policy, dict(reviewed, **{field: value})))
+
     def test_reviewed_ortho_alpha_policy_only_matches_its_protocol(self):
         policy = parity_summary.load_policies()["heightGrid_billboard_ortho_alpha"]
         reviewed = {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}

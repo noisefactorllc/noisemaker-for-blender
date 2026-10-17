@@ -177,6 +177,12 @@ def compare(gold_path, cand_path, policy):
             rgb_mad = d
         total += d
     mean = total / n
+    changed = {}
+    if policy and "max_changed_pixels" in policy:
+        changed["changed_pixels"] = sum(g[i:i + 4] != c[i:i + 4]
+                                        for i in range(0, n, 4))
+    if policy and "max_changed_channels" in policy:
+        changed["changed_channels"] = sum(a != b for a, b in zip(g, c))
     # global_ssim on the /255 normalized luma (batch-compare.py math)
     ya = [0.0] * (n // 4)
     yb = [0.0] * (n // 4)
@@ -200,11 +206,14 @@ def compare(gold_path, cand_path, policy):
                      and rgb_mad <= float(policy.get("max_rgb_abs_diff", mad))
                      and alpha_mad <= float(policy.get("max_alpha_abs_diff", mad))
                      and mean <= float(policy["mean_abs_diff"])
+                     and all(value <= float(policy["max_" + name])
+                             for name, value in changed.items())
                      and ssim >= float(policy["ssim_min"]) and bool(policy.get("mechanism"))):
         cls = "near"
     else:
         cls = "fail"
-    return {"cls": cls, "max_abs_diff": mad, "mean_abs_diff": round(mean, 4), "ssim": round(ssim, 5)}
+    return {"cls": cls, "max_abs_diff": mad, "mean_abs_diff": round(mean, 4),
+            "ssim": round(ssim, 5), **changed}
 
 
 def sha256(path):
