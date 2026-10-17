@@ -19,10 +19,11 @@ from contextlib import contextmanager
 import gpu
 import numpy as np
 from gpu.types import (GPUOffScreen, GPUFrameBuffer, GPUVertFormat, GPUVertBuf, GPUBatch,
-                       GPUUniformBuf, Buffer)
+                       GPUUniformBuf, GPUTexture, Buffer)
 from gpu_extras.batch import batch_for_shader
 
 from . import shader_build, std140
+from ..runtime import async_overlay
 from ..runtime.diagnostics import DiagnosticCollector
 from ..runtime.pipeline import (resolve_dimension, resolve_surface_format,
                                 build_texture_pooling_plan,
@@ -136,6 +137,8 @@ class GpuBackend:
         self._fb_cache = {}       # tuple(id(off)..) -> GPUFrameBuffer (MRT)
         self._vbuf_cache = {}     # count -> GPUVertBuf (attribute-less points draw)
         self.external_inputs = {}
+        # Overlay texture id -> (what it was drawn from, the slot it was drawn into).
+        self._async_overlays = {}
         # Queryable structured diagnostics for the historically-silent
         # unknown-dimension-form and unknown-format fallbacks.
         self.diagnostics = DiagnosticCollector()
@@ -346,6 +349,7 @@ class GpuBackend:
         self.__dict__.pop("_persistent_surfaces", None)
         self.__dict__.pop("_live_ubo", None)
         self.__dict__.pop("_live_block_ubo", None)
+        self.__dict__.pop("_async_overlays", None)
         self.external_inputs.clear()
 
     def abandon(self):
@@ -495,6 +499,57 @@ class GpuBackend:
             if tid is not None and tid != "none":
                 shader.uniform_sampler(name, self._read(tid, graph).texture_color)
 
+    # ---- asyncInit overlays -----------------------------------------------
+    def _sync_async_overlay(self, p, graph):
+        """Draw the asyncInit overlay this pass samples when it is not current.
+
+        The reference fibers, scratches and strayHair effects draw their
+        overlayTex on the CPU (runtime.async_overlay). The overlay follows the
+        render size and the node's own seed and density; a host texture bound
+        under the overlay id replaces it.
+        """
+        key = p.get("effectKey")
+        if not async_overlay.has_async_overlay(key):
+            return
+        tid = (p.get("inputs") or {}).get(async_overlay.OVERLAY_TEXTURE)
+        if not tid or tid == "none" or tid in (getattr(self, "external_inputs", None) or {}):
+            return
+        target = self.pool.get(self.pool_key.get(tid))
+        if target is None:
+            return
+        width = getattr(self, "width", self.size)
+        height = getattr(self, "height", self.size)
+        params = async_overlay.overlay_params(
+            key, async_overlay.step_uniforms(p, getattr(graph, "passes", None)))
+        drawn = (key, width, height, tuple(sorted(params.items())))
+        overlays = self.__dict__.setdefault("_async_overlays", {})
+        current = overlays.get(tid)
+        if current is not None and current[0] == drawn and current[1] is target:
+            return
+        self._upload_overlay(target, async_overlay.generate_overlay(key, width, height, params))
+        overlays[tid] = (drawn, target)
+
+    def _upload_overlay(self, target, pixels):
+        """Copy straight-alpha RGBA8 pixels (row 0 at the top) into ``target``.
+
+        The reference uploads its canvas with flipY, so the canvas's top row
+        is the texture's last row.
+        """
+        height, width = pixels.shape[:2]
+        values = np.ascontiguousarray(pixels[::-1], dtype=np.float32).reshape(-1) / np.float32(255.0)
+        source = GPUTexture((width, height), format="RGBA32F",
+                            data=Buffer("FLOAT", values.size, values))
+        shader, _desc, _rev = self.compile(None, "blit", "blit", None)
+        with _preserve_gpu_state():
+            with target.bind():
+                gpu.state.blend_set('NONE')
+                shader.bind()
+                shader.uniform_float("resolution", [float(width), float(height)])
+                shader.uniform_sampler("src", source)
+                for slab_y, slab_h in slab_ranges(0, height):
+                    gpu.state.viewport_set(0, slab_y, width, slab_h)
+                    self._fs_batch(shader).draw(shader)
+
     # ---- pass execution ---------------------------------------------------
     def execute(self, p, graph, engine):
         pt = p.get("passType")
@@ -513,6 +568,7 @@ class GpuBackend:
             merged = dict(engine)
             merged.update(p.get("uniforms", {}))
             inputs = p.get("inputs", {})
+            self._sync_async_overlay(p, graph)
         else:
             raise ValueError("unsupported pass type %r" % pt)
         mode = p.get("drawMode")

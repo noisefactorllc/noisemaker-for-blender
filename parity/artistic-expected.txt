@@ -367,3 +367,5 @@ noise_type_bSpline3x3
 noise_type_bSpline4x4
 noise_type_sine
 strayHair
+fibers
+scratches
