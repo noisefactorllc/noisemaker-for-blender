@@ -166,16 +166,17 @@ class CompareTests(unittest.TestCase):
             self.assertEqual(result["changed_pixels"], 1)
             self.assertEqual(result["changed_channels"], 3)
 
-    def test_stray_hair_policy_only_matches_its_reviewed_protocol(self):
-        policy = parity_summary.load_policies().get("strayHair")
-        self.assertIsNotNone(policy)
-        reviewed = {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}
-        self.assertIsNotNone(parity_summary.policy_for_protocol(policy, reviewed))
-        for field, value in (("size", 128), ("time", 0.75), ("frames", 1),
-                             ("timestep", 0.01)):
-            with self.subTest(field=field):
-                self.assertIsNone(parity_summary.policy_for_protocol(
-                    policy, dict(reviewed, **{field: value})))
+    def test_missing_stray_hair_overlay_does_not_qualify_as_near(self):
+        protocol = {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}
+        policy = parity_summary.policy_for_protocol(
+            parity_summary.load_policies().get("strayHair"), protocol)
+        with tempfile.TemporaryDirectory() as tmp:
+            gold = Path(tmp) / "gold.png"
+            cand = Path(tmp) / "cand.png"
+            gold.write_bytes(png_bytes(width=256, height=256, value=255,
+                                       overrides={(66, 44): (133, 133, 133, 255)}))
+            cand.write_bytes(png_bytes(width=256, height=256, value=255))
+            self.assertEqual(parity_summary.compare(gold, cand, policy)["cls"], "fail")
 
     def test_reviewed_ortho_alpha_policy_only_matches_its_protocol(self):
         policy = parity_summary.load_policies()["heightGrid_billboard_ortho_alpha"]

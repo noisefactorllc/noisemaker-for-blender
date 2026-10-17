@@ -1,21 +1,6 @@
 {
   "version": 1,
   "cases": {
-    "strayHair": {
-      "protocol_overrides": [
-        {
-          "protocol": {"size": 256, "time": 0.25, "frames": 8, "timestep": 0},
-          "max_abs_diff": 122,
-          "max_rgb_abs_diff": 122,
-          "max_alpha_abs_diff": 0,
-          "mean_abs_diff": 0.02512,
-          "ssim_min": 0.95195,
-          "max_changed_pixels": 36,
-          "max_changed_channels": 108,
-          "mechanism": "Seed 1 CPU overlay produces one short reference mark on white. The native overlay is empty. The reviewed difference covers 36 pixels and 108 RGB channels."
-        }
-      ]
-    },
     "chrome": {
       "max_abs_diff": 200,
       "mean_abs_diff": 2.5,
