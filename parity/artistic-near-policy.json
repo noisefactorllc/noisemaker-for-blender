@@ -7,6 +7,24 @@
       "ssim_min": 0.994,
       "mechanism": "multi-cycle sin tone curve plus pow(v, 8) rim highlight amplifies translator-level rounding"
     },
+    "fibers": {
+      "protocol_overrides": [
+        {
+          "protocol": {
+            "size": 256,
+            "time": 0.25,
+            "frames": 8,
+            "timestep": 0
+          },
+          "max_abs_diff": 13,
+          "max_rgb_abs_diff": 13,
+          "max_alpha_abs_diff": 0,
+          "mean_abs_diff": 0.1739,
+          "ssim_min": 0.99917,
+          "mechanism": "the CPU overlay's 1.5 px round-capped strokes take the exact area of Skia's flattened outline instead of Skia's analytic accumulation; 12,301 of 65,536 pixels differ in RGB by at most 13 (588 by more than 4) with alpha identical, and the captures look the same side by side at native size"
+        }
+      ]
+    },
     "filter_wormhole": {
       "max_abs_diff": 189,
       "mean_abs_diff": 0.023,

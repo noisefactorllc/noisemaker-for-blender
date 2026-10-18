@@ -148,6 +148,24 @@ class CompareTests(unittest.TestCase):
         self.assertIsNotNone(parity_summary.policy_for_protocol(policy, reviewed))
         self.assertIsNone(parity_summary.policy_for_protocol(policy, unreviewed))
 
+    def test_reviewed_fibers_policy_only_matches_its_protocol_and_keeps_alpha(self):
+        policy = parity_summary.load_policies()["fibers"]
+        reviewed = {"size": 256, "time": 0.25, "frames": 8, "timestep": 0}
+        for unreviewed in ({"size": 128, "time": 0.25, "frames": 8, "timestep": 0},
+                           {"size": 256, "time": 0.75, "frames": 8, "timestep": 0}):
+            self.assertIsNone(parity_summary.policy_for_protocol(policy, unreviewed))
+        bound = parity_summary.policy_for_protocol(policy, reviewed)
+        with tempfile.TemporaryDirectory() as tmp:
+            gold = Path(tmp) / "gold.png"
+            cand = Path(tmp) / "cand.png"
+            gold.write_bytes(png_bytes(width=256, height=256, value=0))
+            cand.write_bytes(png_bytes(width=256, height=256, value=0,
+                                       overrides={(3, 4): (13, 13, 13, 255)}))
+            self.assertEqual(parity_summary.compare(gold, cand, bound)["cls"], "near")
+            cand.write_bytes(png_bytes(width=256, height=256, value=0,
+                                       overrides={(3, 4): (13, 13, 13, 254)}))
+            self.assertEqual(parity_summary.compare(gold, cand, bound)["cls"], "fail")
+
     def test_near_policy_enforces_separate_rgb_and_alpha_bounds(self):
         policy = {"max_abs_diff": 7, "max_rgb_abs_diff": 1, "max_alpha_abs_diff": 7,
                   "mean_abs_diff": 0.00013, "ssim_min": 0.98,
