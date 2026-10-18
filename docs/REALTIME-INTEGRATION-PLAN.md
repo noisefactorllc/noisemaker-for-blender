@@ -413,7 +413,7 @@ native harness and test code remained byte-identical; the reference revision bec
 
 ### 9.2 Native observations and verification
 
-The native host is the spare office Mac, Apple M4, Blender 5.1.2, Metal. Tests use disposable
+The native host is an Apple M4 Mac, Blender 5.1.2, Metal. Tests use disposable
 `--factory-startup` GUI processes under the host's shared resource lock; only prepared cache
 consumption uses `--background`. New GUI harnesses require `NM_HARNESS_AUTOCLOSE=1` before
 changing the disposable scene and closing their process. Evidence directories are named
