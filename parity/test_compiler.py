@@ -61,6 +61,38 @@ class ChoiceNameShadowingTests(unittest.TestCase):
         self.assertEqual(result["plans"][0]["chain"][1]["args"]["channel"], 3)
 
 
+class VecComponentCallTests(unittest.TestCase):
+    """vec2(x, y) on a vec2 parameter and vec4(x, y, z, w) on a vec4-shaped
+    color parameter give the written components (upstream bf66e1b8). Any other
+    form, including a wrong component count, gives S002 and the default."""
+
+    def test_vec2_on_vec2_parameter_sets_the_components(self):
+        result = compile("search synth\nmedia(imageSize: vec2(640, 480)).write(o0)\nrender(o0)")
+        self.assertEqual(result.get("diagnostics"), [])
+        args = result["plans"][0]["chain"][0]["args"]
+        self.assertEqual(args["imageSize"], [640, 480])
+
+    def test_vec2_on_vec2_parameter_rejects_non_numbers(self):
+        result = compile("search synth\nmedia(imageSize: vec2(a, 480)).write(o0)\nrender(o0)")
+        self.assertEqual([d["code"] for d in result.get("diagnostics") or []], ["S002"])
+        args = result["plans"][0]["chain"][0]["args"]
+        self.assertEqual(args["imageSize"], [0, 480])
+
+    def test_wrong_component_count_takes_the_default_branch(self):
+        result = compile("search synth\nmedia(imageSize: vec2(640, 480, 16)).write(o0)\nrender(o0)")
+        self.assertEqual([d["code"] for d in result.get("diagnostics") or []], ["S002"])
+        args = result["plans"][0]["chain"][0]["args"]
+        self.assertEqual(args["imageSize"], [1024, 1024])
+
+    def test_vec4_on_a_color_parameter_still_takes_the_color_branch(self):
+        # A color parameter keeps the S002-plus-default behavior; the vec4
+        # branch only applies when the default holds four components.
+        result = compile("search synth\nremap(bgColor: vec4(0.2, 0.4, 0.6, 1.0)).write(o0)\nrender(o0)")
+        self.assertEqual([d["code"] for d in result.get("diagnostics") or []], ["S002"])
+        args = result["plans"][0]["chain"][0]["args"]
+        self.assertEqual(args["bgColor"], [0, 0, 0])
+
+
 class UniformAliasExpansionTests(unittest.TestCase):
     """The expander records a renamed pass-level uniform mapping on the pass
     (upstream bd773801, runtime/uniform-aliases.js) so runtime parameter

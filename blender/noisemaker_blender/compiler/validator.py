@@ -917,6 +917,8 @@ def _resolve_args(
             _resolve_surface(def_, node, args, arg_key, call, original, push_diag, process_chain, get_starter_info, symbols, call_to_surface)
         elif def_type == "color":
             _resolve_color(def_, node, args, arg_key, call, push_diag)
+        elif def_type == "vec2":
+            _resolve_vec2(def_, node, args, arg_key, call, push_diag)
         elif def_type == "vec3":
             _resolve_vec3(def_, node, args, arg_key, call, push_diag)
         elif def_type == "vec4":
@@ -988,6 +990,16 @@ def _resolve_color(def_, node, args, arg_key, call, push_diag):
         push_diag("S001", node, "String literal not allowed for color parameter '%s'" % def_["name"])
         args[arg_key] = default
         return
+    # vec4(x, y, z, w) on a color parameter whose default keeps four
+    # components (the loader registers vec4 parameters as `color`).
+    # Any other form, including a wrong component count, falls through.
+    if (
+        node and node.get("type") == "Call" and node.get("name") == "vec4"
+        and node.get("args") and len(node["args"]) == 4
+        and isinstance(default, list) and len(default) == 4
+    ):
+        args[arg_key] = _vec_call_components(node, def_, call, push_diag)
+        return
     if node and node.get("type") == "Color":
         value = node.get("hex") if node.get("hex") else node.get("value")
     else:
@@ -995,6 +1007,32 @@ def _resolve_color(def_, node, args, arg_key, call, push_diag):
             push_diag("S002", node, "Argument out of range for '%s' in %s()" % (def_["name"], call.get("name")))
         value = default
     args[arg_key] = value
+
+
+def _vec_call_components(node, def_, call, push_diag):
+    """Number components of a vec2()/vec4() call; a non-Number gives S002 and 0."""
+    value = []
+    for arg in node["args"]:
+        if arg.get("type") == "Number":
+            value.append(arg["value"])
+        else:
+            push_diag("S002", arg, "Argument out of range for '%s' in %s()" % (def_["name"], call.get("name")))
+            value.append(0)
+    return value
+
+
+def _resolve_vec2(def_, node, args, arg_key, call, push_diag):
+    default = def_.get("default")
+    if node and node.get("type") == "String":
+        push_diag("S001", node, "String literal not allowed for vec2 parameter '%s'" % def_["name"])
+        args[arg_key] = list(default) if default else [0, 0]
+        return
+    if node and node.get("type") == "Call" and node.get("name") == "vec2" and node.get("args") and len(node["args"]) == 2:
+        args[arg_key] = _vec_call_components(node, def_, call, push_diag)
+    else:
+        if node and node.get("type") and node.get("type") != "Ident":
+            push_diag("S002", node, "Argument out of range for '%s' in %s()" % (def_["name"], call.get("name")))
+        args[arg_key] = list(default) if default else [0, 0]
 
 
 def _resolve_vec3(def_, node, args, arg_key, call, push_diag):
