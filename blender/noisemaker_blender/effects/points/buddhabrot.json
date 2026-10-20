@@ -8,6 +8,11 @@
   ],
   "defaultProgram": "search points, synth, render\n\nperlin()\n  .pointsEmit(stateSize: 512)\n  .buddhabrot()\n  .pointsRender(intensity: 99)\n  .write(o0)\n\nrender(o0)",
   "globals": {
+    "diffuseTex": {
+      "type": "surface",
+      "default": "none",
+      "colorModeUniform": "diffuseActive"
+    },
     "stateSize": {
       "type": "int",
       "default": 512,
@@ -65,7 +70,8 @@
       "inputs": {
         "xyzTex": "global_xyz",
         "velTex": "global_vel",
-        "rgbaTex": "global_rgba"
+        "rgbaTex": "global_rgba",
+        "diffuseTex": "diffuseTex"
       },
       "outputs": {
         "outXYZ": "global_xyz",
@@ -78,7 +84,8 @@
         "mode": "mode",
         "centerX": "centerX",
         "centerY": "centerY",
-        "zoom": "zoom"
+        "zoom": "zoom",
+        "diffuseActive": "diffuseActive"
       },
       "drawBuffers": 3
     },

@@ -19,6 +19,10 @@
     [
       "FLOAT",
       "speed"
+    ],
+    [
+      "FLOAT",
+      "diffuseActive"
     ]
   ],
   "samplers": [
@@ -36,6 +40,11 @@
       2,
       "FLOAT_2D",
       "rgbaTex"
+    ],
+    [
+      3,
+      "FLOAT_2D",
+      "diffuseTex"
     ]
   ],
   "fragmentOut": [

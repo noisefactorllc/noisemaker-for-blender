@@ -10,6 +10,11 @@
 
 // Input state from pipeline (from pointsEmit)
 
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 // Output state (MRT with 4 outputs)
 
 // === HASH FUNCTIONS ===
@@ -270,7 +275,9 @@ void main() {
     outXYZ = vec4(pos, 0.0, 1.0);
     outVel = vec4(velocity, age, seed);
     
-    if (useTypeColor) {
+    if (diffuseActive > 0.5) {
+        outRGBA = texture(diffuseTex, pos);
+    } else if (useTypeColor) {
         outRGBA = vec4(typeColor(int(typeId), typeCount), 1.0);
     } else {
         outRGBA = nmTex(inputTex, pos);

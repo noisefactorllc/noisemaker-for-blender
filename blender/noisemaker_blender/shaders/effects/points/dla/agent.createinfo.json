@@ -31,6 +31,14 @@
     [
       "BOOL",
       "resetState"
+    ],
+    [
+      "FLOAT",
+      "fieldActive"
+    ],
+    [
+      "FLOAT",
+      "diffuseActive"
     ]
   ],
   "samplers": [
@@ -58,6 +66,16 @@
       4,
       "FLOAT_2D",
       "inputTex"
+    ],
+    [
+      5,
+      "FLOAT_2D",
+      "fieldTex"
+    ],
+    [
+      6,
+      "FLOAT_2D",
+      "diffuseTex"
     ]
   ],
   "fragmentOut": [

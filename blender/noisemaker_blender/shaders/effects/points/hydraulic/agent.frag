@@ -7,6 +7,11 @@
 
 // Output state (MRT)
 
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 // === ORIGINAL HFLOW HELPER FUNCTIONS (PRESERVED EXACTLY) ===
 
 vec2 hash2(uint seed) {
@@ -58,7 +63,7 @@ float oklab_l(vec3 rgb) {
 vec4 fetch_texel(int x, int y, int width, int height) {
     int wrapped_x = wrap_int(x, width);
     int wrapped_y = wrap_int(y, height);
-    return texelFetch(inputTex, ivec2(wrapped_x, wrapped_y), 0);
+    return fieldActive > 0.5 ? texelFetch(heightTex, ivec2(wrapped_x, wrapped_y), 0) : texelFetch(inputTex, ivec2(wrapped_x, wrapped_y), 0);
 }
 
 float luminance_at(int x, int y, int width, int height) {
@@ -182,5 +187,5 @@ void main() {
     
     outXYZ = vec4(newPx, newPy, xyz.z, alive);
     outVel = vec4(normVx, normVy, vz, seed_f);
-    outRGBA = rgba;
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
 }

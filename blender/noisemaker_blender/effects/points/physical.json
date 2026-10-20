@@ -6,6 +6,11 @@
     "sim"
   ],
   "globals": {
+    "diffuseTex": {
+      "type": "surface",
+      "default": "none",
+      "colorModeUniform": "diffuseActive"
+    },
     "stateSize": {
       "type": "int",
       "default": 256,
@@ -61,7 +66,8 @@
       "inputs": {
         "xyzTex": "global_xyz",
         "velTex": "global_vel",
-        "rgbaTex": "global_rgba"
+        "rgbaTex": "global_rgba",
+        "diffuseTex": "diffuseTex"
       },
       "outputs": {
         "outXYZ": "global_xyz",
@@ -74,7 +80,8 @@
         "energy": "energy",
         "drag": "drag",
         "deviation": "deviation",
-        "wander": "wander"
+        "wander": "wander",
+        "diffuseActive": "diffuseActive"
       },
       "drawBuffers": 3
     },
