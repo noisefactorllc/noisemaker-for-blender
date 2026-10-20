@@ -66,6 +66,14 @@ _UNDEFINED = object()
 # {"kind":"pipeline",...} dict leaks into pass_obj["uniforms"] as a bogus value.
 _TEXTURE_ARG_KINDS = ("temp", "output", "source", "feedback", "vol", "geo", "xyz", "vel", "rgba", "pipeline")
 
+# Compiled control-flow plan type -> DSL keyword (upstream 79c7f089)
+_CONTROL_FLOW_KEYWORDS = {
+    "Branch": "if",
+    "Break": "break",
+    "Continue": "continue",
+    "Return": "return",
+}
+
 
 def _is_texture_arg(arg):
     """Port of ``isTextureArg``."""
@@ -216,6 +224,12 @@ def expand(compilation_result, options=None):
 
     # 1. Expand each plan into passes
     for plan in plans:
+        # Branch, Break, Continue and Return plans have no chain. The parser
+        # and validator accept them, but the runtime does not execute them.
+        if not isinstance(plan.get("chain"), list):
+            keyword = _CONTROL_FLOW_KEYWORDS.get(plan.get("type"), plan.get("type"))
+            errors.append({"message": "The runtime does not yet execute control flow ('%s')" % keyword})
+            continue
         # Each plan is a chain of effects. Track the "current" output texture as
         # we traverse the chain.
         current_input = None       # 2D pipeline texture

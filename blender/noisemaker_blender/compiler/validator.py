@@ -113,6 +113,15 @@ def _is_number(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def _plan_index(v):
+    """JS ``v.planIndex ?? 0``: the number of plans written before this let
+    (set by the parser, non-enumerable)."""
+    plan_index = getattr(v, "planIndex", None)
+    if plan_index is None:
+        return 0
+    return plan_index
+
+
 def _to_surface(arg):
     """Port of ``toSurface``."""
     if not arg or not isinstance(arg, dict):
@@ -166,6 +175,10 @@ def validate(ast):
         return "[%s]" % (node.get("type") or "unknown")
 
     def push_diag(code, node, message=_UNDEF):
+        # Identifier nodes that already have their S003 for a read before the
+        # let get no other diagnostic (upstream's readsBeforeLet WeakSet).
+        if isinstance(node, dict) and id(node) in reads_before_let:
+            return
         if message is _UNDEF:
             message = DIAGNOSTICS[code]["message"]
         enriched_message = message
@@ -311,6 +324,7 @@ def validate(ast):
         return bool(starter and starter["index"] == 0)
 
     reported_automation_cycles = set()
+    reads_before_let = set()
 
     def substitute(node, resolving=None):
         if resolving is None:
@@ -365,42 +379,90 @@ def validate(ast):
         return node
 
     # --- variable declarations ------------------------------------------------
-    if isinstance(ast.get("vars"), list):
-        for v in ast["vars"]:
-            expr = substitute(clone(v.get("expr")), [v["name"]])
-            if expr and is_starter_chain(expr):
-                head = first_chain_call(expr)
-                if head:
-                    push_diag("S006", head)
-            if expr is None or (
-                isinstance(expr, dict)
-                and expr.get("type") == "Ident"
-                and expr.get("name") in ("null", "undefined")
-            ):
-                push_diag("S004", v)
-                continue
-            if (
-                isinstance(expr, dict)
-                and expr.get("type") == "Ident"
-                and expr.get("name") not in symbols
-                and expr.get("name") not in _STATE_VALUES
-                and expr.get("name") not in ops
-                and not can_resolve_op_name(expr.get("name"))
-            ):
-                push_diag("S003", expr)
-                continue
-            if isinstance(expr, dict) and expr.get("type") == "Chain" and len(expr["chain"]) == 1:
-                symbols[v["name"]] = expr["chain"][0]
-            elif isinstance(expr, dict) and expr.get("type") == "Member":
-                resolved = resolve_enum(expr["path"])
-                if _is_number(resolved):
-                    symbols[v["name"]] = {"type": "Number", "value": resolved}
-                elif resolved is not _UNDEF:
-                    symbols[v["name"]] = resolved
-                else:
-                    symbols[v["name"]] = expr
+    # Top-level lets are declared in statement order (see the plan loop).
+    # `pending_lets` holds the names of the lets that come after the current
+    # statement (upstream 9cc041d0).
+    top_level_vars = ast.get("vars") if isinstance(ast.get("vars"), list) else []
+    next_var = [0]
+    pending_lets = [set()]
+
+    def declare_var(v):
+        expr = substitute(clone(v.get("expr")), [v["name"]])
+        if expr and is_starter_chain(expr):
+            head = first_chain_call(expr)
+            if head:
+                push_diag("S006", head)
+        if expr is None or (
+            isinstance(expr, dict)
+            and expr.get("type") == "Ident"
+            and expr.get("name") in ("null", "undefined")
+        ):
+            push_diag("S004", v)
+            return
+        if (
+            isinstance(expr, dict)
+            and expr.get("type") == "Ident"
+            and expr.get("name") not in symbols
+            and expr.get("name") not in _STATE_VALUES
+            and expr.get("name") not in ops
+            and not can_resolve_op_name(expr.get("name"))
+        ):
+            push_diag("S003", expr)
+            return
+        if isinstance(expr, dict) and expr.get("type") == "Chain" and len(expr["chain"]) == 1:
+            symbols[v["name"]] = expr["chain"][0]
+        elif isinstance(expr, dict) and expr.get("type") == "Member":
+            resolved = resolve_enum(expr["path"])
+            if _is_number(resolved):
+                symbols[v["name"]] = {"type": "Number", "value": resolved}
+            elif resolved is not _UNDEF:
+                symbols[v["name"]] = resolved
             else:
                 symbols[v["name"]] = expr
+        else:
+            symbols[v["name"]] = expr
+
+    def declare_vars_before(plan_index):
+        while (
+            next_var[0] < len(top_level_vars)
+            and _plan_index(top_level_vars[next_var[0]]) <= plan_index
+        ):
+            declare_var(top_level_vars[next_var[0]])
+            next_var[0] += 1
+        pending_lets[0] = {v["name"] for v in top_level_vars[next_var[0]:]}
+
+    # A statement that reads a variable before any let assigns it gets
+    # S003 "Variable used before assignment" at the identifier. Other
+    # diagnostics for that identifier node are not added.
+    def report_reads_before_let(node):
+        if not pending_lets[0] or not isinstance(node, (dict, list)):
+            return
+        if isinstance(node, list):
+            for item in node:
+                report_reads_before_let(item)
+            return
+        if (
+            node.get("type") == "Ident"
+            and node.get("name") in pending_lets[0]
+            and node.get("name") not in symbols
+        ):
+            if id(node) not in reads_before_let:
+                position = getattr(node, "position", None)
+                if position:
+                    push_diag(
+                        "S003",
+                        {
+                            "type": "Ident",
+                            "name": node["name"],
+                            "loc": {"line": position["line"], "column": position["column"]},
+                        },
+                    )
+                else:
+                    push_diag("S003", {"type": "Ident", "name": node["name"]})
+                reads_before_let.add(id(node))
+            return
+        for value in node.values():
+            report_reads_before_let(value)
 
     def eval_expr(node):
         expr = substitute(clone(node))
@@ -476,6 +538,7 @@ def validate(ast):
 
     def compile_chain_statement(stmt):
         chain = []
+        report_reads_before_let(stmt["chain"])
         chain_node = {"type": "Chain", "chain": stmt["chain"]}
         has_write = bool(stmt.get("write") or stmt.get("write3d"))
         if not has_write and is_starter_chain(chain_node):
@@ -778,19 +841,38 @@ def validate(ast):
 
     def compile_block(body):
         result = []
+        # A `let` inside a block applies to the rest of that block only, so a
+        # block cannot change how statements outside it compile.
+        shadowed = {}
         for s in body or []:
+            if s.get("type") == "VarAssign":
+                if s["name"] not in shadowed:
+                    shadowed[s["name"]] = (
+                        {"value": symbols[s["name"]]} if s["name"] in symbols else None
+                    )
+                declare_var(s)
+                # Kept as the parser node, like the top-level `vars` entries
+                result.append(s)
+                continue
             compiled = compile_stmt(s)
             if compiled:
                 result.append(compiled)
+        for name, previous in shadowed.items():
+            if previous:
+                symbols[name] = previous["value"]
+            else:
+                symbols.pop(name, None)
         return result
 
     def compile_stmt(stmt):
         t = stmt.get("type")
         if t == "IfStmt":
+            report_reads_before_let(stmt["condition"])
             cond = eval_condition(stmt["condition"])
             then_branch = compile_block(stmt.get("then"))
             elif_ = []
             for e in stmt.get("elif") or []:
+                report_reads_before_let(e["condition"])
                 elif_.append({"cond": eval_condition(e["condition"]), "then": compile_block(e.get("then"))})
             else_branch = compile_block(stmt.get("else"))
             return {"type": "Branch", "cond": cond, "then": then_branch, "elif": elif_, "else": else_branch}
@@ -801,14 +883,21 @@ def validate(ast):
         if t == "Return":
             node = {"type": "Return"}
             if stmt.get("value"):
+                report_reads_before_let(stmt["value"])
                 node["value"] = eval_expr(stmt["value"])
             return node
         return compile_chain_statement(stmt)
 
-    for stmt in ast.get("plans") or []:
-        compiled = compile_stmt(stmt)
+    # Statements compile in order. Each one sees the lets written before it,
+    # and the latest assignment of a name wins. Lets that come after the
+    # last statement are still declared, so their own checks run.
+    statements = ast.get("plans") or []
+    for index in range(len(statements)):
+        declare_vars_before(index)
+        compiled = compile_stmt(statements[index])
         if compiled:
             plans.append(compiled)
+    declare_vars_before(float("inf"))
 
     vars_ = ast.get("vars") or []
     search_namespaces = program_search_order or []

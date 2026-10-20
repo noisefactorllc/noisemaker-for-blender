@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "blender"))
 
 from noisemaker_blender.compiler import (  # noqa: E402
     CompilationError,
+    ExpansionError,
     compile,
     compile_graph,
     lex,
@@ -91,6 +92,151 @@ class VecComponentCallTests(unittest.TestCase):
         self.assertEqual([d["code"] for d in result.get("diagnostics") or []], ["S002"])
         args = result["plans"][0]["chain"][0]["args"]
         self.assertEqual(args["bgColor"], [0, 0, 0])
+
+
+class StatementOrderTests(unittest.TestCase):
+    """Upstream 9cc041d0 (GAP-011): lets are declared in statement order. A
+    chain sees only the lets written before it, and the latest assignment of
+    a name wins. Lets in that set may still refer to each other in any order.
+    A chain that reads a variable before any let assigns it gets S003
+    "Variable used before assignment" at the identifier."""
+
+    def test_a_chain_sees_the_lets_written_before_it(self):
+        result = compile(
+            "search synth\n"
+            "let a = 25\n"
+            "noise(scaleX: a).write(o0)\n"
+            "let b = 75\n"
+            "noise(scaleX: b).write(o1)\n"
+            "render(o0)"
+        )
+        self.assertEqual(result.get("diagnostics"), [])
+        self.assertEqual(
+            result["plans"][0]["chain"][0]["args"]["scaleX"],
+            {"_varRef": "a", "value": 25},
+        )
+        self.assertEqual(
+            result["plans"][1]["chain"][0]["args"]["scaleX"],
+            {"_varRef": "b", "value": 75},
+        )
+
+    def test_a_second_let_of_a_name_changes_only_later_chains(self):
+        result = compile(
+            "search synth\n"
+            "let a = 25\n"
+            "noise(scaleX: a).write(o0)\n"
+            "let a = 75\n"
+            "noise(scaleX: a).write(o1)\n"
+            "render(o0)"
+        )
+        self.assertEqual(result.get("diagnostics"), [])
+        self.assertEqual(
+            result["plans"][0]["chain"][0]["args"]["scaleX"]["value"], 25)
+        self.assertEqual(
+            result["plans"][1]["chain"][0]["args"]["scaleX"]["value"], 75)
+
+    def test_a_chain_reading_a_later_let_gets_s003_at_the_identifier(self):
+        result = compile(
+            "search synth\n"
+            "noise(speed: bassReact).write(o0)\n"
+            "let bassReact = audio(band: 0, min: 0.9, max: 6.6)\n"
+            "render(o0)"
+        )
+        s003 = [d for d in result.get("diagnostics") or [] if d["code"] == "S003"]
+        self.assertEqual(len(s003), 1)
+        self.assertEqual(s003[0].get("identifier"), "bassReact")
+        self.assertEqual(s003[0].get("location"), {"line": 2, "column": 14})
+
+    def test_lets_that_refer_to_later_lets_still_compile(self):
+        # The shipped example programs declare an osc() let whose speed reads
+        # an audio() let that comes after it. Lets up to the current statement
+        # are declared together, so that forward reference still resolves.
+        result = compile(
+            "search synth, mixer\n"
+            "let osc1 = osc(type: oscKind.sawInv, speed: bassReact)\n"
+            "let bassReact = audio(band: 0, min: 0.9, max: 6.6)\n"
+            "noise(speed: osc1).write(o0)\n"
+            "render(o0)"
+        )
+        self.assertEqual(result.get("diagnostics"), [])
+        speed = result["plans"][0]["chain"][0]["args"]["speed"]
+        self.assertEqual(speed.get("type"), "Oscillator")
+        self.assertEqual(speed["speed"].get("type"), "Audio")
+
+
+class BlockStatementTests(unittest.TestCase):
+    """Upstream 4d05e186 / 660e2680 (GAP-010): a let inside an if block
+    compiles and applies to the rest of that block only, and comment lines
+    inside a block parse, attaching to the next statement."""
+
+    def test_a_let_inside_an_if_block_compiles(self):
+        result = compile(
+            "search synth\n"
+            "let x = 25\n"
+            "if (1) {\n"
+            "  let x = 50\n"
+            "  noise(scaleX: x).write(o0)\n"
+            "}\n"
+            "noise(scaleX: x).write(o1)\n"
+            "render(o0)"
+        )
+        self.assertEqual(result.get("diagnostics"), [])
+        branch = result["plans"][0]
+        self.assertEqual(branch["type"], "Branch")
+        inner = branch["then"][0]
+        self.assertEqual(inner["type"], "VarAssign")
+        self.assertEqual(inner["name"], "x")
+        self.assertEqual(
+            branch["then"][1]["chain"][0]["args"]["scaleX"],
+            {"_varRef": "x", "value": 50},
+        )
+        # The block-scoped let does not leak past the closing brace.
+        self.assertEqual(
+            result["plans"][1]["chain"][0]["args"]["scaleX"],
+            {"_varRef": "x", "value": 25},
+        )
+
+    def test_comment_lines_inside_an_if_block_parse(self):
+        ast = parse(lex(
+            "search synth\n"
+            "if (1) {\n"
+            "  // leading\n"
+            "  noise().write(o0)\n"
+            "}\n"
+            "render(o0)"
+        ))
+        branch = ast["plans"][0]
+        self.assertEqual(branch["then"][0].get("leadingComments"), ["// leading"])
+
+
+class ControlFlowExpansionTests(unittest.TestCase):
+    """Upstream 79c7f089 (GAP-010): expand() reports each control-flow plan
+    ("The runtime does not yet execute control flow ('<keyword>')") instead of
+    throwing a raw TypeError, so compileGraph() rejects with the documented
+    ERR_EXPANSION_FAILED shape."""
+
+    def test_expand_reports_control_flow_keywords(self):
+        cases = [
+            ("if (1) { }", "if"),
+            ("break", "break"),
+            ("continue", "continue"),
+            ("return", "return"),
+        ]
+        for stmt_src, keyword in cases:
+            with self.subTest(stmt=stmt_src):
+                src = "search synth\nnoise().write(o0)\n%s\nrender(o0)" % stmt_src
+                result = validate(parse(lex(src)))
+                expanded = expand(result)
+                messages = [e["message"] for e in expanded.get("errors") or []]
+                self.assertIn(
+                    "The runtime does not yet execute control flow ('%s')" % keyword,
+                    messages,
+                )
+
+    def test_compile_graph_rejects_control_flow(self):
+        with self.assertRaises(ExpansionError) as ctx:
+            compile_graph("search synth\nnoise().write(o0)\nbreak\nrender(o0)")
+        self.assertEqual(ctx.exception.code, "ERR_EXPANSION_FAILED")
 
 
 class UniformAliasExpansionTests(unittest.TestCase):

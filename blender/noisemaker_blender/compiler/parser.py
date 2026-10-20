@@ -129,6 +129,7 @@ def _js_binary_number(left, right, operator):
 class AstNode(dict):
     """AST node dict subclass carrying non-enumerable compiler metadata."""
     position: dict | None = None
+    planIndex: int | None = None
     subchainArgumentDiagnostics: list | None = None
 
 
@@ -598,7 +599,12 @@ def parse(tokens, options=None):
             if not stmt or not isinstance(stmt, dict):
                 return
             if stmt.get("type") == "VarAssign":
-                variables.append(stmt)
+                # Statement order: the number of plans written before this let.
+                # Non-enumerable in the reference (an AstNode attribute here), so
+                # the serialized AST shape is unchanged.
+                node = stmt if isinstance(stmt, AstNode) else AstNode(stmt)
+                node.planIndex = len(plans)
+                variables.append(node)
             else:
                 plans.append(stmt)
 
@@ -739,8 +745,18 @@ def parse(tokens, options=None):
     def parse_block():
         expect("LBRACE", "Expect '{'")
         body = []
-        while peek()["type"] != "RBRACE":
+        while True:
+            # Comments attach to the next statement, as at top level
+            leading_comments = collect_comments()
+            if peek()["type"] == "RBRACE":
+                # Comments before '}' have no statement. The reference keeps
+                # them on the block as a non-enumerable trailingComments list;
+                # only the unparser reads it, and this port has no unparser,
+                # so they end here.
+                break
             stmt = parse_statement()
+            if len(leading_comments) > 0:
+                stmt["leadingComments"] = leading_comments
             body.append(stmt)
             while peek()["type"] == "SEMICOLON":
                 advance()
@@ -1328,7 +1344,20 @@ def parse(tokens, options=None):
                 path.append(nxt["lexeme"])
             if len(path) > 1:
                 return {"type": "Member", "path": path}
-            return {"type": "Ident", "name": path[0]}
+            ident = {"type": "Ident", "name": path[0]}
+            # Private source position for structured diagnostics; the
+            # public AST shape is unchanged.
+            ident_position = getattr(token, "position", None)
+            if ident_position:
+                ident_node = AstNode(ident)
+                ident_node.position = {
+                    "line": ident_position["line"],
+                    "column": ident_position["column"],
+                    "start": ident_position["start"],
+                    "end": ident_position["end"],
+                }
+                return ident_node
+            return ident
         if tt == "OUTPUT_REF":
             advance()
             return {"type": "OutputRef", "name": token["lexeme"]}
