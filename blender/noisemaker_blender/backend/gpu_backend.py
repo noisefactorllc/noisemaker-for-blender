@@ -472,6 +472,18 @@ class GpuBackend:
             # dropped uniform can't masquerade as a correct render.
             _warn_uniform_once(name, ctype, value)
 
+    def _default_texture(self):
+        """A 1x1 transparent-black texture for declared samplers the pass
+        lists no input for, as the reference WebGL2 backend binds its
+        default texture. Created lazily so GPU-free construction (harness
+        contract: instances built via ``__new__``) never touches it."""
+        tex = self.__dict__.get("_default_texture_cache")
+        if tex is None:
+            tex = GPUTexture((1, 1), format="RGBA32F",
+                             data=Buffer("FLOAT", 4, np.zeros(4, dtype=np.float32)))
+            self.__dict__["_default_texture_cache"] = tex
+        return tex
+
     def _bind_inputs(self, shader, desc, rev, merged, inputs, graph):
         fields = desc.get("pushConstants", [])
         if desc.get("ubo"):
@@ -498,6 +510,11 @@ class GpuBackend:
             tid = inputs.get(rev.get(name, name))
             if tid is not None and tid != "none":
                 shader.uniform_sampler(name, self._read(tid, graph).texture_color)
+            else:
+                # A declared sampler that the pass lists no input for gets the
+                # default texture (transparent black). Left alone it would keep
+                # unit 0 and sample the first bound input instead.
+                shader.uniform_sampler(name, self._default_texture())
 
     # ---- asyncInit overlays -----------------------------------------------
     def _sync_async_overlay(self, p, graph):

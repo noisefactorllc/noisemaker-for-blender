@@ -33,6 +33,10 @@
       "weight"
     ],
     [
+      "INT",
+      "colorMode"
+    ],
+    [
       "BOOL",
       "resetState"
     ]
@@ -57,7 +61,7 @@
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 48,
+  "std140Bytes": 52,
   "ubo": false,
   "notes": []
 }
