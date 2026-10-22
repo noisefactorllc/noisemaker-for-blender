@@ -6,15 +6,15 @@
     "sim"
   ],
   "globals": {
-    "heightTex": {
-      "type": "surface",
-      "default": "none",
-      "colorModeUniform": "fieldActive"
-    },
     "diffuseTex": {
       "type": "surface",
       "default": "none",
       "colorModeUniform": "diffuseActive"
+    },
+    "fieldTex": {
+      "type": "surface",
+      "default": "none",
+      "colorModeUniform": "fieldActive"
     },
     "stateSize": {
       "type": "int",
@@ -78,7 +78,7 @@
         "velTex": "global_vel",
         "rgbaTex": "global_rgba",
         "inputTex": "inputTex",
-        "heightTex": "heightTex",
+        "fieldTex": "fieldTex",
         "diffuseTex": "diffuseTex"
       },
       "outputs": {

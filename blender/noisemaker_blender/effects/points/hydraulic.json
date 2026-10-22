@@ -6,15 +6,15 @@
     "sim"
   ],
   "globals": {
-    "heightTex": {
-      "type": "surface",
-      "default": "none",
-      "colorModeUniform": "fieldActive"
-    },
     "diffuseTex": {
       "type": "surface",
       "default": "none",
       "colorModeUniform": "diffuseActive"
+    },
+    "heightTex": {
+      "type": "surface",
+      "default": "none",
+      "colorModeUniform": "fieldActive"
     },
     "stride": {
       "type": "float",
