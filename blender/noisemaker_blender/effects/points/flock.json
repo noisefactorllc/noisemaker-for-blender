@@ -6,11 +6,6 @@
     "sim"
   ],
   "globals": {
-    "diffuseTex": {
-      "type": "surface",
-      "default": "none",
-      "colorModeUniform": "diffuseActive"
-    },
     "separation": {
       "type": "float",
       "default": 2,
@@ -91,8 +86,7 @@
       "inputs": {
         "xyzTex": "global_xyz",
         "velTex": "global_vel",
-        "rgbaTex": "global_rgba",
-        "diffuseTex": "diffuseTex"
+        "rgbaTex": "global_rgba"
       },
       "outputs": {
         "outXYZ": "global_xyz",
@@ -109,8 +103,7 @@
         "maxForce": "maxForce",
         "boundaryMode": "boundaryMode",
         "wallMargin": "wallMargin",
-        "noiseWeight": "noiseWeight",
-        "diffuseActive": "diffuseActive"
+        "noiseWeight": "noiseWeight"
       },
       "drawBuffers": 3
     },

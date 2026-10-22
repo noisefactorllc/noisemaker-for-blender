@@ -19,10 +19,6 @@
     [
       "FLOAT",
       "dt"
-    ],
-    [
-      "FLOAT",
-      "diffuseActive"
     ]
   ],
   "samplers": [
@@ -45,11 +41,6 @@
       3,
       "FLOAT_2D",
       "fieldTex"
-    ],
-    [
-      4,
-      "FLOAT_2D",
-      "diffuseTex"
     ]
   ],
   "fragmentOut": [

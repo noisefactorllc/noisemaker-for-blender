@@ -31,10 +31,6 @@
     [
       "FLOAT",
       "wander"
-    ],
-    [
-      "FLOAT",
-      "diffuseActive"
     ]
   ],
   "samplers": [
@@ -57,11 +53,6 @@
       3,
       "FLOAT_2D",
       "rgbaTex"
-    ],
-    [
-      4,
-      "FLOAT_2D",
-      "diffuseTex"
     ]
   ],
   "fragmentOut": [

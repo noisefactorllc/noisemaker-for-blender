@@ -23,14 +23,6 @@
     [
       "FLOAT",
       "inputWeight"
-    ],
-    [
-      "FLOAT",
-      "fieldActive"
-    ],
-    [
-      "FLOAT",
-      "diffuseActive"
     ]
   ],
   "samplers": [
@@ -53,16 +45,6 @@
       3,
       "FLOAT_2D",
       "rgbaTex"
-    ],
-    [
-      4,
-      "FLOAT_2D",
-      "heightTex"
-    ],
-    [
-      5,
-      "FLOAT_2D",
-      "diffuseTex"
     ]
   ],
   "fragmentOut": [

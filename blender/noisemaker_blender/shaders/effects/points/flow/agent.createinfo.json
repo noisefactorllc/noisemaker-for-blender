@@ -31,14 +31,6 @@
     [
       "FLOAT",
       "behavior"
-    ],
-    [
-      "FLOAT",
-      "fieldActive"
-    ],
-    [
-      "FLOAT",
-      "diffuseActive"
     ]
   ],
   "samplers": [
@@ -61,16 +53,6 @@
       3,
       "FLOAT_2D",
       "rgbaTex"
-    ],
-    [
-      4,
-      "FLOAT_2D",
-      "fieldTex"
-    ],
-    [
-      5,
-      "FLOAT_2D",
-      "diffuseTex"
     ]
   ],
   "fragmentOut": [

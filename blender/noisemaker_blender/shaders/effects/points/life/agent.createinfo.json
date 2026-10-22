@@ -51,10 +51,6 @@
     [
       "BOOL",
       "useTypeColor"
-    ],
-    [
-      "FLOAT",
-      "diffuseActive"
     ]
   ],
   "samplers": [
@@ -87,11 +83,6 @@
       5,
       "FLOAT_2D",
       "inputTex"
-    ],
-    [
-      6,
-      "FLOAT_2D",
-      "diffuseTex"
     ]
   ],
   "fragmentOut": [

@@ -7,11 +7,6 @@
 
 // Output state (MRT)
 
-vec4 selectedDiffuse(vec2 uv) {
-    ivec2 size = textureSize(diffuseTex, 0);
-    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
-    return texelFetch(diffuseTex, pixel, 0);
-}
 const float TAU = 6.283185307179586;
 const float RIGHT_ANGLE = 1.5707963267948966;
 
@@ -110,10 +105,10 @@ void main() {
     }
     
     // Sample input texture at current position for flow direction
-    ivec2 texSize = fieldActive > 0.5 ? textureSize(fieldTex, 0) : textureSize(inputTex, 0);
+    ivec2 texSize = textureSize(inputTex, 0);
     ivec2 texCoord = ivec2(px * float(texSize.x), py * float(texSize.y));
     texCoord = clamp(texCoord, ivec2(0), texSize - 1);
-    vec4 texel = fieldActive > 0.5 ? texelFetch(fieldTex, texCoord, 0) : texelFetch(inputTex, texCoord, 0);
+    vec4 texel = texelFetch(inputTex, texCoord, 0);
     float inputLuma = oklab_l(texel.rgb);
     
     // inputWeight controls how much the input texture influences flow direction
@@ -151,5 +146,5 @@ void main() {
     // Output updated state - attrition is handled by pointsEmit
     outXYZ = vec4(newX, newY, pz, 1.0);
     outVel = vec4(0.0, 0.0, rotRand, strideRand);
-    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
+    outRGBA = rgba;
 }

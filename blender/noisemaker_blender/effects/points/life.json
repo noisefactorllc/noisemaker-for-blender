@@ -6,11 +6,6 @@
     "sim"
   ],
   "globals": {
-    "diffuseTex": {
-      "type": "surface",
-      "default": "none",
-      "colorModeUniform": "diffuseActive"
-    },
     "stateSize": {
       "type": "int",
       "default": 256,
@@ -115,8 +110,7 @@
         "rgbaTex": "global_rgba",
         "dataTex": "global_life_data",
         "forceMatrix": "forceMatrix",
-        "inputTex": "inputTex",
-        "diffuseTex": "diffuseTex"
+        "inputTex": "inputTex"
       },
       "outputs": {
         "outXYZ": "global_xyz",
@@ -135,8 +129,7 @@
         "boundaryMode": "boundaryMode",
         "matrixSeed": "matrixSeed",
         "symmetricForces": "symmetricForces",
-        "useTypeColor": "useTypeColor",
-        "diffuseActive": "diffuseActive"
+        "useTypeColor": "useTypeColor"
       },
       "drawBuffers": 4
     },

@@ -6,16 +6,6 @@
     "sim"
   ],
   "globals": {
-    "diffuseTex": {
-      "type": "surface",
-      "default": "none",
-      "colorModeUniform": "diffuseActive"
-    },
-    "fieldTex": {
-      "type": "surface",
-      "default": "none",
-      "colorModeUniform": "fieldActive"
-    },
     "stateSize": {
       "type": "int",
       "default": 256,
@@ -77,9 +67,7 @@
         "xyzTex": "global_xyz",
         "velTex": "global_vel",
         "rgbaTex": "global_rgba",
-        "inputTex": "inputTex",
-        "fieldTex": "fieldTex",
-        "diffuseTex": "diffuseTex"
+        "inputTex": "inputTex"
       },
       "outputs": {
         "outXYZ": "global_xyz",
@@ -92,9 +80,7 @@
         "strideDeviation": "strideDeviation",
         "kink": "kink",
         "quantize": "quantize",
-        "inputWeight": "inputWeight",
-        "diffuseActive": "diffuseActive",
-        "fieldActive": "fieldActive"
+        "inputWeight": "inputWeight"
       },
       "drawBuffers": 3
     },

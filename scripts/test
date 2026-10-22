@@ -92,7 +92,12 @@ run_pngread=0
 declare -A seen=()
 unit_selection=()
 gate_selection=()
-add_unit() { [[ -n "${seen[$1]-}" ]] || { seen[$1]=1; unit_selection+=("$1"); }; }
+add_unit() {
+  [[ -f "$1" ]] || return 0
+  [[ -n "${seen[$1]-}" ]] && return 0
+  seen[$1]=1
+  unit_selection+=("$1")
+}
 add_gate() { [[ -n "${seen[gate:$1]-}" ]] || { seen[gate:$1]=1; gate_selection+=("$1"); }; }
 if [[ -n "${NM_CHANGED_FILES:-}" && -n "${NM_CHANGED_FILES//[[:space:]]/}" ]]; then
   run_all=0

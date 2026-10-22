@@ -13,14 +13,6 @@
       "resolution"
     ],
     [
-      "VEC2",
-      "tileOffset"
-    ],
-    [
-      "VEC2",
-      "fullResolution"
-    ],
-    [
       "FLOAT",
       "time"
     ],
@@ -76,7 +68,7 @@
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 96,
+  "std140Bytes": 80,
   "ubo": false,
   "notes": []
 }
