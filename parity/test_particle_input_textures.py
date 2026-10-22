@@ -153,6 +153,17 @@ class ParticleInputTextureTests(unittest.TestCase):
         finally:
             ops_mod.rebuild()
 
+    def test_height_map_is_listed_before_diffuse_map(self):
+        # Upstream 663e7ab..12751c78: every particle behavior lists its height
+        # map before its diffuse map, as heightGrid does.
+        import json
+        for name in ("flow", "dla", "physarum", "hydraulic", "heightGrid"):
+            with self.subTest(effect=name):
+                defn = json.load(open(ROOT / "blender/noisemaker_blender/effects/points" / f"{name}.json"))
+                keys = list(defn["globals"].keys())
+                self.assertIn("heightTex", keys)
+                self.assertLess(keys.index("heightTex"), keys.index("diffuseTex"))
+
 
 if __name__ == "__main__":
     unittest.main()
