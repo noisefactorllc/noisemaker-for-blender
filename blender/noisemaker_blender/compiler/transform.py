@@ -112,10 +112,9 @@ def _type_matches(value, type_):
     return True
 
 
-def _collect_accepted_arg_names(spec, instance):
-    """Port of ``collectAcceptedArgNames`` (post-a1a3fa2a): spec args and
-    instance globals. Upstream retired parameter aliases, so there is no
-    alias-map contribution."""
+def _collect_accepted_arg_names(spec, instance, aliases=None):
+    """Port of ``collectAcceptedArgNames`` (upstream 27a2b58f): spec args,
+    instance globals, and their registered param aliases."""
     accepted = set()
     for def_ in (spec.get("args") or []) if spec else []:
         if def_ and def_.get("name"):
@@ -123,7 +122,17 @@ def _collect_accepted_arg_names(spec, instance):
     if instance:
         for key in (instance.get("globals") or {}).keys():
             accepted.add(key)
+    for name in (aliases or {}).keys():
+        accepted.add(name)
+    for name in (aliases or {}).values():
+        accepted.add(name)
     return accepted
+
+
+def _alias_map_for(resolved_name):
+    """Port of ``aliasMapFor``: the registered alias map for an op."""
+    from . import ops as ops_mod
+    return ops_mod.get_param_aliases(resolved_name)
 
 
 def _predict_backend_support(instance, resolved_name, manifest):
@@ -230,14 +239,15 @@ def predict_replacement(resolved_name, spec, new_args, old_instance, options=Non
             }
         )
 
-    # Upstream a1a3fa2a retired parameter aliases: prediction checks canonical
-    # names only (no alias-map awareness).
-    accepted = _collect_accepted_arg_names(spec, instance)
+    # Upstream 27a2b58f restores paramAliases: prediction resolves deprecated
+    # names through the registered alias map before the accepted-arg checks.
+    aliases = _alias_map_for(resolved_name)
+    accepted = _collect_accepted_arg_names(spec, instance, aliases)
 
     provided = new_args or {}
-    provided_canonical = set(provided.keys())
+    provided_canonical = {aliases.get(key, key) for key in provided.keys()}
     for key in provided.keys():
-        if key not in accepted:
+        if aliases.get(key, key) not in accepted:
             prediction["arguments"]["unknown"].append(key)
     known_defs = {}
     for def_ in (spec.get("args") or []) if spec else []:
@@ -261,7 +271,8 @@ def predict_replacement(resolved_name, spec, new_args, old_instance, options=Non
 
     # Type and range checks
     for key, value in provided.items():
-        def_ = known_defs.get(key)
+        canonical = aliases.get(key, key)
+        def_ = known_defs.get(canonical)
         if not def_:
             continue
         declared_type = def_.get("type")

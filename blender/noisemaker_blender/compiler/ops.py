@@ -189,23 +189,21 @@ def _register_effect(definition: dict) -> None:
     _OPS[op_key] = {"name": func, "args": args}
 
     # --- param aliases / effect aliases ---------------------------------------
-    # INTENTIONALLY NOT REGISTERED.
-    #
     # The Stage-1 contract is defined by the golden-generating oracle
     # (tools/dump-compile.mjs ``bootstrapReference``), which registers effects,
-    # ops, starter ops, and enums -- but does NOT call registerParamAliases or
-    # registerEffectAlias. Consequently, in the reference compile() output:
-    #   * a deprecated param NAME (e.g. ``noiseType``) is treated as an UNKNOWN
-    #     argument -> S001 (not remapped, no S007); its value is dropped and the
-    #     canonical param keeps its default.
-    #   * a deprecated effect emits NO S008.
-    # (canvas.js DOES register both at runtime, but that path did not produce the
-    # goldens.) Populating ``_PARAM_ALIASES``/``_EFFECT_ALIASES`` here would make
-    # ``resolve_param_aliases``/``check_effect_alias`` diverge from the contract,
-    # so they are deliberately left empty for the built-in catalog. Upstream
-    # a1a3fa2a retired parameter aliases entirely: ``paramAliases`` is no longer
-    # a supported definition field (portable registration fails outright), so no
-    # registration path can populate ``_PARAM_ALIASES`` anymore.
+    # ops, starter ops, and enums. Upstream 27a2b58f moved registration of
+    # ``paramAliases`` into ``registerEffectWithRuntime`` (canvas.js), which
+    # ``bootstrapReference`` replaces with ``registerEffect`` calls per key
+    # form -- so the oracle still does NOT call registerParamAliases, and the
+    # port keeps _PARAM_ALIASES empty for the built-in catalog: a deprecated
+    # param NAME stays an UNKNOWN argument (S001, no remap, no S007) in the
+    # compile() contract, and a deprecated effect emits NO S008. The alias
+    # registry stays registered at runtime (canvas.js line for instance.paramAliases)
+    # for hosts that need it; the port exposes get_param_aliases/resolve_param_aliases
+    # for that shape without touching the golden contract.
+    #
+    # Portable registration keeps upstream's rejection of ``paramAliases``:
+    # registerPortableEffect fails the definition outright.
 
     # --- starter ops ----------------------------------------------------------
     # An explicit boolean ``starter`` on the definition wins (portable
@@ -310,14 +308,29 @@ def get_param_aliases(op_name: str) -> dict:
 def resolve_param_aliases(op_name: str, kwargs: dict):
     """Port of ``paramAliases.resolveParamAliases`` (mutates ``kwargs``).
 
-    Upstream a1a3fa2a deleted paramAliases.js and retired parameter aliases
-    entirely: no registration path can populate ``_PARAM_ALIASES``, so this
-    always returns no warnings and never rewrites kwargs. Kept as a no-op so
-    the validator's call site stays a verbatim port of the post-retirement
-    reference (validator.js no longer calls it at all upstream).
+    Upstream 27a2b58f restores paramAliases.js: ``resolveParamAliases``
+    renames deprecated keys in place, lets the canonical key win when both
+    spellings are present, and returns one deprecation warning per hit. The
+    built-in catalog still never populates ``_PARAM_ALIASES`` (see the
+    registration note above), so for compiled programs this stays a no-op --
+    the port keeps it verbatim so the validator's call site mirrors
+    validator.js.
     """
     _ensure_built()
-    return []
+    aliases = _PARAM_ALIASES.get(op_name)
+    if not aliases:
+        return []
+    warnings = []
+    for old_name in aliases:
+        if old_name not in kwargs:
+            continue
+        new_name = aliases[old_name]
+        if new_name not in kwargs:
+            kwargs[new_name] = kwargs[old_name]
+        del kwargs[old_name]
+        from .lang_data import param_alias_warning
+        warnings.append(param_alias_warning(old_name, new_name))
+    return warnings
 
 
 def check_effect_alias(op_name: str):
@@ -459,8 +472,9 @@ def _validate_portable(definition) -> str:
                 ):
                     _fail("choices for %s must map names to %s or null" % (
                         key, "strings" if spec.get("type") == "string" else "numbers"))
-    # Upstream a1a3fa2a retired parameter aliases: ``paramAliases`` is no longer
-    # a supported definition field and registration fails outright.
+    # Upstream 27a2b58f keeps the portable rejection of ``paramAliases``
+    # (registerPortableEffect still fails the definition outright); only the
+    # built-in catalog re-gained the field (effect-validator accepts it there).
     if "paramAliases" in definition:
         _fail("paramAliases is no longer supported")
     if registry.get_effect("user.%s" % func) or registry.get_effect("user/%s" % func):

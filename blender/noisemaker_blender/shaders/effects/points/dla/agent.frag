@@ -9,6 +9,11 @@
 
 // Output state (MRT)
 
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 // Integer-based hash for deterministic randomness
 uint hash_uint(uint seed) {
     uint state = seed * 747796405u + 2891336453u;
@@ -108,9 +113,9 @@ void main() {
     float inputW = inputWeight / 100.0;
     vec2 stepDir = randomDir;
     if (inputW > 0.0) {
-        ivec2 inputDims = textureSize(inputTex, 0);
+        ivec2 inputDims = fieldActive > 0.5 ? textureSize(heightTex, 0) : textureSize(inputTex, 0);
         ivec2 inputCoord = ivec2(wrap01(pos) * vec2(inputDims));
-        vec4 inputVal = texelFetch(inputTex, inputCoord, 0);
+        vec4 inputVal = fieldActive > 0.5 ? texelFetch(heightTex, inputCoord, 0) : texelFetch(inputTex, inputCoord, 0);
         vec2 inputDir = inputVal.xy * 2.0 - 1.0;
         if (length(inputDir) > 0.01) {
             inputDir = normalize(inputDir);
@@ -148,16 +153,16 @@ void main() {
         // Agent stuck: mark as dead for respawn, flag justStuck for deposit
         outXYZ = vec4(candidate, 0.0, 0.0);  // w=0 signals death to pointsEmit
         outVel = vec4(seed, 1.0, 0.0, agentRand);  // y=1 signals "just stuck" for depositGrid
-        outRGBA = rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : rgba;
     } else if (needsRespawn) {
         // Attrition death: mark for respawn
         outXYZ = vec4(candidate, 0.0, 0.0);  // w=0 signals death
         outVel = vec4(seed, 0.0, 0.0, agentRand);  // y=0, not stuck
-        outRGBA = rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : rgba;
     } else {
         // Continue walking
         outXYZ = vec4(candidate, 0.0, 1.0);  // w=1 alive
         outVel = vec4(seed, 0.0, 0.0, agentRand);
-        outRGBA = rgba;
+        outRGBA = diffuseActive > 0.5 ? selectedDiffuse(candidate) : rgba;
     }
 }

@@ -9,9 +9,9 @@ stages depend on, with NO behavioral change:
   * ``shaders/src/lang/enumPaths.js``    -> ``normalize_member_path`` /
     ``path_starts_with`` / ``apply_enum_prefix`` / ``strip_enum_prefix``
   * ``shaders/src/lang/effectAliases.js`` deprecation-warning string format
-    (``S008``). Upstream a1a3fa2a retired parameter aliases: ``paramAliases.js``
-    (``S007``/``ALIAS_EOL_DATE``) was deleted upstream, so no S007 data is
-    ported; S008's warning no longer carries an EOL date.
+    (``S008``). Upstream 27a2b58f restores ``paramAliases.js``: S007's
+    "Deprecated parameter alias" data and ``ALIAS_EOL_DATE`` are ported again
+    (``param_alias_warning``); S008's warning still carries no EOL date.
 
 The reference builds ``stdEnums.palette`` from ``palettes.js`` (i.e.
 ``share/palettes.json``) with ``value`` == the palette's index in insertion
@@ -49,8 +49,10 @@ DIAGNOSTICS = {
     "S004": {"stage": "semantic", "severity": "error", "message": "Cannot assign null or undefined"},
     "S005": {"stage": "semantic", "severity": "error", "message": "Illegal chain structure"},
     "S006": {"stage": "semantic", "severity": "error", "message": "Starter chain missing write() call"},
-    # Upstream a1a3fa2a retired parameter aliases and removed the S007
-    # "Deprecated parameter alias" diagnostic (paramAliases.js deleted).
+    # Upstream 27a2b58f restores paramAliases.js and the S007
+    # "Deprecated parameter alias" diagnostic (the alias registry is populated
+    # for built-in effects only; portable registration still rejects the field).
+    "S007": {"stage": "semantic", "severity": "warning", "message": "Deprecated parameter alias"},
     "S008": {"stage": "semantic", "severity": "warning", "message": "Deprecated effect"},
     "R001": {"stage": "runtime", "severity": "error", "message": "Runtime error"},
 }
@@ -65,6 +67,16 @@ def effect_alias_warning(old_op_name: str, new_name: str) -> str:
     """
     bare = old_op_name.split(".")[-1] if "." in old_op_name else old_op_name
     return "effect '%s' is deprecated, use '%s' instead." % (bare, new_name)
+
+
+def param_alias_warning(old_name: str, new_name: str) -> str:
+    """The exact deprecation-warning string for a parameter alias (S007).
+
+    Mirrors ``paramAliases.resolveParamAliases`` (upstream 27a2b58f): one
+    message per renamed key, carrying the shared alias EOL date.
+    """
+    return ("param '%s' is deprecated, use '%s' instead. "
+            "Aliases will be removed on 2027-06-01." % (old_name, new_name))
 
 
 # --- std_enums.js -------------------------------------------------------------

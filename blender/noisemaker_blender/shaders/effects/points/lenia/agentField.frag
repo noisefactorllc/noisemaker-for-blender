@@ -10,6 +10,11 @@
 
 // MRT outputs
 
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 const float EPSILON = 0.0001;
 
 // Growth function G(u) = exp(-((u - μ) / σ)²)
@@ -97,5 +102,5 @@ void main() {
     // Output
     outXYZ = vec4(newPos, xyz.z, 1.0);  // Keep z, stay alive
     outVel = vec4(velocity, age, vel.w);  // Store velocity, age, seed
-    outRGBA = rgba;  // Color unchanged
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
 }

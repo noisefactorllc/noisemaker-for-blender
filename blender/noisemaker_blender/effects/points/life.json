@@ -6,6 +6,11 @@
     "sim"
   ],
   "globals": {
+    "diffuseTex": {
+      "type": "surface",
+      "default": "none",
+      "colorModeUniform": "diffuseActive"
+    },
     "stateSize": {
       "type": "int",
       "default": 256,
@@ -110,7 +115,8 @@
         "rgbaTex": "global_rgba",
         "dataTex": "global_life_data",
         "forceMatrix": "forceMatrix",
-        "inputTex": "inputTex"
+        "inputTex": "inputTex",
+        "diffuseTex": "diffuseTex"
       },
       "outputs": {
         "outXYZ": "global_xyz",
@@ -119,6 +125,7 @@
         "outData": "global_life_data"
       },
       "uniforms": {
+        "diffuseActive": "diffuseActive",
         "typeCount": "typeCount",
         "attractionScale": "attractionScale",
         "repulsionScale": "repulsionScale",

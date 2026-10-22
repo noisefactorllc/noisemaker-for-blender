@@ -10,8 +10,9 @@ indices, resolves params against each effect's arg spec (enum/choice/member
 resolution, surface refs, color/vec/boolean coercion, default injection),
 expands subchains into begin/end markers, injects
 built-in ``_read``/``_write``/``_read3d``/``_write3d``/``prev`` steps, and emits
-diagnostics (S001/S002/S003/S004/S005/S006/S008). Upstream a1a3fa2a retired
-parameter aliases (paramAliases.js deleted, S007 removed).
+diagnostics (S001/S002/S003/S004/S005/S006/S007/S008). Upstream 27a2b58f
+restores parameter aliases (paramAliases.js, S007) for the built-in catalog's
+runtime registration; the compile() contract keeps them unregistered.
 
 This is a faithful, behavior-preserving translation of the reference. The only
 branches that cannot be reproduced 1:1 are the ones that build a live runtime
@@ -781,8 +782,15 @@ def validate(ast):
                 args = {}
                 arg_sources = [None]  # boxed: lazily-created dict
                 kw = call.get("kwargs")
-                # Upstream a1a3fa2a retired parameter aliases (paramAliases.js
-                # deleted, S007 removed); validator.js no longer resolves aliases.
+                # Upstream 27a2b58f restores paramAliases.js: deprecated names
+                # are rewritten in place with an S007 warning before arg
+                # resolution. The built-in catalog never populates the alias
+                # registry (see ops.py), so this is a no-op there; registered
+                # aliases (runtime-only paths) do rename.
+                if kw:
+                    alias_warnings = _ops_mod.resolve_param_aliases(op_name, kw)
+                    for w in alias_warnings:
+                        push_diag("S007", call, w)
                 seen = set()
                 spec_args = spec.get("args") or []
                 _resolve_args(

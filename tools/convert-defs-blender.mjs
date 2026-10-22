@@ -278,8 +278,10 @@ function normalizeEffect (instance, namespace, name) {
     func
   }
   if (instance.tags !== undefined) def.tags = instance.tags
-  // paramAliases: upstream a1a3fa2a retired parameter aliases — the field is no
-  // longer part of the definition schema, so it is NOT extracted.
+  // paramAliases: upstream 27a2b58f restores the registry for built-in effects
+  // only. Portable registration still rejects the field (ops.register_portable
+  // effect keeps its failure path), so it is extracted for the catalog only.
+  if (instance.paramAliases !== undefined) def.paramAliases = instance.paramAliases
   // externalTexture: expander binds `${texRef}_step_${i}` for media/text/meshLoader.
   if (instance.externalTexture !== undefined) def.externalTexture = instance.externalTexture
   if (instance.defaultProgram !== undefined) def.defaultProgram = instance.defaultProgram

@@ -1469,13 +1469,18 @@ class CompilerTests(unittest.TestCase):
                         isinstance(v.get("type"), str) and v["type"],
                         msg=f"Effect {eff_name} global '{k}' missing valid 'type'",
                     )
-            # Upstream a1a3fa2a retired parameter aliases: no catalog effect may
-            # carry a ``paramAliases`` field anymore.
-            self.assertNotIn(
-                "paramAliases",
-                defn,
-                msg=f"Effect {eff_name} still carries retired 'paramAliases'",
-            )
+            # Upstream 27a2b58f restores parameter aliases: built-in effects
+            # may carry ``paramAliases`` again (point behaviors: fieldTex ->
+            # heightTex). It must map names to canonical names.
+            pa = defn.get("paramAliases")
+            if pa is not None:
+                self.assertIsInstance(
+                    pa, dict,
+                    msg=f"Effect {eff_name} 'paramAliases' not a dict",
+                )
+                for k, v in pa.items():
+                    self.assertIsInstance(k, str, msg=f"Effect {eff_name} alias key '{k}' not a string")
+                    self.assertIsInstance(v, str, msg=f"Effect {eff_name} alias '{k}' not a string")
 
     def test_gap005_pass_field_propagation_and_viewport_resolution(self):
         from noisemaker_blender.runtime.pipeline import resolve_dimension, resolve_pass_viewport

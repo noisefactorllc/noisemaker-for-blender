@@ -3,6 +3,11 @@
 
 // MRT outputs
 
+vec4 selectedDiffuse(vec2 uv) {
+    ivec2 size = textureSize(diffuseTex, 0);
+    ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
+    return texelFetch(diffuseTex, pixel, 0);
+}
 const float TAU = 6.28318530718;
 
 // Hash functions
@@ -38,7 +43,8 @@ float sampleTrail(vec2 uv) {
 float sampleExternalField(vec2 uv, float weight) {
     if (weight <= 0.0) return 0.0;
     float blend = clamp(weight * 0.01, 0.0, 1.0);
-    return luminance(nmTex(inputTex, uv).rgb) * blend * 0.05;
+    vec3 field = fieldActive > 0.5 ? nmTex(heightTex, uv).rgb : nmTex(inputTex, uv).rgb;
+    return luminance(field) * blend * 0.05;
 }
 
 void main() {
@@ -104,7 +110,8 @@ void main() {
     float speedScale = 1.0;
     float blend = clamp(inputWeight * 0.01, 0.0, 1.0);
     if (blend > 0.0) {
-        float localInput = luminance(nmTex(inputTex, pos).rgb);
+        vec3 field = fieldActive > 0.5 ? nmTex(heightTex, pos).rgb : nmTex(inputTex, pos).rgb;
+        float localInput = luminance(field);
         // Invert: slow in bright, fast in dark
         speedScale = mix(1.0, mix(1.8, 0.35, localInput), blend);
     }
@@ -120,5 +127,5 @@ void main() {
     // Output
     outXYZ = vec4(newPos, newHeading, 1.0);  // alive = 1
     outVel = vec4(0.0, 0.0, newAge, seed);
-    outRGBA = rgba;  // Color unchanged
+    outRGBA = diffuseActive > 0.5 ? selectedDiffuse(outXYZ.xy) : rgba;
 }
