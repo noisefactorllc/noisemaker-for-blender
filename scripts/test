@@ -82,7 +82,11 @@ vpy="$venv/bin/python"
 # --- changed-path selection (NM_CHANGED_FILES) ---------------------------------
 # The supervisor passes this candidate's changed paths, one per line, in
 # NM_CHANGED_FILES. When it is set, run only the suites that exercise those
-# paths; when it is unset, run the whole suite exactly as before.
+# paths; when it is unset, run the whole suite exactly as before. Mapping is
+# by directory prefix, so a deleted or renamed path (gone from the checkout)
+# still selects the suites that guard its behavior. Any changed path that maps
+# to no suite falls back to the whole suite: selection never reduces coverage
+# below what the changed paths require.
 run_all=1
 run_pngread=0
 declare -A seen=()
@@ -92,29 +96,45 @@ add_unit() { [[ -n "${seen[$1]-}" ]] || { seen[$1]=1; unit_selection+=("$1"); };
 add_gate() { [[ -n "${seen[gate:$1]-}" ]] || { seen[gate:$1]=1; gate_selection+=("$1"); }; }
 if [[ -n "${NM_CHANGED_FILES:-}" && -n "${NM_CHANGED_FILES//[[:space:]]/}" ]]; then
   run_all=0
+  all_mapped=1
   while IFS= read -r p; do
     p="${p%$'\r'}"
     [[ -n "$p" ]] || continue
-    [[ -f "$p" || -d "$p" ]] || continue
+    hit=0
     case "$p" in
-      parity/test_*.py) add_unit "$p" ;;
+      parity/test_*.py)
+        if [[ -f "$p" ]]; then
+          add_unit "$p"
+        else
+          # A removed parity test module cannot run itself; the compiler
+          # parity gates guard the corpus and compiler behavior it covered.
+          for g in lex parse compile expanded graph; do add_gate "$g"; done
+        fi
+        hit=1 ;;
+      parity/*)
+        for g in lex parse compile expanded graph; do add_gate "$g"; done
+        hit=1 ;;
       blender/noisemaker_blender/compiler/*)
         for g in lex parse compile expanded graph; do add_gate "$g"; done
-        add_unit "parity/test_compiler.py" ;;
+        add_unit "parity/test_compiler.py"
+        hit=1 ;;
       blender/noisemaker_blender/effects/*|blender/noisemaker_blender/shaders/*)
         for g in lex parse compile expanded graph; do add_gate "$g"; done
-        add_unit "parity/test_particle_input_textures.py" ;;
-      blender/harness/test_pngread.py) run_pngread=1 ;;
+        add_unit "parity/test_particle_input_textures.py"
+        hit=1 ;;
+      blender/harness/*) run_pngread=1; hit=1 ;;
     esac
-    shopt -s nullglob
-    for t in parity/test_*.py; do
-      grep -qF -- "$p" "$t" 2>/dev/null && add_unit "$t"
-    done
-    shopt -u nullglob
+    if [[ -f "$p" ]]; then
+      shopt -s nullglob
+      for t in parity/test_*.py; do
+        grep -qF -- "$p" "$t" 2>/dev/null && { add_unit "$t"; hit=1; }
+      done
+      shopt -u nullglob
+    fi
+    (( hit )) || all_mapped=0
   done <<<"$NM_CHANGED_FILES"
-  if (( ${#unit_selection[@]} == 0 )) && (( ${#gate_selection[@]} == 0 )) \
-     && (( run_pngread == 0 )); then
-    # No suite maps to the changed paths; keep full coverage.
+  if (( ! all_mapped )); then
+    # Some changed path maps to no suite; keep full coverage.
     run_all=1
   fi
 fi
