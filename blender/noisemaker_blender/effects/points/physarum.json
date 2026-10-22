@@ -6,15 +6,15 @@
     "sim"
   ],
   "globals": {
+    "heightTex": {
+      "type": "surface",
+      "default": "none",
+      "colorModeUniform": "fieldActive"
+    },
     "diffuseTex": {
       "type": "surface",
       "default": "none",
       "colorModeUniform": "diffuseActive"
-    },
-    "fieldTex": {
-      "type": "surface",
-      "default": "none",
-      "colorModeUniform": "fieldActive"
     },
     "moveSpeed": {
       "type": "float",
@@ -95,7 +95,7 @@
         "rgbaTex": "global_rgba",
         "trailTex": "global_physarum_pheromone",
         "inputTex": "inputTex",
-        "fieldTex": "fieldTex",
+        "heightTex": "heightTex",
         "diffuseTex": "diffuseTex"
       },
       "outputs": {

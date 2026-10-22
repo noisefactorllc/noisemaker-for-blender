@@ -79,12 +79,53 @@ fi
 vpy="$venv/bin/python"
 "$vpy" -c 'import numpy, PIL; print("venv:   numpy %s, Pillow %s" % (numpy.__version__, PIL.__version__))'
 
+# --- changed-path selection (NM_CHANGED_FILES) ---------------------------------
+# The supervisor passes this candidate's changed paths, one per line, in
+# NM_CHANGED_FILES. When it is set, run only the suites that exercise those
+# paths; when it is unset, run the whole suite exactly as before.
+run_all=1
+run_pngread=0
+declare -A seen=()
+unit_selection=()
+gate_selection=()
+add_unit() { [[ -n "${seen[$1]-}" ]] || { seen[$1]=1; unit_selection+=("$1"); }; }
+add_gate() { [[ -n "${seen[gate:$1]-}" ]] || { seen[gate:$1]=1; gate_selection+=("$1"); }; }
+if [[ -n "${NM_CHANGED_FILES:-}" && -n "${NM_CHANGED_FILES//[[:space:]]/}" ]]; then
+  run_all=0
+  while IFS= read -r p; do
+    p="${p%$'\r'}"
+    [[ -n "$p" ]] || continue
+    [[ -f "$p" || -d "$p" ]] || continue
+    case "$p" in
+      parity/test_*.py) add_unit "$p" ;;
+      blender/noisemaker_blender/compiler/*)
+        for g in lex parse compile expanded graph; do add_gate "$g"; done
+        add_unit "parity/test_compiler.py" ;;
+      blender/noisemaker_blender/effects/*|blender/noisemaker_blender/shaders/*)
+        for g in lex parse compile expanded graph; do add_gate "$g"; done
+        add_unit "parity/test_particle_input_textures.py" ;;
+      blender/harness/test_pngread.py) run_pngread=1 ;;
+    esac
+    shopt -s nullglob
+    for t in parity/test_*.py; do
+      grep -qF -- "$p" "$t" 2>/dev/null && add_unit "$t"
+    done
+    shopt -u nullglob
+  done <<<"$NM_CHANGED_FILES"
+  if (( ${#unit_selection[@]} == 0 )) && (( ${#gate_selection[@]} == 0 )) \
+     && (( run_pngread == 0 )); then
+    # No suite maps to the changed paths; keep full coverage.
+    run_all=1
+  fi
+fi
+
 # --- 1. unittest suites --------------------------------------------------------
 # Every suite runs even after an earlier one fails; the exit status reflects all.
 failed=()
 summary=()
 
 step "parity/test_*.py (unittest)"
+if (( run_all )); then
 if ! "$vpy" - "$repo/parity" "$work/unit.summary" <<'PY'
 import collections
 import pathlib
@@ -138,8 +179,49 @@ then
   failed+=("parity/test_*.py")
 fi
 summary+=("$(cat "$work/unit.summary" 2>/dev/null || echo 'unit: no result')")
+else
+  if (( ${#unit_selection[@]} )); then
+    if ! "$vpy" - "$repo" "$work/unit.summary" "${unit_selection[@]}" <<'PY'
+import pathlib
+import sys
+import unittest
+
+repo = pathlib.Path(sys.argv[1])
+sys.path.insert(0, str(repo / "parity"))
+loader = unittest.defaultTestLoader
+suite = unittest.TestSuite()
+for path in sys.argv[3:]:
+    suite.addTests(loader.loadTestsFromName(pathlib.Path(path).stem))
+
+result = unittest.TextTestRunner(stream=sys.stdout, verbosity=1).run(suite)
+
+def ids(items):
+    return {getattr(t, "test_case", t).id() for t in items}
+
+not_passed = (ids(t for t, _ in result.failures)
+              | ids(t for t, _ in result.errors)
+              | ids(t for t, _ in result.skipped)
+              | ids(t for t, _ in result.expectedFailures)
+              | ids(result.unexpectedSuccesses))
+line = ("unit-selected: files=%d ran=%d failed=%d errors=%d skipped=%d"
+        % (len(sys.argv) - 3, result.testsRun, len(result.failures),
+           len(result.errors), len(result.skipped)))
+print(line)
+pathlib.Path(sys.argv[2]).write_text(line + "\n")
+if result.testsRun == 0 or not_passed or not result.wasSuccessful():
+    sys.exit(1)
+PY
+    then
+      failed+=("${unit_selection[*]}")
+    fi
+    summary+=("$(cat "$work/unit.summary" 2>/dev/null || echo 'unit: no result')")
+  else
+    summary+=("unit: none selected by NM_CHANGED_FILES")
+  fi
+fi
 
 # --- 2. stdlib PNG decoder ---------------------------------------------------
+if (( run_all || run_pngread )); then
 step "blender/harness/test_pngread.py"
 status=0
 out="$("$vpy" blender/harness/test_pngread.py 2>&1)" || status=$?
@@ -148,8 +230,10 @@ if (( status != 0 )) || grep -q 'SKIP' <<<"$out" || ! grep -qx 'PNGREAD PASS' <<
   failed+=("blender/harness/test_pngread.py")
 fi
 summary+=("test_pngread: $(grep -c '^  OK ' <<<"$out" || true) OK, $(grep -c '^  FAIL ' <<<"$out" || true) FAIL, $(grep -c 'SKIP' <<<"$out" || true) SKIP")
+fi
 
 # --- 3. DSL compiler parity gates --------------------------------------------
+if (( run_all )) || (( ${#gate_selection[@]} > 0 )); then
 step "parity/compiler/check_*.py against the reference compiler"
 pin="$(tr -d '[:space:]' < parity/reference-revision)"
 [[ "$pin" =~ ^[0-9a-f]{40}$ ]] || fail "parity/reference-revision does not hold a full commit SHA"
@@ -169,13 +253,16 @@ cp -R tools "$gates/"
 cp -R parity/compiler parity/corpus parity/regen-compiler-goldens.sh "$gates/parity/"
 NM_REFERENCE_ROOT="$ref" bash "$gates/parity/regen-compiler-goldens.sh" | tail -n 1
 
-for gate in lex parse compile expanded graph; do
+gate_list=(lex parse compile expanded graph)
+(( run_all )) || gate_list=("${gate_selection[@]}")
+for gate in "${gate_list[@]}"; do
   status=0
   out="$("$vpy" "$gates/parity/compiler/check_$gate.py" 2>&1)" || status=$?
   printf '%s\n' "$out"
   (( status == 0 )) || failed+=("parity/compiler/check_$gate.py")
   summary+=("$(tail -n 1 <<<"$out")")
 done
+fi
 
 # --- summary -----------------------------------------------------------------
 step "summary"

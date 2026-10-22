@@ -43,7 +43,7 @@ float sampleTrail(vec2 uv) {
 float sampleExternalField(vec2 uv, float weight) {
     if (weight <= 0.0) return 0.0;
     float blend = clamp(weight * 0.01, 0.0, 1.0);
-    vec3 field = fieldActive > 0.5 ? nmTex(fieldTex, uv).rgb : nmTex(inputTex, uv).rgb;
+    vec3 field = fieldActive > 0.5 ? nmTex(heightTex, uv).rgb : nmTex(inputTex, uv).rgb;
     return luminance(field) * blend * 0.05;
 }
 
@@ -110,7 +110,7 @@ void main() {
     float speedScale = 1.0;
     float blend = clamp(inputWeight * 0.01, 0.0, 1.0);
     if (blend > 0.0) {
-        vec3 field = fieldActive > 0.5 ? nmTex(fieldTex, pos).rgb : nmTex(inputTex, pos).rgb;
+        vec3 field = fieldActive > 0.5 ? nmTex(heightTex, pos).rgb : nmTex(inputTex, pos).rgb;
         float localInput = luminance(field);
         // Invert: slow in bright, fast in dark
         speedScale = mix(1.0, mix(1.8, 0.35, localInput), blend);

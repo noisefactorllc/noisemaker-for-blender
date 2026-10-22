@@ -1,13 +1,14 @@
-"""Explicit particle texture inputs (upstream 06ce0927..317c43cc,
-test_particle_input_textures.mjs).
+"""Explicit particle texture inputs (upstream test_particle_input_textures.mjs
+at 27a2b58f4a17df2ab700bfc427cc16e27ba38ae4).
 
 Each point behavior exposes explicit texture-input surfaces:
-- flow/dla/physarum fieldTex, hydraulic heightTex: the movement field
+- flow/hydraulic/dla/physarum heightTex: the movement field
   (fieldActive), falling back to the chained input when "none" or omitted
 - every behavior's diffuseTex: the particle color source (diffuseActive),
   keeping the existing color when "none" or omitted
 """
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -34,8 +35,8 @@ def agent_pass(effect, params=""):
     return graph, agents[0]
 
 
-FIELD_EFFECTS = [("flow", "fieldTex"), ("hydraulic", "heightTex"),
-                 ("dla", "fieldTex"), ("physarum", "fieldTex")]
+FIELD_EFFECTS = [("flow", "heightTex"), ("hydraulic", "heightTex"),
+                 ("dla", "heightTex"), ("physarum", "heightTex")]
 DIFFUSE_EFFECTS = ["flow", "hydraulic", "dla", "physarum", "life",
                    "flock", "physical", "attractor", "buddhabrot", "lenia"]
 
@@ -89,8 +90,19 @@ class ParticleInputTextureTests(unittest.TestCase):
 
     def test_surface_globals_carry_no_uniform_spec_entry(self):
         _, agent = agent_pass("flow")
-        self.assertNotIn("fieldTex", agent.get("uniformSpecs", {}))
+        self.assertNotIn("heightTex", agent.get("uniformSpecs", {}))
         self.assertNotIn("diffuseTex", agent.get("uniformSpecs", {}))
+
+    def test_every_behavior_lists_height_before_diffuse(self):
+        for path in sorted((ROOT / "blender" / "noisemaker_blender" /
+                            "effects" / "points").glob("*.json")):
+            with self.subTest(effect=path.stem):
+                spec = json.loads(path.read_text())
+                keys = list(spec.get("globals", {}))
+                if "heightTex" in keys and "diffuseTex" in keys:
+                    self.assertLess(keys.index("heightTex"),
+                                    keys.index("diffuseTex"),
+                                    f"{path.stem}: heightTex before diffuseTex")
 
 
 if __name__ == "__main__":
