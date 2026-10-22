@@ -71,12 +71,14 @@
         "xyzTex": "global_xyz",
         "velTex": "global_vel",
         "rgbaTex": "global_rgba",
-        "diffuseTex": "diffuseTex"
+        "diffuseTex": "diffuseTex",
+        "baseColorTex": "global_buddhabrot_base_color"
       },
       "outputs": {
         "outXYZ": "global_xyz",
         "outVel": "global_vel",
-        "outRGBA": "global_rgba"
+        "outRGBA": "global_rgba",
+        "outBaseColor": "global_buddhabrot_base_color"
       },
       "uniforms": {
         "diffuseActive": "diffuseActive",
@@ -87,7 +89,7 @@
         "centerY": "centerY",
         "zoom": "zoom"
       },
-      "drawBuffers": 3
+      "drawBuffers": 4
     },
     {
       "name": "zWrite",
@@ -124,6 +126,17 @@
         "paramDefault": 512
       },
       "format": "rgba32float"
+    },
+    "global_buddhabrot_base_color": {
+      "width": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "height": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "format": "rgba8"
     }
   }
 }

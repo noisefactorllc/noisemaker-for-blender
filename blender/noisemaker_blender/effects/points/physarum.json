@@ -99,12 +99,14 @@
         "trailTex": "global_physarum_pheromone",
         "inputTex": "inputTex",
         "heightTex": "heightTex",
-        "diffuseTex": "diffuseTex"
+        "diffuseTex": "diffuseTex",
+        "baseColorTex": "global_physarum_base_color"
       },
       "outputs": {
         "outXYZ": "global_xyz",
         "outVel": "global_vel",
-        "outRGBA": "global_rgba"
+        "outRGBA": "global_rgba",
+        "outBaseColor": "global_physarum_base_color"
       },
       "uniforms": {
         "diffuseActive": "diffuseActive",
@@ -115,7 +117,7 @@
         "sensorDistance": "sensorDistance",
         "inputWeight": "inputWeight"
       },
-      "drawBuffers": 3
+      "drawBuffers": 4
     },
     {
       "name": "copy",
@@ -162,6 +164,17 @@
       "width": "100%",
       "height": "100%",
       "format": "rgba16f"
+    },
+    "global_physarum_base_color": {
+      "width": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "height": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "format": "rgba8"
     }
   }
 }

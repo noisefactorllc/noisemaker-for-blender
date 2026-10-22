@@ -12,6 +12,21 @@ vec4 selectedDiffuse(vec2 uv) {
     ivec2 pixel = clamp(ivec2(clamp(uv, vec2(0.0), vec2(0.999999)) * vec2(size)), ivec2(0), size - 1);
     return texelFetch(diffuseTex, pixel, 0);
 }
+
+uniform sampler2D baseColorTex;  // Agent color kept while a diffuse map is active
+layout(location = 3) out vec4 outBaseColor;
+
+// The agent's color without a diffuse map. baseColorTex keeps it (alpha > 0)
+// while a diffuse map is active and is cleared otherwise.
+vec4 baseColor(ivec2 coord, vec4 col) {
+    vec4 kept = texelFetch(baseColorTex, coord, 0);
+    return kept.a == 0.0 ? col : kept;
+}
+
+vec4 keptBaseColor(vec4 base) {
+    return diffuseActive > 0.5 ? vec4(base.rgb, max(base.a, 1.0 / 255.0)) : vec4(0.0);
+}
+
 uint hash_uint(uint s) {
     uint state = s * 747796405u + 2891336453u;
     uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
@@ -52,6 +67,7 @@ void main() {
         outXYZ = pos;
         outVel = vel;
         outRGBA = col;
+        outBaseColor = keptBaseColor(baseColor(coord, col));
         return;
     }
 
@@ -71,6 +87,7 @@ void main() {
             outXYZ = vec4(pos.xy, 0.0, 0.0);
             outVel = vel;
             outRGBA = vec4(0.0, 0.0, 0.0, 0.0);
+            outBaseColor = vec4(0.0);
             return;
         }
 
@@ -111,6 +128,7 @@ void main() {
             outXYZ = vec4(pos.xy, 0.0, 0.0);
             outVel = vel;
             outRGBA = vec4(0.0, 0.0, 0.0, 0.0);
+            outBaseColor = vec4(0.0);
             return;
         }
 
@@ -120,6 +138,7 @@ void main() {
         outXYZ = vec4(screen, 0.5, 1.0);
         outVel = vec4(cRe, cIm, 1.0, escapeStep);
         outRGBA = diffuseActive > 0.5 ? vec4(selectedDiffuse(screen).rgb * brightness, 1.0) : vec4(brightness, brightness, brightness, 1.0);
+        outBaseColor = keptBaseColor(vec4(brightness, brightness, brightness, 1.0));
         return;
     }
 
@@ -149,6 +168,7 @@ void main() {
             outXYZ = vec4(pos.xy, 0.0, 0.0);
             outVel = vec4(0.0, 0.0, step, 0.0);
             outRGBA = vec4(0.0, 0.0, 0.0, 0.0);
+            outBaseColor = vec4(0.0);
             return;
         }
 
@@ -161,5 +181,7 @@ void main() {
 
     outXYZ = vec4(screen, 0.5, 1.0);
     outVel = vec4(cRe, cIm, step, escapeStep);
-    outRGBA = diffuseActive > 0.5 ? vec4(selectedDiffuse(screen).rgb * 0.03, 1.0) : col;
+    vec4 base = baseColor(coord, col);
+    outRGBA = diffuseActive > 0.5 ? vec4(selectedDiffuse(screen).rgb * 0.03, 1.0) : base;
+    outBaseColor = keptBaseColor(base);
 }

@@ -51,19 +51,21 @@
         "xyzTex": "global_xyz",
         "velTex": "global_vel",
         "rgbaTex": "global_rgba",
-        "diffuseTex": "diffuseTex"
+        "diffuseTex": "diffuseTex",
+        "baseColorTex": "global_attractor_base_color"
       },
       "outputs": {
         "outXYZ": "global_xyz",
         "outVel": "global_vel",
-        "outRGBA": "global_rgba"
+        "outRGBA": "global_rgba",
+        "outBaseColor": "global_attractor_base_color"
       },
       "uniforms": {
         "diffuseActive": "diffuseActive",
         "attractor": "attractor",
         "speed": "speed"
       },
-      "drawBuffers": 3
+      "drawBuffers": 4
     },
     {
       "name": "passthrough",
@@ -77,5 +79,17 @@
       "uniforms": {}
     }
   ],
-  "textures": {}
+  "textures": {
+    "global_attractor_base_color": {
+      "width": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "height": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "format": "rgba8"
+    }
+  }
 }

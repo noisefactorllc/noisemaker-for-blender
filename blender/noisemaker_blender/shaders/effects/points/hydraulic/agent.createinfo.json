@@ -63,6 +63,11 @@
       5,
       "FLOAT_2D",
       "diffuseTex"
+    ],
+    [
+      6,
+      "FLOAT_2D",
+      "baseColorTex"
     ]
   ],
   "fragmentOut": [
@@ -80,12 +85,17 @@
       2,
       "VEC4",
       "outRGBA"
+    ],
+    [
+      3,
+      "VEC4",
+      "outBaseColor"
     ]
   ],
   "uniformAliases": {},
   "std140Bytes": 32,
   "ubo": false,
   "notes": [
-    "MRT (3) — staged"
+    "MRT (3) \u2014 staged"
   ]
 }

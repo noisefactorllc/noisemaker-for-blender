@@ -117,12 +117,15 @@
         "velTex": "global_vel",
         "rgbaTex": "global_rgba",
         "diffuseTex": "diffuseTex",
-        "fieldTex": "global_lenia_field"
+        "fieldTex": "global_lenia_field",
+        "baseColorTex": "global_lenia_base_color",
+        "inputTex": "inputTex"
       },
       "outputs": {
         "outXYZ": "global_xyz",
         "outVel": "global_vel",
-        "outRGBA": "global_rgba"
+        "outRGBA": "global_rgba",
+        "outBaseColor": "global_lenia_base_color"
       },
       "uniforms": {
         "diffuseActive": "diffuseActive",
@@ -131,7 +134,7 @@
         "repulsion": "repulsion",
         "dt": "dt"
       },
-      "drawBuffers": 3
+      "drawBuffers": 4
     },
     {
       "name": "passthrough",
@@ -155,6 +158,17 @@
       "width": "50%",
       "height": "50%",
       "format": "rgba16f"
+    },
+    "global_lenia_base_color": {
+      "width": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "height": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "format": "rgba8"
     }
   }
 }

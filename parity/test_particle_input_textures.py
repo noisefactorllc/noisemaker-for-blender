@@ -164,6 +164,42 @@ class ParticleInputTextureTests(unittest.TestCase):
                 self.assertIn("heightTex", keys)
                 self.assertLess(keys.index("heightTex"), keys.index("diffuseTex"))
 
+    def test_agent_base_color_contract(self):
+        # Upstream 663e7ab..12751c78 adds a per-behavior base-color texture,
+        # a fourth MRT slot, and keeps the agent's own color there while a
+        # diffuse map recolors it. life keeps its data output and is excluded.
+        import json
+        effects = ("flow", "dla", "physarum", "hydraulic", "attractor",
+                   "buddhabrot", "flock", "physical", "lenia")
+        for name in effects:
+            with self.subTest(effect=name):
+                defn = json.load(open(ROOT / "blender/noisemaker_blender/effects/points" / f"{name}.json"))
+                texture = defn["textures"]["global_%s_base_color" % name]
+                self.assertEqual(texture["format"], "rgba8")
+                self.assertEqual(texture["width"], {"param": "stateSize", "inherit": True})
+                self.assertEqual(texture["height"], {"param": "stateSize", "inherit": True})
+                agent = next(p for p in defn["passes"] if p["program"] in ("agent", "agentField"))
+                self.assertEqual(agent["drawBuffers"], 4)
+                self.assertEqual(agent["inputs"]["baseColorTex"], "global_%s_base_color" % name)
+                self.assertEqual(agent["outputs"]["outBaseColor"], "global_%s_base_color" % name)
+                frag_name = "agentField.frag" if name == "lenia" else "agent.frag"
+                frag = (ROOT / "blender/noisemaker_blender/shaders/effects/points" / name / frag_name).read_text()
+                self.assertIn("uniform sampler2D baseColorTex;", frag)
+                self.assertIn("layout(location = 3) out vec4 outBaseColor;", frag)
+                self.assertIn("outBaseColor = keptBaseColor(", frag)
+
+    def test_agent_base_color_graph_scope(self):
+        # The base-color texture scopes per particle pipeline like the other
+        # particle state textures, and its stateSize dimension is inherited.
+        graph = compile_graph(
+            "search synth, render, points\n"
+            "solid(color: #00ff00).pointsEmit().flow(heightTex: read(o1)).write(o0)\n"
+            "render(o0)"
+        )
+        passes = [p for p in graph["passes"] if p["program"].endswith("_agent")]
+        self.assertEqual(passes[0]["outputs"]["outBaseColor"], "global_flow_base_color_node_1")
+        self.assertEqual(passes[0]["inputs"]["baseColorTex"], passes[0]["outputs"]["outBaseColor"])
+
 
 if __name__ == "__main__":
     unittest.main()

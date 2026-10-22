@@ -51,12 +51,14 @@
         "rgbaTex": "global_rgba",
         "inputTex": "inputTex",
         "heightTex": "heightTex",
-        "diffuseTex": "diffuseTex"
+        "diffuseTex": "diffuseTex",
+        "baseColorTex": "global_hydraulic_base_color"
       },
       "outputs": {
         "outXYZ": "global_xyz",
         "outVel": "global_vel",
-        "outRGBA": "global_rgba"
+        "outRGBA": "global_rgba",
+        "outBaseColor": "global_hydraulic_base_color"
       },
       "uniforms": {
         "diffuseActive": "diffuseActive",
@@ -66,7 +68,7 @@
         "inverse": "inverse",
         "inputWeight": "inputWeight"
       },
-      "drawBuffers": 3
+      "drawBuffers": 4
     },
     {
       "name": "passthrough",
@@ -80,5 +82,17 @@
       "uniforms": {}
     }
   ],
-  "textures": {}
+  "textures": {
+    "global_hydraulic_base_color": {
+      "width": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "height": {
+        "param": "stateSize",
+        "inherit": true
+      },
+      "format": "rgba8"
+    }
+  }
 }

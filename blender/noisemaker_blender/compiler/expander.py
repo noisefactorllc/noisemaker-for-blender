@@ -51,8 +51,8 @@ from .palette_expansion import expand_palette
 
 # /^(?:o|vol|geo|xyz|vel|rgba)[0-7]$/
 _SURFACE_REF_PATTERN = re.compile(r"^(?:o|vol|geo|xyz|vel|rgba)[0-7]$")
-# /^global_(xyz|vel|rgba|points_trail|life_data)$/
-_PARTICLE_TEX_PATTERN = re.compile(r"^global_(xyz|vel|rgba|points_trail|life_data)$")
+# /^global_(xyz|vel|rgba|points_trail|life_data|[a-z]+_base_color)$/
+_PARTICLE_TEX_PATTERN = re.compile(r"^global_(xyz|vel|rgba|points_trail|life_data|[a-z]+_base_color)$")
 
 # Sentinel distinguishing JS ``undefined`` (missing key) from JS ``null`` (None).
 _UNDEFINED = object()
@@ -548,7 +548,10 @@ def expand(compilation_result, options=None):
                                 )
                                 scoped_param = (volume_size_param if original_param == "volumeSize"
                                                 else "%s_%s" % (original_param, dimension_scope))
-                                scoped_param_map[original_param] = scoped_param
+                                # An inherited dimension reads the scope's value and never
+                                # writes this effect's own value over it.
+                                if not dim_spec.get("inherit"):
+                                    scoped_param_map[original_param] = scoped_param
                                 new_dim = dict(dim_spec)
                                 new_dim["param"] = scoped_param
                                 return new_dim
