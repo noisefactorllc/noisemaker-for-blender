@@ -190,7 +190,7 @@ def setup_layout():
     text.write("")
     st = bpy.context.scene.noisemaker
     st.source_mode = 'TEXT'
-    st.text = text.name
+    st.text = text
     st.image_name = "NM_interactive"
 
     regions = {r.type: (r.x, r.y, r.width, r.height) for r in area.regions}
