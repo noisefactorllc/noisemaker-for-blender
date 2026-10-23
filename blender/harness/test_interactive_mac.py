@@ -239,9 +239,10 @@ def image_is_flat(img):
     w, h = img.size[0], img.size[1]
     if w == 0 or h == 0:
         return True
-    buf = bytearray(w * h * 4)
+    # foreach_get fills the buffer with float32 channel values: w*h*4 floats
+    # (16 bytes per pixel), not w*h*4 bytes.
+    buf = np.empty(w * h * 4, dtype=np.float32)
     img.pixels.foreach_get(buf)
-    buf = np.frombuffer(buf, dtype=np.float32)
     px = buf.reshape(-1, 4)
     return float(px[:, :3].std()) <= 0.01
 
@@ -371,7 +372,8 @@ def tick_driver_watch():
         traceback.print_exc()
         sys.stdout.flush()
         bpy.app.timers.unregister(tick_driver_watch)
-        os._exit(1)
+        # Exit codes: 0 PASS, 1 NOT-DELIVERED, 2 FAIL, 3 internal exception.
+        os._exit(3)
     return 0.5
 
 
@@ -403,4 +405,5 @@ else:
         traceback.print_exc()
         save_state("FAIL")
         sys.stdout.flush()
-        os._exit(1)
+        # Exit codes: 0 PASS, 1 NOT-DELIVERED, 2 FAIL, 3 internal exception.
+        os._exit(3)
