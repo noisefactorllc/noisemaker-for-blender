@@ -169,11 +169,22 @@ def setup_layout():
     window = bpy.context.window
     area = window.screen.areas[0]
     area.type = 'NODE_EDITOR'
+    scene = bpy.context.scene
+    # The sibling harness pattern (test_interactive_gui.py): a real compositor
+    # tree and the correct tree_type. NOISEMAKER_PT_compositor.poll is true
+    # only when space.tree_type == 'CompositorNodeTree', so this must be set
+    # before the panel draw counters can register any draw.
+    if not scene.use_nodes:
+        scene.use_nodes = True
     for space in area.spaces:
         if space.type == 'NODE_EDITOR':
-            space.node_tree = bpy.context.scene.compositing_node_group
+            if getattr(space, "tree_type", None) != 'CompositorNodeTree':
+                space.tree_type = 'CompositorNodeTree'
+            space.node_tree = scene.compositing_node_group
             space.show_region_toolbar = True
             space.show_region_ui = True
+    assert any(getattr(s, "tree_type", "") == 'CompositorNodeTree'
+               for s in area.spaces), "tree_type CompositorNodeTree not set"
 
     text = bpy.data.texts.new("NM_program")
     text.write("")
@@ -348,7 +359,9 @@ def tick_driver_watch():
                 print("    %s: %s" % (s, results[s]))
             sys.stdout.flush()
             bpy.app.timers.unregister(tick_driver_watch)
-            os._exit(0)
+            # Distinct exit codes so a caller can tell the verdicts apart:
+            # 0 PASS, 1 NOT-DELIVERED, 2 FAIL.
+            os._exit({"PASS": 0, "NOT-DELIVERED": 1, "FAIL": 2}[verdict])
         if landed:
             STATE["elapsed_now"] = elapsed
     except Exception:
