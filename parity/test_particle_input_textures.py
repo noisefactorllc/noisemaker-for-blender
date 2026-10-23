@@ -176,8 +176,10 @@ class ParticleInputTextureTests(unittest.TestCase):
                 defn = json.load(open(ROOT / "blender/noisemaker_blender/effects/points" / f"{name}.json"))
                 texture = defn["textures"]["global_%s_base_color" % name]
                 self.assertEqual(texture["format"], "rgba8")
-                self.assertEqual(texture["width"], {"param": "stateSize", "inherit": True})
-                self.assertEqual(texture["height"], {"param": "stateSize", "inherit": True})
+                self.assertEqual(texture["width"],
+                                 {"param": "stateSize", "inherit": True, "default": 256})
+                self.assertEqual(texture["height"],
+                                 {"param": "stateSize", "inherit": True, "default": 256})
                 agent = next(p for p in defn["passes"] if p["program"] in ("agent", "agentField"))
                 self.assertEqual(agent["drawBuffers"], 4)
                 self.assertEqual(agent["inputs"]["baseColorTex"], "global_%s_base_color" % name)
@@ -199,6 +201,36 @@ class ParticleInputTextureTests(unittest.TestCase):
         passes = [p for p in graph["passes"] if p["program"].endswith("_agent")]
         self.assertEqual(passes[0]["outputs"]["outBaseColor"], "global_flow_base_color_node_1")
         self.assertEqual(passes[0]["inputs"]["baseColorTex"], passes[0]["outputs"]["outBaseColor"])
+
+    def test_base_color_memory_sizes_like_pointsEmit_when_stateSize_is_a_function(self):
+        # Upstream 12751c78..32d8d3e6: the runtime does not evaluate a
+        # function-valued stateSize, so each texture falls back to its spec's
+        # default. pointsEmit's state textures fall back to 256; the base
+        # color memory is an attachment of the same agent pass, so it must
+        # fall back to the same size (WebGPU rejects mismatched attachments).
+        from noisemaker_blender.runtime.pipeline import resolve_dimension
+        for name in ("flow", "dla", "physarum", "hydraulic", "attractor",
+                     "buddhabrot", "flock", "physical", "lenia"):
+            with self.subTest(effect=name):
+                dsl = (
+                    "search synth, render, points\n"
+                    "noise().pointsEmit(stateSize: () => 128).%s().write(o0)\n"
+                    "render(o0)" % name
+                )
+                graph = compile_graph(dsl)
+                specs = graph["textures"]
+                state = specs["global_xyz_node_1"]
+                memory = specs["global_%s_base_color_node_1" % name]
+                wrapper = {"fn": {"_func_src": "128"}}
+                state_size = resolve_dimension(state["width"], 512, {})
+                memory_size = resolve_dimension(memory["width"], 512,
+                                                {"stateSize_node_1": wrapper})
+                self.assertEqual(state_size, 256)
+                self.assertEqual(memory_size, state_size,
+                                 "memory %d does not match agent state %d"
+                                 % (memory_size, state_size))
+                self.assertEqual(resolve_dimension(memory["height"], 512, {}),
+                                 resolve_dimension(state["height"], 512, {}))
 
 
 if __name__ == "__main__":
