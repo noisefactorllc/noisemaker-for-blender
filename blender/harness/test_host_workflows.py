@@ -235,5 +235,7 @@ def main():
 
 if bpy.app.background:
     print("HOSTWORKFLOWS FAIL: these checks need GUI mode; run without -b")
+    sys.stdout.flush()
+    os._exit(1)  # exit-code gate: a failed invocation must exit non-zero
 else:
     bpy.app.timers.register(main, first_interval=0.5)
