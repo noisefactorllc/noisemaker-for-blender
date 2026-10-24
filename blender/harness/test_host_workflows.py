@@ -18,9 +18,13 @@ requires that the integration test does not cover, on the recorded host:
     - cleanup: disable + uninstall the addon, verify classes and files removed
 
 Usage (isolated preferences):
-  BLENDER_USER_RESOURCES=<fresh dir> blender --factory-startup \
-      --python blender/harness/test_host_workflows.py --python-expr \
-      "import bpy; bpy.ops.wm.quit_blender()"
+  BLENDER_USER_RESOURCES=<fresh dir> blender \
+      --python blender/harness/test_host_workflows.py
+  The harness quits Blender itself; do not also pass --python-expr quit_blender,
+  which can quit before the session timer fires.
+  No --factory-startup: session 2 reads the preferences session 1 saved, and
+  factory startup resets them (the add-on would start disabled).
+  A failed session makes the Blender process exit non-zero.
   NM_ARCHIVE_ZIP points at the distribution archive zip to install; without it,
   session 1 zips this checkout's blender/noisemaker_blender the way the README's
   install step does and installs that.
@@ -212,7 +216,7 @@ def session2():
         for f in fails:
             print("  - " + f)
         sys.stdout.flush()
-        return
+        os._exit(1)
     print("  cleanup OK  addon disabled and removed")
     print("HOSTWORKFLOWS SESSION2 PASS")
 
@@ -223,6 +227,8 @@ def main():
     except Exception:
         print("HOSTWORKFLOWS SESSION%s FAIL (exception):" % STAGE)
         traceback.print_exc()
+        sys.stdout.flush()
+        os._exit(1)  # exit-code gate: a failed session must exit non-zero
     sys.stdout.flush()
     bpy.ops.wm.quit_blender()
 
