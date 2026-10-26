@@ -192,15 +192,86 @@ _PROTO_LINE = __import__("re").compile(
     r"\s+(\w+)\s*\([^()]*\)\s*;[ \t]*\n", __import__("re").M)
 
 
-def remove_redundant_prototypes(src):
+def remove_redundant_prototypes(src, keep_prototypes=False):
     """Drop a forward prototype when the same function is defined later (the definition stands on
-    its own under Metal). Leaves prototypes with no in-file definition untouched. (dither.)"""
+    its own under Metal). Leaves prototypes with no in-file definition untouched. (dither.)
+
+    keep_prototypes=True (GL-class backends: OpenGL/Vulkan) skips the drop entirely. Under Metal
+    a class member is visible regardless of declaration order, so dropping the prototype is safe;
+    under GL there is no such hoisting, and a prototype ahead of a call-before-definition site
+    (e.g. stkSmear's srcSample) is load-bearing — dropping it fails the compile with an
+    undefined-symbol error."""
+    if keep_prototypes:
+        return src
     def repl(m):
         name = m.group(1)
         if __import__("re").search(r"\b%s\s*\([^()]*\)\s*\{" % __import__("re").escape(name), src):
             return ""
         return m.group(0)
     return _PROTO_LINE.sub(repl, src)
+
+
+# Source-level declarations duplicated by the descriptor. The synced points agent shaders keep
+# the raw upstream `uniform sampler2D baseColorTex;` / `layout(location = 3) out vec4
+# outBaseColor;` lines (pinned by parity/test_particle_input_textures.py), while their
+# createinfo descriptors declare the same sampler slot and MRT output. The declaration pair is
+# a redeclaration error under GL (C1038/C7599); the descriptor supplies the binding either way,
+# so dropping the duplicate line at load time is semantics-preserving on every backend.
+def strip_descriptor_declared(src, descriptor):
+    """Remove `uniform sampler2D <name>;` and `layout(location = N) out vec4 <name>;` lines
+    whose names the descriptor already declares (samplers / fragmentOut)."""
+    re_ = __import__("re")
+    for _slot, _stype, name in descriptor.get("samplers", []):
+        src = re_.sub(r"^[ \t]*uniform[ \t]+sampler2D[ \t]+" + re_.escape(name)
+                      + r"[ \t]*;[^\n]*\n?", "", src, flags=re_.M)
+    for _slot, _otype, name in descriptor.get("fragmentOut", []):
+        src = re_.sub(r"^[ \t]*layout[ \t]*\([ \t]*location[ \t]*=[ \t]*\d+[ \t]*\)[ \t]*out[ \t]+"
+                      r"vec4[ \t]+" + re_.escape(name) + r"[ \t]*;[^\n]*\n?", "", src, flags=re_.M)
+    return src
+
+
+# Integer-valued conditions. Metal compiles shader functions to C++-style class members where a
+# nonzero int converts to bool implicitly, so GLSL sources that say `if (INVERT)` (an int-valued
+# #define) or `if (nm_ub.wrap)` (a BOOL uniform materialized as a std140 int member) compile under
+# Metal. GL-class backends reject the same code with an implicit-cast error, so conditions on
+# provably-int names are made explicit at load time. Only names PROVABLY int for THIS shader are
+# rewritten (from the pass defines and the descriptor's push constants); comparisons and arithmetic
+# on the same names are left untouched.
+_CMP_TAIL = r"(?![ \t]*(?:==|!=|<=|>=|<|>|\+|-|\*|/|%))"
+
+
+def fix_int_bool_conditions(src, int_names):
+    """Rewrite bare int-valued conditions to explicit `!= 0` / `== 0` comparisons.
+
+    int_names: identifiers provably int-typed in this shader (int-valued defines, INT/UINT push
+    constants, and — under the UBO path — BOOL push constants, which the std140 block declares as
+    int members). Handles: `if (X)` / `if (!X)`, `while (X)`, operands of `&&`/`||`, and bare
+    `!X`. Qualified refs (nm_ub.<name>) and bare names both match."""
+    if not int_names:
+        return src
+    re_ = __import__("re")
+    alt = "|".join(re_.escape(n) for n in sorted(int_names, key=len, reverse=True))
+    ref = r"(?:\b\w+[ \t]*\.[ \t]*)?\b(?:%s)\b" % alt
+
+    def cond(m):
+        return "%s ((%s) %s 0)" % (m.group(1), m.group(3), "==" if m.group(2) else "!=")
+    src = re_.sub(r"\b(if|while)\s*\(\s*(!?)\s*(" + ref + r")\s*\)", cond, src)
+
+    def right(m):
+        return "%s (%s) %s 0" % (m.group(1), m.group(3), "==" if m.group(2) else "!=")
+    src = re_.sub(r"(&&|\|\|)[ \t]*(!?[ \t]*)(" + ref + r")" + _CMP_TAIL,
+                  lambda m: "%s (%s) %s 0" % (m.group(1), m.group(3), "==" if "!" in m.group(2) else "!="),
+                  src)
+    src = re_.sub(r"((?<![=!<>][ \t])" + ref + r")([ \t]*&&|[ \t]*\|\|)",
+                  lambda m: "((%s) != 0)%s" % (m.group(1), m.group(2)), src)
+    src = re_.sub(r"(?<![\w.])(?<![=!<>][ \t])![ \t]*(" + ref + r")" + _CMP_TAIL,
+                  lambda m: "((%s) == 0)" % m.group(1), src)
+    # bool initialized directly from a provably-int value (`bool hasRep = nm_ub.repetition;`)
+    src = re_.sub(r"\bbool[ \t]+(\w+)[ \t]*=[ \t]*(!?[ \t]*)(" + ref + r")[ \t]*;",
+                  lambda m: "bool %s = ((%s) %s 0);" % (m.group(1), m.group(3),
+                                                        "==" if "!" in m.group(2) else "!="),
+                  src)
+    return src
 
 
 # Scalar reflect/refract. Metal's geometric library defines reflect/refract ONLY for float2/3/4

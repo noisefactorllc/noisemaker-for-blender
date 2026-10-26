@@ -11,6 +11,26 @@ from . import std140
 # Fullscreen-triangle vertex shader shared by every effect (body uses gl_FragCoord).
 VERT_SRC = "void main(){ gl_Position = vec4(pos, 0.0, 1.0); }"
 
+# Cached Metal-backend verdict (fixed per process once a GPU context exists).
+_is_metal = None
+
+
+def _is_metal_backend():
+    """True only on Blender's Metal backend (macOS). Under Metal, shader functions become
+    class members that are visible regardless of declaration order, so a forward prototype
+    is pure redundancy and can be dropped. GL-class backends (OpenGL/Vulkan) have no such
+    hoisting: GLSL requires declaration before use, so prototypes must stay."""
+    global _is_metal
+    if _is_metal is None:
+        try:
+            from gpu import platform
+            _is_metal = platform.backend_type_get() == "METAL"
+        except Exception:
+            # No GPU context (or probe unavailable): behave like a GL-class backend and
+            # keep prototypes — legal under every GLSL compiler.
+            _is_metal = False
+    return _is_metal
+
 
 def _uniforms(info, descriptor):
     """Declare a descriptor's scalar/vector uniforms — either as push constants, or (when the
@@ -42,9 +62,32 @@ def _header(defines):
     return "".join("#define %s %s\n" % (k, v) for k, v in defines.items())
 
 
-def _body(src, is_ubo, descriptor):
+def _int_condition_names(defines, descriptor, is_ubo):
+    """Identifiers provably int-typed in this shader, for fix_int_bool_conditions.
+
+    Sources: pass defines with int values (e.g. render3d's INVERT/FILTERING), INT/UINT push
+    constants, and — under the UBO path — BOOL push constants too (the std140 block materializes
+    them as int members, so `if (nm_ub.wrap)` is an int condition there)."""
+    names = set()
+    for name, value in (defines or {}).items():
+        if isinstance(value, int) and not isinstance(value, bool):
+            names.add(name)
+    for ctype, name in descriptor.get("pushConstants", []):
+        if ctype in ("INT", "UINT") or (is_ubo and ctype == "BOOL"):
+            names.add(name)
+    blk = descriptor.get("uniformBlock") or {}
+    for ctype, _name, _count in blk.get("members", []):
+        if ctype in ("int", "uint", "bool"):
+            names.add(_name)
+    return names
+
+
+def _body(src, is_ubo, descriptor, defines=None):
     """Load-time GLSL->MSL-compat fix-ups (all no-ops when nothing matches):
-      - drop forward prototypes that are later defined (Metal class-member redeclaration);
+      - drop source-level `uniform sampler2D` / `layout(location) out vec4` declarations that
+        the descriptor already declares (the synced agent shaders keep the raw upstream lines);
+      - drop forward prototypes that are later defined, Metal backend only (Metal class-member
+        redeclaration; GL-class backends keep them — GLSL needs declaration before use);
       - const-qualify `in` array function params (so const global arrays bind under Metal);
       - rename C++ alternative-token identifiers (`or`/`and`/...) — Metal keywords;
       - rename locals shadowing GLSL builtins (`float max = max(...)`) — Blender MSL rejects
@@ -52,10 +95,13 @@ def _body(src, is_ubo, descriptor):
       - vecN==vecN(...) -> all(equal(...)) in bool contexts (compound case the transpiler misses);
       - scalar reflect/refract -> injected nm_reflect/nm_refract (Metal has no scalar overload);
       - packHalf2x16/unpackHalf2x16 -> injected polyfill (no MSL-codegen builtin under either name);
+      - conditions on provably-int names (`if (INVERT)`, `if (nm_ub.wrap)`) -> explicit `!= 0`
+        comparisons — Metal's C++ semantics accept the implicit conversion, GL does not;
       - for UBO effects, qualify bare uniform refs into the std140 block (scope-aware);
       - for an explicit `layout(std140)` block (remap), qualify its member refs -> <instance>.<member>.
     See backend/std140.py + docs/BLENDER-PLATFORM-NOTES.md."""
-    src = std140.remove_redundant_prototypes(src)
+    src = std140.strip_descriptor_declared(src, descriptor)
+    src = std140.remove_redundant_prototypes(src, keep_prototypes=not _is_metal_backend())
     src = std140.const_array_params(src)
     src = std140.fix_struct_constructors(src)
     src = std140.rename_cpp_alt_tokens(src)
@@ -66,6 +112,7 @@ def _body(src, is_ubo, descriptor):
     src = std140.inject_pack_half2x16(src)
     if is_ubo:
         src = std140.rewrite_uniform_refs(src, descriptor.get("pushConstants", []))
+    src = std140.fix_int_bool_conditions(src, _int_condition_names(defines, descriptor, is_ubo))
     blk = descriptor.get("uniformBlock")
     if blk:                                    # qualify the block's member refs -> <instance>.<member>
         members = [(t, n) for t, n, _c in blk["members"]]
@@ -83,7 +130,7 @@ def build_create_info(frag_src, descriptor, defines=None):
         info.fragment_out(slot, otype, name)
     info.vertex_in(0, 'VEC2', "pos")
     info.vertex_source(VERT_SRC)
-    info.fragment_source(_header(defines) + _body(frag_src, is_ubo, descriptor))
+    info.fragment_source(_header(defines) + _body(frag_src, is_ubo, descriptor, defines))
     return info
 
 
@@ -111,8 +158,8 @@ def build_create_info_vf(vert_src, frag_src, descriptor, defines=None):
             getattr(iface, interp)(vtype, name)
         info.vertex_out(iface)
     header = _header(defines)
-    info.vertex_source(header + _body(vert_src, is_ubo, descriptor))
-    info.fragment_source(header + _body(frag_src, is_ubo, descriptor))
+    info.vertex_source(header + _body(vert_src, is_ubo, descriptor, defines))
+    info.fragment_source(header + _body(frag_src, is_ubo, descriptor, defines))
     return info
 
 
