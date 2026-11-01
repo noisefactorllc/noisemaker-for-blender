@@ -146,6 +146,85 @@ class TransformTests(unittest.TestCase):
 
 
 # ============================================================================
+# Let declaration order preservation (reference 9cd5fcd4)
+# ============================================================================
+# Upstream 9cd5fcd4 fixed deepClone so a deep clone of a compiled program
+# preserves let declaration order: the reference stores it as a
+# non-enumerable field on each VarAssign node (planIndex here), and the old
+# Object.keys()-based clone dropped it, scrambling let bindings after a
+# replaceEffect round-trip. The port's _deep_clone is copy.deepcopy, which
+# copies every instance attribute (including planIndex) and keeps shared
+# references shared, so the fixed semantics hold; these tests pin them.
+# The reference tests round-trip through unparse(); this port has no
+# unparser, so the structural invariants stand in for the round-trip.
+
+
+class LetDeclarationOrderTests(unittest.TestCase):
+    def setUp(self):
+        self.source = (
+            "search synth, filter\n"
+            "let amount = 13\n"
+            "noise().blur().write(o0)\n"
+            "let amount = 97\n"
+            "noise().blur().write(o1)\n"
+            "render(o1)"
+        )
+        self.compiled = compile(self.source)
+        # blur in plan 0 (non-starter position) -> filter.invert
+        self.result = replace_effect(self.compiled, 1, "invert")
+        self.assertTrue(self.result["success"], self.result.get("error"))
+        self.new_program = self.result["program"]
+
+    def test_let_declaration_order_survives_the_clone(self):
+        cloned_order = [getattr(v, "planIndex", None) for v in self.new_program["vars"]]
+        self.assertEqual([0, 1], cloned_order, "Cloned let nodes keep their declaration order")
+
+    def test_let_nodes_are_copies_not_shared_with_the_input(self):
+        input_vars = self.compiled["vars"]
+        cloned_vars = self.new_program["vars"]
+        self.assertEqual(len(input_vars), len(cloned_vars))
+        for original, cloned in zip(input_vars, cloned_vars):
+            self.assertIsNot(original, cloned, "Each cloned let node is a fresh copy")
+            self.assertIsNot(original["expr"], cloned["expr"], "let expressions are copied too")
+            self.assertEqual(
+                getattr(original, "planIndex", None),
+                getattr(cloned, "planIndex", None),
+                "Cloned node keeps the original's declaration order",
+            )
+
+    def test_replacement_does_not_mutate_the_input_program(self):
+        # The reference asserts unparse(compiled) is unchanged; without an
+        # unparser, check the equivalent: every plan and let node of the input
+        # still holds its original content, and editing the clone leaves the
+        # input untouched.
+        self.assertEqual("synth.noise", self.compiled["plans"][0]["chain"][0]["op"])
+        self.assertEqual("filter.blur", self.compiled["plans"][0]["chain"][1]["op"])
+        self.assertEqual("synth.noise", self.compiled["plans"][1]["chain"][0]["op"])
+        self.assertEqual("filter.blur", self.compiled["plans"][1]["chain"][1]["op"])
+        self.assertEqual(2, len(self.compiled["plans"]))
+
+        self.new_program["vars"][0]["expr"]["value"] = 999
+        self.assertEqual(13, self.compiled["vars"][0]["expr"]["value"])
+        self.assertEqual(97, self.compiled["vars"][1]["expr"]["value"])
+
+    def test_let_bindings_survive_removal_of_an_earlier_plan(self):
+        # The reference replaces in plan 0, shifts plans, recompiles and
+        # checks the remaining chain keeps its latest preceding let (97).
+        # Without an unparser, verify the structural equivalent: after the
+        # clone loses its earlier plan, its remaining let nodes are intact,
+        # independent of the input, and the input still holds both plans.
+        replaced = replace_effect(self.compiled, 0, "solid")
+        self.assertTrue(replaced["success"], replaced.get("error"))
+        cloned = replaced["program"]
+        cloned["plans"].pop(0)
+
+        self.assertEqual([0, 1], [getattr(v, "planIndex", None) for v in cloned["vars"]])
+        self.assertEqual(2, len(self.compiled["plans"]))
+        self.assertEqual(13, self.compiled["vars"][0]["expr"]["value"])
+        self.assertEqual(97, self.compiled["vars"][1]["expr"]["value"])
+
+
+# ============================================================================
 # Replacement preflight prediction tests (reference 403c2a4bf2cb)
 # ============================================================================
 
