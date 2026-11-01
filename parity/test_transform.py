@@ -208,20 +208,43 @@ class LetDeclarationOrderTests(unittest.TestCase):
         self.assertEqual(97, self.compiled["vars"][1]["expr"]["value"])
 
     def test_let_bindings_survive_removal_of_an_earlier_plan(self):
-        # The reference replaces in plan 0, shifts plans, recompiles and
-        # checks the remaining chain keeps its latest preceding let (97).
-        # Without an unparser, verify the structural equivalent: after the
-        # clone loses its earlier plan, its remaining let nodes are intact,
-        # independent of the input, and the input still holds both plans.
-        replaced = replace_effect(self.compiled, 0, "solid")
+        # The reference replaces in plan 0, shifts plans, recompiles the
+        # remaining program and checks its chain keeps the latest preceding
+        # let (97). Without an unparser the port cannot recompile the
+        # remaining program, so this asserts the structural equivalent:
+        # the surviving chain's argument already carries its resolution
+        # against the latest preceding let ("amount" -> 97), independent
+        # of the removed plan's binding (13).
+        source = (
+            "search synth, filter\n"
+            "let amount = 13\n"
+            "noise(seed: amount).write(o0)\n"
+            "let amount = 97\n"
+            "noise(seed: amount).write(o1)\n"
+            "render(o1)"
+        )
+        program = compile(source)
+        replaced = replace_effect(program, 0, "solid")
         self.assertTrue(replaced["success"], replaced.get("error"))
         cloned = replaced["program"]
         cloned["plans"].pop(0)
 
+        noise_step = next(
+            s for s in cloned["plans"][0]["chain"] if s.get("op") == "synth.noise"
+        )
+        self.assertEqual(
+            {"_varRef": "amount", "value": 97},
+            noise_step["args"]["seed"],
+            "Surviving chain resolves to the latest preceding let (97)",
+        )
+        self.assertEqual(
+            97, cloned["vars"][1]["expr"]["value"],
+            "The surviving var list keeps the latest binding, not the removed plan's",
+        )
         self.assertEqual([0, 1], [getattr(v, "planIndex", None) for v in cloned["vars"]])
-        self.assertEqual(2, len(self.compiled["plans"]))
-        self.assertEqual(13, self.compiled["vars"][0]["expr"]["value"])
-        self.assertEqual(97, self.compiled["vars"][1]["expr"]["value"])
+        self.assertEqual(2, len(program["plans"]))
+        self.assertEqual(13, program["vars"][0]["expr"]["value"])
+        self.assertEqual(97, program["vars"][1]["expr"]["value"])
 
 
 # ============================================================================
