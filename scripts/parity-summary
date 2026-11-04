@@ -373,8 +373,12 @@ def ensure_golden_infra(ref_root, serve_port, cdp_port, chrome):
             _time.sleep(0.5)
     if not up(cdp_port):
         prof = Path(os.environ.get("NM_CHROME_PROFILE", str(work_profile_dir())))
+        # The mock keychain and the basic password store keep Chrome away from
+        # the macOS keychain. A fresh profile otherwise asks for keychain access
+        # in a dialog and blocks Chrome until someone answers it.
         procs.append(subprocess.Popen([chrome, "--headless=new", f"--remote-debugging-port={cdp_port}",
                                        "--use-angle=metal",
+                                       "--use-mock-keychain", "--password-store=basic",
                                        "--no-sandbox", f"--user-data-dir={prof}", "about:blank"],
                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
         for _ in range(30):
