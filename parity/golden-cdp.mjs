@@ -18,7 +18,9 @@
 // The caller must serve NM_REFERENCE_ROOT at the demo origin root (a static file
 // server suffices: /demo/shaders/ is the app, /shaders/... its sources) and run
 // headless Chromium on the host GPU with --remote-debugging-port=$NM_CDP_PORT
-// --headless=new --use-angle=metal --no-sandbox.
+// --headless=new --use-angle=metal --use-mock-keychain --password-store=basic
+// --no-sandbox. Without the two keychain flags, Chromium on macOS stops in a
+// keychain access dialog.
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
