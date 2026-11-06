@@ -47,8 +47,10 @@ def extract_hsv2rgb(text):
 def last_sector_is_unconditional_else(function_source):
     if re.search(r"5\.0/6\.0 <= h && h < 1\.0", function_source):
         return False
-    # The else branch must carry the last sector's assignment.
-    return bool(re.search(r"\}\s*else\s*\{\s*rgb = vec3\(c, 0\.0, x\);", function_source))
+    # The else branch must carry the last sector's assignment. GLSL
+    # comments between the brace and the assignment are reference text
+    # carried verbatim from the pinned source, so skip them.
+    return bool(re.search(r"\}\s*else\s*\{\s*(?://[^\n]*\n\s*)*rgb = vec3\(c, 0\.0, x\);", function_source))
 
 
 def draw_hsv(hsv, function):
