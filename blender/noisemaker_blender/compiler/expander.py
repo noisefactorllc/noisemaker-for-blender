@@ -187,17 +187,7 @@ def _resolve_global_surface_ref(name):
 
 
 def _collect_global_texture_users(chain):
-    """Find globals deliberately shared by different effects in a chain.
-
-    Port of ``collectGlobalTextureUsers`` (upstream cf95f49c): collects, for
-    every ``global_`` texture name any non-builtin, non-skipped step's effect
-    references (declared textures, global defaults, output properties and pass
-    input/output bindings), the set of distinct effects that name it. A
-    texture only one effect in the chain names, and that the effect writes, is
-    private per-instance state; textures named by several effects stay
-    chain-scoped shared state. Values are sets of ``id(effect_def)`` (JS
-    ``Set`` of effect objects).
-    """
+    """Port of ``collectGlobalTextureUsers`` (upstream cf95f49c)."""
     users = {}
     effects = {}
     for step in chain or []:

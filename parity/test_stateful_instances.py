@@ -1,24 +1,5 @@
 #!/usr/bin/env python3
-"""Each stateful effect instance in a chain keeps its own state and size.
-
-Ported from reference `shaders/tests/test_stateful_instances.js` (upstream
-cf95f49c, GAP-059). Before that change the expander scoped every ``global_``
-texture by chain position only, so two instances of a stateful effect in one
-chain (an inline surface argument or a repeated filter) read and wrote one
-state texture, and two zoom-sized simulations in one chain shared one
-``zoom_chain_N`` size. A ``global_`` texture that only one effect in the chain
-names, and that the effect writes, is now private state: the first instance
-keeps the chain-scoped ID and each further instance appends its node. A sizing
-parameter belongs to the first node that sizes private state from it; every
-other node gets a node-scoped name. Textures that different effects share
-(loopBegin/loopEnd accumulator, mesh buffers) keep the chain scope.
-
-The reference suite also re-sizes state textures when a step's zoom changes at
-runtime through the renderer's parameter-update path. That reallocation is
-renderer-side, so this engine-free suite covers the render-graph facts it
-depends on: distinct state textures, distinct sizing parameters and each
-node's own zoom uniform value.
-"""
+"""Each stateful effect instance in a chain keeps its own state and size."""
 
 import sys
 import unittest
@@ -44,11 +25,7 @@ def build(chain):
 
 
 def instances(graph, effect_func, state_prefix):
-    """Group the graph's passes into per-instance nodes, as the reference does.
-
-    Every pass of one instance must name the same state texture; a node's
-    state is the single ``state_prefix``-prefixed texture its passes touch.
-    """
+    """Group the graph's passes into per-instance nodes, as the reference does."""
     nodes = {}
     for p in graph["passes"]:
         if p.get("func") != effect_func:

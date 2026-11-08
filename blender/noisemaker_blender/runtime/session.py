@@ -289,6 +289,15 @@ class RenderSession:
             elif uniform_target in render_pass.get("uniforms", {}):
                 yield render_pass, uniform_target, "uniform", metadata
 
+    @staticmethod
+    def _inherits_volume_size(render_pass, location, target):
+        # Upstream applyParameterValues/applyStepParameterValues skip the whole
+        # volumeSize write on a pass with inheritsVolumeSize: it inherits the
+        # chain source's value, and a local write would sample the chain-sized
+        # atlas with the wrong size.
+        return (location == "uniform" and target == "volumeSize"
+                and render_pass.get("inheritsVolumeSize"))
+
     @classmethod
     def _apply_parameters(cls, graph, parameters):
         for key, value in parameters.items():
@@ -296,21 +305,70 @@ class RenderSession:
             if not matches:
                 raise KeyError(key)
             for render_pass, target, location, metadata in matches:
+                if cls._inherits_volume_size(render_pass, location, target):
+                    continue
                 slot = render_pass["defines" if location == "define" else "uniforms"]
                 slot[target] = (int(value) if metadata.get("type") == "boolean"
                                 and (location == "define" or type(slot[target]) is int)
                                 else value)
+                if location == "uniform":
+                    cls._propagate_scoped(graph, render_pass, target, slot[target])
 
     @staticmethod
     def _resource_sensitive(graph, uniform):
+        # A dimension spec references `uniform` directly (param/screenDivide)
+        # or through a scoped variant of it (upstream
+        # dimensionReferencesScopedParam: `<uniform>_node_N`, `<uniform>_chain_N`,
+        # e.g. zoom_chain_0_node_3 for private state sizing).
+        def references(value):
+            if not isinstance(value, dict):
+                return False
+            ref = value.get("param")
+            if not isinstance(ref, str):
+                ref = value.get("screenDivide")
+            return (isinstance(ref, str) and
+                    (ref == uniform or ref.startswith(uniform + "_node_")
+                     or ref.startswith(uniform + "_chain_")))
+
         def mentions(value):
             if isinstance(value, dict):
-                return value.get("param") == uniform or value.get("screenDivide") == uniform or any(
+                return references(value) or any(
                     mentions(item) for item in value.values())
             if isinstance(value, (list, tuple)):
                 return any(mentions(item) for item in value)
             return False
         return any(mentions(spec) for spec in graph.textures.values())
+
+    @staticmethod
+    def _propagate_scoped(graph, render_pass, uniform, value):
+        """Write the pass's scoped variant of `uniform` and broadcast it.
+
+        The expander sizes private state through scoped names
+        (zoom_chain_0_node_3), so a runtime parameter change must reach the
+        scoped uniform on every pass that carries it, or the state texture
+        keeps its old size (upstream broadcastChainScopedParam).
+        """
+        scoped = render_pass.get("scopedParams")
+        if uniform == "volumeSize" and render_pass.get("inheritsVolumeSize"):
+            # A consumer pass inherits volumeSize from the chain source; a local
+            # value must never clobber the scoped chain sizing (upstream
+            # applyParameterValues/applyStepParameterValues skip this write).
+            return
+        if not isinstance(scoped, dict) or uniform not in scoped:
+            return
+        scoped_name = scoped[uniform]
+        if not isinstance(render_pass.get("uniforms"), dict):
+            return
+        render_pass["uniforms"][scoped_name] = value
+        for other_pass in graph.passes:
+            if other_pass is render_pass:
+                continue
+            uniforms = other_pass.get("uniforms")
+            if not isinstance(uniforms, dict) or scoped_name not in uniforms:
+                continue
+            uniforms[scoped_name] = value
+            if uniform == "volumeSize" and other_pass.get("inheritsVolumeSize"):
+                uniforms[uniform] = value
 
     @staticmethod
     def _condition_sensitive(graph, uniform):
@@ -362,6 +420,7 @@ class RenderSession:
                 slot = selected_pass["uniforms"]
                 slot[name] = (int(value) if selected_metadata.get("type") == "boolean"
                               and type(slot[name]) is int else value)
+                self._propagate_scoped(self.graph, selected_pass, name, slot[name])
             self._last_request = None
             if self.graph.is_stateful():
                 self._replay.invalidate()
