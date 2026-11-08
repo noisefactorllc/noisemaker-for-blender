@@ -1,5 +1,24 @@
 #!/usr/bin/env python3
-"""Each stateful effect instance in a chain keeps its own state and size."""
+"""Each stateful effect instance in a chain keeps its own state and size.
+
+Ported from reference `shaders/tests/test_stateful_instances.js` (upstream
+cf95f49c, GAP-059). Before that change the expander scoped every ``global_``
+texture by chain position only, so two instances of a stateful effect in one
+chain (an inline surface argument or a repeated filter) read and wrote one
+state texture, and two zoom-sized simulations in one chain shared one
+``zoom_chain_N`` size. A ``global_`` texture that only one effect in the chain
+names, and that the effect writes, is now private state: the first instance
+keeps the chain-scoped ID and each further instance appends its node. A sizing
+parameter belongs to the first node that sizes private state from it; every
+other node gets a node-scoped name. Textures that different effects share
+(loopBegin/loopEnd accumulator, mesh buffers) keep the chain scope.
+
+The reference suite also re-sizes state textures when a step's zoom changes at
+runtime through the renderer's parameter-update path. That reallocation is
+renderer-side, so this engine-free suite covers the render-graph facts it
+depends on: distinct state textures, distinct sizing parameters and each
+node's own zoom uniform value.
+"""
 
 import sys
 import unittest
@@ -9,6 +28,21 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "blender"))
 
 from noisemaker_blender.compiler import compile_graph  # noqa: E402
+from noisemaker_blender.runtime.session import Program, RenderSession  # noqa: E402
+
+
+class RecordingBackend:
+    def __init__(self, shaders_root=None, *, width=256, height=256):
+        self.uniforms = None
+
+    def setup(self, graph, uniforms):
+        self.uniforms = uniforms
+
+    def compile(self, *args):
+        pass
+
+    def free(self):
+        pass
 
 SEARCH = "search synth, mixer, filter, render\n"
 
@@ -25,7 +59,11 @@ def build(chain):
 
 
 def instances(graph, effect_func, state_prefix):
-    """Group the graph's passes into per-instance nodes, as the reference does."""
+    """Group the graph's passes into per-instance nodes, as the reference does.
+
+    Every pass of one instance must name the same state texture; a node's
+    state is the single ``state_prefix``-prefixed texture its passes touch.
+    """
     nodes = {}
     for p in graph["passes"]:
         if p.get("func") != effect_func:
@@ -164,6 +202,35 @@ class StatefulInstanceTests(unittest.TestCase):
         self.assertEqual(
             instances(graph, "watercolor", "global_wc_state")[0]["texture"],
             "global_wc_state_chain_1")
+
+
+    def test_changing_one_instances_zoom_leaves_the_others_intact(self):
+        for program in (PROGRAM_A, PROGRAM_B):
+            source = "%s%s\nrender(o0)" % (SEARCH, program)
+            session = RenderSession(
+                Program.from_graph(source, compile_graph(source)),
+                size=256, backend_factory=RecordingBackend)
+            nodes = instances(session.graph.data, "reactionDiffusion",
+                              "global_rd_state")
+            sizes = [zoom_param(session.graph.data, node) for node in nodes]
+            self.assertEqual(session.backend.uniforms[sizes[0]], 4)
+            self.assertEqual(session.backend.uniforms[sizes[1]], 16)
+
+            session.set_parameter("synth.reactionDiffusion#1.zoom", 2)
+
+            nodes = instances(session.graph.data, "reactionDiffusion",
+                              "global_rd_state")
+            self.assertEqual(session.backend.uniforms[sizes[0]], 4,
+                             "the other instance's state size stays intact")
+            self.assertEqual(session.backend.uniforms[sizes[1]], 2)
+            for p in nodes[1]["passes"]:
+                self.assertEqual(p["uniforms"]["zoom"], 2)
+
+            session.set_parameter("synth.reactionDiffusion#0.zoom", 32)
+
+            self.assertEqual(session.backend.uniforms[sizes[0]], 32)
+            self.assertEqual(session.backend.uniforms[sizes[1]], 2,
+                             "the other instance's state size stays intact")
 
 
 if __name__ == "__main__":
