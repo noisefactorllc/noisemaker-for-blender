@@ -186,6 +186,47 @@ def _resolve_global_surface_ref(name):
     return name
 
 
+def _collect_global_texture_users(chain):
+    """Find globals deliberately shared by different effects in a chain.
+
+    Port of ``collectGlobalTextureUsers`` (upstream cf95f49c): collects, for
+    every ``global_`` texture name any non-builtin, non-skipped step's effect
+    references (declared textures, global defaults, output properties and pass
+    input/output bindings), the set of distinct effects that name it. A
+    texture only one effect in the chain names, and that the effect writes, is
+    private per-instance state; textures named by several effects stay
+    chain-scoped shared state. Values are sets of ``id(effect_def)`` (JS
+    ``Set`` of effect objects).
+    """
+    users = {}
+    effects = {}
+    for step in chain or []:
+        if not isinstance(step, dict) or step.get("builtin"):
+            continue
+        step_args = step.get("args")
+        if isinstance(step_args, dict) and step_args.get("_skip") is True:
+            continue
+        effect = get_effect(step.get("op"))
+        if not effect:
+            continue
+        effects.setdefault(id(effect), effect)
+    for effect in effects.values():
+        refs = list((effect.get("textures") or {}).keys())
+        refs.extend((effect.get("textures3d") or {}).keys())
+        refs.extend(d.get("default") for d in (effect.get("globals") or {}).values())
+        refs.extend(effect.get(key) for key in
+                    ("outputTex", "outputTex3d", "outputGeo",
+                     "outputXyz", "outputVel", "outputRgba"))
+        for pass_def in effect.get("passes") or []:
+            refs.extend((pass_def.get("inputs") or {}).values())
+            refs.extend((pass_def.get("outputs") or {}).values())
+        for ref in refs:
+            if not isinstance(ref, str) or not ref.startswith("global_"):
+                continue
+            users.setdefault(ref, set()).add(id(effect))
+    return users
+
+
 def _resolve_enum(path):
     """Resolve a dotted enum path (e.g. ``channel.r``) to its numeric value.
 
@@ -249,6 +290,9 @@ def expand(compilation_result, options=None):
         pipeline_uniforms = {}
         chain_scope_id = "chain_%d" % plans.index(plan)
         volume_size_param = "volumeSize_%s" % chain_scope_id
+        global_texture_users = _collect_global_texture_users(plan.get("chain"))
+        seen_effects = set()
+        size_param_owners = {}  # chain-scoped sizing param -> first node that sizes from it
 
         chain = plan.get("chain") or []
         for step in chain:
@@ -416,6 +460,35 @@ def expand(compilation_result, options=None):
                 for condition in list(conds_scan.get("runIf") or []) + list(conds_scan.get("skipIf") or []):
                     conditional_uniforms.add(condition.get("uniform"))
 
+            node_id = "node_%s" % step_temp
+            # Preserve legacy IDs for the first instance. Repeated private state
+            # gets a node suffix; cooperating effects retain the shared chain scope.
+            instance_scope_id = ("%s_%s" % (chain_scope_id, node_id)
+                                 if id(effect_def) in seen_effects else chain_scope_id)
+            seen_effects.add(id(effect_def))
+            owned_textures = set((effect_textures or {}).keys())
+            owned_textures.update((effect_textures3d or {}).keys())
+            for pass_def in effect_passes:
+                owned_textures.update((pass_def.get("outputs") or {}).values())
+
+            # Read-only globals can be external uploads, whose bindings retain chain IDs.
+            def is_private_global(tex_name):
+                return (tex_name in owned_textures and
+                        len(global_texture_users.get(tex_name, ())) == 1)
+
+            def global_scope(tex_name):
+                return instance_scope_id if is_private_global(tex_name) else chain_scope_id
+
+            # The first node to size private state from a param keeps the legacy
+            # chain-scoped name; any other node, of the same or another effect, gets its own.
+            def claim_size_param(scoped_param, is_private):
+                owner = size_param_owners.get(scoped_param, _UNDEFINED)
+                if owner is _UNDEFINED:
+                    size_param_owners[scoped_param] = node_id
+                if is_private and owner is not _UNDEFINED and owner != node_id:
+                    return "%s_%s" % (scoped_param, node_id)
+                return scoped_param
+
             # Helper to scope particle textures to current pipeline.
             def scope_particle_tex(tex_name):
                 if not current_particle_pipeline_id:
@@ -424,17 +497,14 @@ def expand(compilation_result, options=None):
                     return "%s_%s" % (tex_name, current_particle_pipeline_id)
                 return tex_name
 
-            # Helper to scope global state textures to chain level. Particle
-            # scoping takes priority; all other global_ textures get chain scoping.
+            # Particle scoping takes priority over private state and shared chain state.
             def scope_chain_tex(tex_name):
                 particle_result = scope_particle_tex(tex_name)
                 if particle_result != tex_name:
                     return particle_result
                 if tex_name.startswith("global_"):
-                    return "%s_%s" % (tex_name, chain_scope_id)
+                    return "%s_%s" % (tex_name, global_scope(tex_name))
                 return tex_name
-
-            node_id = "node_%s" % step_temp
 
             # Track scoped params for this node's particle/chain textures, in
             # insertion order (mirrors JS Map). orig -> scoped.
@@ -507,10 +577,7 @@ def expand(compilation_result, options=None):
                     should_scope_as_chain = tex_name.startswith("global_") and not is_particle_tex
 
                     if tex_name.startswith("global_"):
-                        if should_scope_as_particle:
-                            virtual_tex_id = "%s_%s" % (tex_name, current_particle_pipeline_id)
-                        else:
-                            virtual_tex_id = "%s_%s" % (tex_name, chain_scope_id)
+                        virtual_tex_id = scope_chain_tex(tex_name)
                     else:
                         virtual_tex_id = "%s_%s" % (node_id, tex_name)
 
@@ -529,6 +596,12 @@ def expand(compilation_result, options=None):
                     )
                     if should_scope_params:
                         scope_suffix = current_particle_pipeline_id if should_scope_as_particle else chain_scope_id
+                        is_private_tex = (not tex_name.startswith("global_")) or is_private_global(tex_name)
+
+                        def chain_size_param(scoped_param, inherit):
+                            if should_scope_as_particle or inherit:
+                                return scoped_param
+                            return claim_size_param(scoped_param, is_private_tex)
 
                         def scope_dim_spec(dim_spec):
                             if isinstance(dim_spec, dict) and "param" in dim_spec:
@@ -541,13 +614,14 @@ def expand(compilation_result, options=None):
                                 # surfaces stay on their existing `should_scope_as_particle` scoping) --
                                 # matching `pointsEmit`'s own `stateSize_<pipelineId>` uniform so both
                                 # sides read the same agent-count texture size.
-                                dimension_scope = (
-                                    current_particle_pipeline_id
-                                    if original_param == "stateSize" and current_particle_pipeline_id
-                                    else scope_suffix
-                                )
                                 scoped_param = (volume_size_param if original_param == "volumeSize"
-                                                else "%s_%s" % (original_param, dimension_scope))
+                                                else ("%s_%s" % (original_param, current_particle_pipeline_id)
+                                                      if (original_param == "stateSize" and
+                                                          current_particle_pipeline_id and
+                                                          not tex_name.startswith("global_"))
+                                                      else chain_size_param(
+                                                          "%s_%s" % (original_param, scope_suffix),
+                                                          dim_spec.get("inherit"))))
                                 # An inherited dimension reads the scope's value and never
                                 # writes this effect's own value over it.
                                 if not dim_spec.get("inherit"):
@@ -557,7 +631,8 @@ def expand(compilation_result, options=None):
                                 return new_dim
                             if isinstance(dim_spec, dict) and "screenDivide" in dim_spec:
                                 original_param = dim_spec["screenDivide"]
-                                scoped_param = "%s_%s" % (original_param, scope_suffix)
+                                scoped_param = chain_size_param(
+                                    "%s_%s" % (original_param, scope_suffix), False)
                                 scoped_param_map[original_param] = scoped_param
                                 new_dim = dict(dim_spec)
                                 new_dim["screenDivide"] = scoped_param
