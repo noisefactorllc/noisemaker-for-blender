@@ -137,6 +137,31 @@ class StatefulInstanceTests(unittest.TestCase):
             self.assertEqual(rd[0]["passes"][0]["uniforms"][rd_param], 4)
             self.assertEqual(ca[0]["passes"][0]["uniforms"][ca_param], 16)
 
+            source = "%s%s\nrender(o0)" % (SEARCH, chain)
+            session = RenderSession(
+                Program.from_graph(source, compile_graph(source)),
+                size=256, backend_factory=RecordingBackend)
+            rd = instances(session.graph.data, "reactionDiffusion",
+                           "global_rd_state")
+            ca = instances(session.graph.data, "cellularAutomata",
+                           "global_ca_state")
+            rd_size = zoom_param(session.graph.data, rd[0])
+            ca_size = zoom_param(session.graph.data, ca[0])
+            self.assertEqual(session.backend.uniforms[rd_size], 4)
+            self.assertEqual(session.backend.uniforms[ca_size], 16)
+
+            session.set_parameter("synth.cellularAutomata#0.zoom", 2)
+
+            self.assertEqual(session.backend.uniforms[rd_size], 4,
+                             "the other effect's state size stays intact")
+            self.assertEqual(session.backend.uniforms[ca_size], 2)
+
+            session.set_parameter("synth.reactionDiffusion#0.zoom", 32)
+
+            self.assertEqual(session.backend.uniforms[rd_size], 32)
+            self.assertEqual(session.backend.uniforms[ca_size], 2,
+                             "the other effect's state size stays intact")
+
     def test_loop_begin_and_loop_end_retain_their_shared_accumulator(self):
         for chain in (
             "perlin().loopBegin().loopEnd().write(o0)",
