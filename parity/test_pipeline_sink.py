@@ -130,6 +130,131 @@ class PipelineSinkTests(unittest.TestCase):
         submissions = [e for e in events if e[0] == "submit"]
         self.assertEqual(len(submissions), 1)
 
+    def test_render_reports_each_isolated_sink_error_to_the_throwing_sink(self):
+        events = []
+        backend = RecordingBackend(events)
+        graph = EmptyGraph()
+        manager = SinkManager()
+
+        configure_error = RuntimeError("configure failed")
+        defer_error = RuntimeError("defer probe failed")
+        submit_error = RuntimeError("submit failed")
+        reported = []
+        state = {"failing": True}
+
+        class FailedSink(RecordingSink):
+            def configure(self, descriptor):
+                if state["failing"]:
+                    raise configure_error
+
+            def defer_render(self):
+                if state["failing"]:
+                    raise defer_error
+                return False
+
+            def submit(self, texture_id, timestamp):
+                if state["failing"]:
+                    raise submit_error
+                return True
+
+            def onError(self, error):
+                reported.append(("failed", error))
+
+        class SilentSink(RecordingSink):
+            # A sink without onError fails exactly as before: counted and isolated.
+            def configure(self, descriptor):
+                if state["failing"]:
+                    raise RuntimeError("silent configure failed")
+
+            def submit(self, texture_id, timestamp):
+                if state["failing"]:
+                    raise RuntimeError("silent submit failed")
+                return True
+
+        reporter_calls = []
+
+        class ThrowingReporterSink(RecordingSink):
+            def configure(self, descriptor):
+                if state["failing"]:
+                    raise RuntimeError("configure failed again")
+
+            def submit(self, texture_id, timestamp):
+                return True
+
+            def onError(self, error):
+                reporter_calls.append(error)
+                raise RuntimeError("reporter failed")
+
+        healthy_calls = []
+
+        class HealthySink(RecordingSink):
+            def configure(self, descriptor):
+                healthy_calls.append(("configure", descriptor["width"], descriptor["height"]))
+
+            def defer_render(self):
+                healthy_calls.append(("defer_render",))
+                return False
+
+            def submit(self, texture_id, timestamp):
+                healthy_calls.append(("submit", timestamp))
+                return True
+
+            def onError(self, error):
+                reported.append(("healthy", error))
+
+        failed = FailedSink(events)
+        silent = SilentSink(events)
+        throwing_reporter = ThrowingReporterSink(events)
+        healthy = HealthySink(events)
+        for sink in (failed, silent, throwing_reporter, healthy):
+            manager.add(sink)
+
+        result = pipeline.render(backend, graph, time=0.25, frames=1, sink_manager=manager)
+
+        self.assertEqual(result, "pixels")
+        self.assertEqual(reported, [
+            ("failed", configure_error),
+            ("failed", defer_error),
+            ("failed", submit_error),
+        ])
+        self.assertEqual(len(reporter_calls), 1)
+        self.assertEqual([call[0] for call in healthy_calls],
+                         ["configure", "defer_render", "submit"])
+        self.assertEqual(manager.stats[failed], {"accepted": 0, "dropped": 0, "failed": 3})
+        self.assertEqual(manager.stats[silent], {"accepted": 0, "dropped": 0, "failed": 2})
+        self.assertEqual(manager.stats[throwing_reporter], {"accepted": 1, "dropped": 0, "failed": 1})
+        self.assertEqual(manager.stats[healthy], {"accepted": 1, "dropped": 0, "failed": 0})
+
+    def test_render_keeps_a_reporter_the_host_already_gave_the_sink_manager(self):
+        events = []
+        backend = RecordingBackend(events)
+        graph = EmptyGraph()
+        host_reported = []
+        sink_reported = []
+        manager = SinkManager(on_error=lambda error, sink: host_reported.append((sink, error)))
+
+        configure_error = RuntimeError("configure failed")
+
+        class FailingSink(RecordingSink):
+            def configure(self, descriptor):
+                raise configure_error
+
+            def submit(self, texture_id, timestamp):
+                return True
+
+            def onError(self, error):
+                sink_reported.append(error)
+
+        sink = FailingSink(events)
+        manager.add(sink)
+
+        result = pipeline.render(backend, graph, frames=1, sink_manager=manager)
+
+        self.assertEqual(result, "pixels")
+        self.assertEqual(host_reported, [(sink, configure_error)])
+        self.assertEqual(sink_reported, [])
+        self.assertEqual(manager.stats[sink], {"accepted": 1, "dropped": 0, "failed": 1})
+
     def test_render_handles_non_callable_should_defer_render_attribute(self):
         events = []
         backend = RecordingBackend(events)

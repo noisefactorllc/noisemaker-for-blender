@@ -1099,6 +1099,20 @@ def resolve_repeat_count(p, lookup):
     return 1
 
 
+def report_sink_error(error, sink):
+    """Pass an isolated sink failure to the sink that threw it.
+
+    A sink opts in with an optional ``onError(error)`` method (the Python
+    ``on_error`` spelling works too), for example to end an output whose new
+    size it cannot send. Rendering and the other sinks continue either way.
+    """
+    handler = getattr(sink, "onError", None)
+    if not callable(handler):
+        handler = getattr(sink, "on_error", None)
+    if callable(handler):
+        handler(error)
+
+
 class FrameStepper:
     """One-frame-at-a-time driver for the render loop in ``render``.
 
@@ -1128,6 +1142,11 @@ class FrameStepper:
         backend.setup(graph, self.defaults)
         self.out_name = graph.render_surface  # surface name, e.g. "o1"
         if sink_manager is not None:
+            if getattr(sink_manager, "_on_error", None) is None:
+                # The pipeline reports each isolated sink error to the sink that
+                # threw it, like the reference pipeline's own SinkManager. A host
+                # that supplied its own reporter keeps it.
+                sink_manager._on_error = report_sink_error
             sink_manager.configure({
                 "width": backend.size,
                 "height": backend.size,
@@ -1205,7 +1224,9 @@ def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None,
 
     If `samples` (set of frame indices) given, return {frame: array}; else the final
     render-surface array. An optional externally owned `sink_manager` receives the configured
-    output descriptor and each completed render-surface binding with a monotonic timestamp in ms.
+    output descriptor and each completed render-surface binding with a monotonic timestamp in ms;
+    unless it carries its own error reporter, the pipeline gives it one that passes each
+    isolated sink error to the `onError` method of the sink that threw it.
 
     Equivalent to driving a :class:`FrameStepper` to completion; the stepper exists so the
     bake operator can run the same loop from a modal timer (cancellable long bakes).
