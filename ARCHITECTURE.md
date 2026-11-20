@@ -120,6 +120,6 @@ entry names another renderer, or none, as missing. A case is **exact** when the 
 measured, mechanism-bound entry in `parity/3d-near-policy.json` or
 `parity/artistic-near-policy.json` bounds it. Everything else fails. The manifest's stateful cases
 (`flow3d`, `reactionDiffusion3d`, `cellularAutomata3d`) are graded over the same 8 frames. The
-flagship chain (`parity/programs/north_star.dsl`) is graded at that protocol under a measured
-near-policy entry; long chaotic evolutions are not graded.
+flagship chain (`parity/programs/north_star.dsl`) grades strict at that protocol; long chaotic
+evolutions are not graded.
 `docs/CHAOS-GATE.md` explains why they cannot match pixel for pixel.

@@ -115,10 +115,9 @@ patch version in the same change that alters the distributed add-on; never reuse
 
 Ready-to-bake examples live in [`parity/programs/`](parity/programs). The flagship is
 [`parity/programs/north_star.dsl`](parity/programs/north_star.dsl): 3D noise → chaotic particle
-flow → fluid → color, lighting, bloom and lens. Its chaotic flow → fluid chain is a different
-instance of the same chaos on each engine, so it does not match the reference pixel for pixel; the
-shared 8-frame protocol grades it inside a measured policy entry (see
-[docs/CHAOS-GATE.md](docs/CHAOS-GATE.md)).
+flow → fluid → color, lighting, bloom and lens. At the shared 8-frame protocol it grades strict,
+within the published tolerance. Long evolutions of chaotic programs like it are checked for
+stability and character rather than pixel parity (see [docs/CHAOS-GATE.md](docs/CHAOS-GATE.md)).
 
 ## Good to know
 
@@ -225,8 +224,8 @@ automation through the session API; device capture and `scope`/`spectrum` remain
   copy of them.
 - **Chaotic programs.** Chaotic agent flows that feed the fluid solver, and continuous cellular
   automata, render deterministically and stay bounded. Their long evolutions are not graded for
-  pixel parity; the flagship chain's short 8-frame case is graded inside a measured policy entry
-  ([docs/CHAOS-GATE.md](docs/CHAOS-GATE.md)).
+  pixel parity; the flagship chain's short 8-frame case grades strict, within the published
+  tolerance ([docs/CHAOS-GATE.md](docs/CHAOS-GATE.md)).
 - **Authoring.** Programs compile, preview and bake inside Blender. Live integration qualification
   is tracked separately from the historical rendered parity contract.
 
