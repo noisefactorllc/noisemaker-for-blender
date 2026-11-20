@@ -103,7 +103,7 @@ all-platform support, or the complete performance targets. See
 |---|---|---|
 | Engine-free suite | unit tests, PNG decoder, compiler gates at the pinned reference | `scripts/test` |
 | Backend contract | uniform normalization, viewport boxes, surface refresh and diagnostics under Blender's `gpu` module, without a GPU context | `blender --background --python blender/harness/test_backend_contract.py` |
-| Rendered parity | the 116 cases in `parity/3d-expected.txt` and `parity/artistic-expected.txt`, port render vs reference WebGL2 golden | `scripts/parity-summary` |
+| Rendered parity | the cases in `parity/3d-expected.txt` and `parity/artistic-expected.txt`, port render vs reference WebGL2 golden | `scripts/parity-summary` |
 | Integration | DSL → bake operator → Image datablock | `parity/integration.sh` |
 
 CI runs the engine-free suite and the backend contract on every push. Rendered parity needs a GPU
