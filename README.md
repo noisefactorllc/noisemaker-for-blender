@@ -212,7 +212,7 @@ automation through the session API; device capture and `scope`/`spectrum` remain
 - **Compiler.** The add-on's Python compiler produces the same render graph as the reference
   compiler for every program in `parity/corpus/` (the compiler gates in `scripts/test`; `B5oBsA`, a
   program that must fail to compile, is excluded from the expand and graph gates).
-- **Rendered parity.** `scripts/parity-summary` renders the 116 cases listed in
+- **Rendered parity.** `scripts/parity-summary` renders the cases listed in
   `parity/3d-expected.txt` and `parity/artistic-expected.txt` with this add-on and with the
   reference WebGL2 engine at the pinned revision (headless Chromium, ANGLE over Metal), at
   256×256, time 0.25, 8 frames. The goldens are minted on the GPU class the add-on renders on, never
