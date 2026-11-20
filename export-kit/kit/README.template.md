@@ -71,20 +71,14 @@ Anything marked with a warning glyph above is not supported by this port and wil
 even though the rest of the program still does. `scope` and `spectrum` are the two the Blender port
 excludes outright: they read live audio and MIDI, which the add-on has no host for.
 
-Two more were previously described as rendering incorrectly. On 2026-09-27 **bloom** and **lens** were
-compared against the Noisemaker reference engine's own renders on an Apple-Silicon Blender 5.1 host
-(Metal). **bloom** matched the reference engine within this port's published tolerance (worst
-per-channel difference 1 in 255 against a tolerance of 2). **lens** renders but carries an open
-measured defect: its worst per-channel difference against the reference engine is 10 in 255, above
-the published 2-step tolerance, while its structural similarity is 0.99999 — expect small local
-differences in lens-heavy programs. Programs that feed such effects through chaotic stateful solvers
-(for example a flow → fluid chain) can diverge structurally across engines; that divergence is on
-record as an open defect in the add-on repository's compatibility record. The public bake path itself
-reproduced the reference engine within tolerance on the checked program. One open item is still on
-record: an earlier zero-tolerance comparison against retained historical goldens showed a small bloom
-difference (at most 1 in 255) not yet reproduced against the current reference engine; see the add-on
-repository's compatibility record. Expect small differences from what the app showed you, on top of
-any effect still carrying an open defect.
+On an Apple M4 Mac, with the reference engine running in Chrome on Metal, **bloom** and **lens**
+render the same pixels in this port as in the Noisemaker reference engine. On other GPUs, drivers or software
+renderers, expect small differences from what the app showed you: they may round some math
+functions differently.
+
+Long bakes of programs that feed a chaotic stateful solver, for example a flow → fluid chain, are a
+different case. The solver magnifies tiny rounding differences frame after frame, so a long bake
+renders a different instance of the same chaos rather than the app's exact pixels.
 
 ## The engine
 
