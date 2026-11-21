@@ -29,6 +29,13 @@ The result appears in an Image datablock (named `Noisemaker` unless you change *
 It reads the `program.dsl` sitting beside it and writes to an Image
 called `NoisedeckExport`, with the resolution, frame count and timestep as constants at the top.
 
+A bake connects no inputs. The image of `media`, the overlay of `text`, the preview of `meshLoader`
+and the note grid of `roll` read transparent black, a program with `meshRender` fails with
+`mesh position input has no triangle vertex count`, and a parameter automated with `audio()` or
+`midi()` takes the `min` of that call, scaled from 0 to 1 onto the parameter's range. To feed an
+image, text, a mesh, or `audio()` and `midi()` values, use the add-on's Python session API,
+described under *Python sessions and final rendering* in the port's README.
+
 ### Simulations need time to evolve
 
 Fluid, agent, reaction-diffusion and cellular-automata effects start from an empty state, so a

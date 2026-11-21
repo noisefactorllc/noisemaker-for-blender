@@ -174,6 +174,74 @@ with nm.open_session(instance, width=1024, height=512) as session:
     texture = nm.attach_material(instance, material, image)
 ```
 
+A program that uses `media()`, `text()`, `meshLoader()` or `meshRender()` declares host inputs,
+and `session.inputs.required` maps each declared name to its kind (`image`, `text` or `mesh`). An
+image or text input is named `imageTex_step_<N>` or `textTex_step_<N>`, where N counts every
+call in the program from 0, `write` calls included, and a call passed as an argument counts before
+the call that takes it. A mesh input
+is a pair, `global_mesh0_positions_chain_<n>` and `global_mesh0_normals_chain_<n>`, where n is the
+chain's position in the program, counted from 0. Read the exact names from
+`session.inputs.required`, and bind each one before you evaluate:
+
+```python
+import bpy
+from noisemaker_blender import api as nm
+from noisemaker_blender.integration.inputs import (
+    EvaluatedMeshAdapter, MeshTextureProvider, TextTextureProvider)
+
+program = nm.compile("search synth, filter, render\n"
+                     "media().text().write(o0)\n"
+                     "meshLoader().meshRender().write(o1)\n"
+                     "render(o0)")
+obj = bpy.data.objects["Cube"]
+text = TextTextureProvider("Hello", width=512, height=256)
+adapter = EvaluatedMeshAdapter(obj, lambda: bpy.context.evaluated_depsgraph_get())
+with nm.open_session(program, width=1024, height=512) as session:
+    nm.bind_input(session, "imageTex_step_0", image=bpy.data.images["Photo"])
+    nm.bind_input(session, "textTex_step_1", text)
+    nm.bind_input(session, "global_mesh0_positions_chain_1", MeshTextureProvider(adapter, "positions"))
+    nm.bind_input(session, "global_mesh0_normals_chain_1", MeshTextureProvider(adapter, "normals"))
+    nm.set_external_state(session, {"audio": {"low": 0.5}})
+    output = session.evaluate(nm.FrameRequest(frame=1))
+text.close()
+```
+
+- An image binding takes a still Image datablock. For a movie or image sequence, bind
+  `BlenderImageProvider(image, frame_provider=...)` from the same module, where
+  `frame_provider(frame, subframe)` returns the still Image that holds that frame; bound with
+  `image=`, a session raises `UnsupportedHostInput` at evaluation and an instance refuses it. To
+  call `mark_changed()` after you change an Image's pixels in memory, bind your own
+  `BlenderImageProvider(image)`. After you edit the mesh, call `adapter.mark_changed()`. A text
+  provider draws its own string: change it with `update(text)` and free it with `close()`. A
+  stateful program raises `ValueError` for a mesh adapter whose depsgraph callable takes no
+  request argument.
+- On an instance, `nm.bind_input(instance, name, image=...)` saves the Image reference with the
+  `.blend`, and the Live panel's **Host Images** box edits saved bindings. A `provider=` binding on
+  an instance is held in memory: bind it again after a file load, undo or redo. Call
+  `nm.bind_input(instance, name)` with neither to remove a binding, or `session.unbind_input(name)`
+  on a session. On a session, a recompile keeps every binding whose name the new program still
+  declares and drops the rest. On an instance, a binding whose name the new program no longer
+  declares stops the instance with `orphan host input binding` until you remove it.
+- `nm.set_external_state` takes a session only. Pass a `dict` with optional `audio` and `midi`
+  entries, or a callable or object with `resolve(request)` that returns `(state, revision)`.
+  The `audio` entry holds `low`, `mid`, `high` and `vol` from 0 to 1, and `raw` from -1 to 1 with
+  `rawReady` set to `True`; an `audio()` with a `channel` (optionally with `name` and `id`) reads
+  `get_device_channel_state(config)` instead. The `midi` entry is an object or mapping:
+  `midi(channel: ...)` calls `get_channel(channel)`, which returns a channel state with `gate`,
+  `key`, `velocity` and `time` (wall-clock milliseconds), plus `cc`, `cc14`, `nrpn`, `pitchBend`,
+  `pressure` or `polyPressure` for those modes. `midi(zone: ...)` calls `get_zone_voice(config)`,
+  which returns a voice with `key`, `velocity`, `time` and `channel`, the channel state those modes
+  read; a zone voice counts as gate on. If the entry has `get_port_state(config)`, its result is
+  used in its place.
+- If a declared input is not bound, evaluation raises `UnboundInputError`, naming the inputs,
+  before any GPU work, and on an instance the Live panel shows the message. With no external
+  state, `audio()` and `midi()` automation take the `min` of that call, scaled from 0 to 1 onto the
+  parameter's range.
+  A session or instance refuses a program with `roll`, whose note grid has no host path
+  (`unsupported or unbound input 'midiNoteGrid'`). The **Bake** button and the export kit's bake
+  script bind no inputs: those inputs and the note grid of `roll` read transparent black, and a
+  program with `meshRender` fails the bake with `mesh position input has no triangle vertex count`.
+
 A borrowed `OutputHandle` expires on the next evaluation or session replacement/close. Use
 `session.read_float(output)` for an owned top-down float array. Consumer helpers create/reuse
 stock Image nodes; connect their sockets to the intended shader/compositor/geometry output.
