@@ -11,6 +11,10 @@
     [
       "FLOAT",
       "heightOffset"
+    ],
+    [
+      "FLOAT",
+      "aspectInv"
     ]
   ],
   "samplers": [

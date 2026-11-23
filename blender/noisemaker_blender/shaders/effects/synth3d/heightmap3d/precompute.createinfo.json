@@ -11,6 +11,14 @@
     [
       "FLOAT",
       "baseHeight"
+    ],
+    [
+      "FLOAT",
+      "aspect"
+    ],
+    [
+      "FLOAT",
+      "aspectInv"
     ]
   ],
   "samplers": [
@@ -38,7 +46,7 @@
     ]
   ],
   "uniformAliases": {},
-  "std140Bytes": 16,
+  "std140Bytes": 32,
   "ubo": false,
   "notes": [
     "MRT (2) — staged"
