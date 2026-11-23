@@ -1,5 +1,7 @@
 {
   "noise_rectangular": {"width": 257, "height": 129},
   "heightmap3d_landscape_edge": {"width": 257, "height": 256},
-  "heightmap3d_landscape_perspective": {"width": 257, "height": 256}
+  "heightmap3d_landscape_perspective": {"width": 257, "height": 256},
+  "heightmap3d_landscape_wide": {"width": 256, "height": 144},
+  "heightGrid_billboard_wide": {"width": 256, "height": 144}
 }

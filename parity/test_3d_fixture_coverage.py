@@ -29,6 +29,7 @@ FIXTURE_EFFECTS = {
     "heightmap3d_landscape_isosurface": "heightmap3d",
     "heightmap3d_landscape_edge": "heightmap3d",
     "heightmap3d_landscape_perspective": "heightmap3d",
+    "heightmap3d_landscape_wide": "heightmap3d",
 }
 # Per-fixture 3D render call: the landscape fixtures terminate in
 # renderLandscape3d (their own 3D camera raymarch), everything else in render3d.
@@ -37,6 +38,7 @@ RENDER_CALLS = {
     "heightmap3d_landscape_isosurface": ".renderLandscape3d(",
     "heightmap3d_landscape_edge": ".renderLandscape3d(",
     "heightmap3d_landscape_perspective": ".renderLandscape3d(",
+    "heightmap3d_landscape_wide": ".renderLandscape3d(",
 }
 FIXTURES = tuple(FIXTURE_EFFECTS)
 

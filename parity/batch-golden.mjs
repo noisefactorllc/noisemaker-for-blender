@@ -7,7 +7,7 @@
 // reference GPU output to <name>.golden.png at a fixed size/time.
 //
 // Usage:
-//   node batch-golden.mjs <manifest> <outDir> [--size 256] [--time 0.25] [--backend webgl2]
+//   node batch-golden.mjs <manifest> <outDir> [--size 256] [--width W] [--height H] [--time 0.25] [--backend webgl2]
 // manifest: each non-empty line is "<name>\t<dslPath>" (\t or whitespace).
 //
 // See parity/export-and-render.mjs for the per-program driving rationale.
@@ -38,6 +38,8 @@ function parseArgs (argv) {
   const o = { size: 256, time: 0.25, backend: 'webgl2', frames: 8, timestep: 0 }; const pos = []
   for (let i = 0; i < argv.length; i++) { const a = argv[i]
     if (a === '--size') o.size = parseInt(argv[++i], 10)
+    else if (a === '--width') o.width = parseInt(argv[++i], 10)
+    else if (a === '--height') o.height = parseInt(argv[++i], 10)
     else if (a === '--time') o.time = parseFloat(argv[++i])
     else if (a === '--backend') o.backend = argv[++i]
     else if (a === '--frames') o.frames = parseInt(argv[++i], 10)
@@ -49,7 +51,7 @@ function parseArgs (argv) {
 }
 
 // Drive the demo to load one DSL and read back o0 as linear-quantised RGBA8 top-down.
-async function renderOne (page, dsl, size, time, lastId, frames = 8, timestep = 0, veltex = null) {
+async function renderOne (page, dsl, width, height, time, lastId, frames = 8, timestep = 0, veltex = null) {
   const baselineId = lastId
   await page.evaluate((src) => {
     const ed = document.getElementById('dsl-editor'); const run = document.getElementById('dsl-run-btn')
@@ -84,9 +86,9 @@ async function renderOne (page, dsl, size, time, lastId, frames = 8, timestep = 
   await page.evaluate(() => { if (window.__noisemakerSetPaused) window.__noisemakerSetPaused(true) })
   await page.evaluate((sz) => {
     const r = window.__noisemakerCanvasRenderer; const p = window.__noisemakerRenderingPipeline
-    if (r && r.canvas) { r.canvas.width = sz; r.canvas.height = sz; if (r.canvas.style){ r.canvas.style.width = sz+'px'; r.canvas.style.height = sz+'px' } }
-    if (p && typeof p.resize === 'function') p.resize(sz, sz)
-  }, size)
+    if (r && r.canvas) { r.canvas.width = sz[0]; r.canvas.height = sz[1]; if (r.canvas.style){ r.canvas.style.width = sz[0]+'px'; r.canvas.style.height = sz[1]+'px' } }
+    if (p && typeof p.resize === 'function') p.resize(sz[0], sz[1])
+  }, [width, height])
   // DETERMINISM STEP 2 — render EXACTLY `frames` from a CLEAN, ZEROED state,
   // matching the Unity side (NMParityRunner.BuildAndRender: fresh NMPipeline,
   // Init, then exactly 8 Render(0.25) from a zeroed pipeline). We cannot create a
@@ -171,9 +173,9 @@ async function renderOne (page, dsl, size, time, lastId, frames = 8, timestep = 
     return { width, height, pixels: rgba8, graphId: pipeline.graph.id }
   })
   if (result.error) throw new Error('readback: ' + result.error)
-  const { width, height, pixels } = result
-  const topDown = Buffer.alloc(width*height*4)
-  for (let y=0;y<height;y++) for (let x=0;x<width;x++) { const s=((height-1-y)*width+x)*4, d=(y*width+x)*4; topDown[d]=pixels[s]; topDown[d+1]=pixels[s+1]; topDown[d+2]=pixels[s+2]; topDown[d+3]=pixels[s+3] }
+  const { width: rw, height: rh, pixels } = result
+  const topDown = Buffer.alloc(rw*rh*4)
+  for (let y=0;y<rh;y++) for (let x=0;x<rw;x++) { const s=((rh-1-y)*rw+x)*4, d=(y*rw+x)*4; topDown[d]=pixels[s]; topDown[d+1]=pixels[s+1]; topDown[d+2]=pixels[s+2]; topDown[d+3]=pixels[s+3] }
 
   // VELOCITY READBACK: read a named state surface's RAW float32 (.rg = velocity) for
   // frame-by-frame comparison vs the C# port (the dye display hides the velocity field).
@@ -198,12 +200,13 @@ async function renderOne (page, dsl, size, time, lastId, frames = 8, timestep = 
       return { width, height, floats: Array.from(buf), maxMag, meanMag: sumMag/(width*height) }
     }, veltex)
   }
-  return { png: encodePng(width, height, topDown), graphId: result.graphId, vel }
+  return { png: encodePng(rw, rh, topDown), graphId: result.graphId, vel }
 }
 
 async function main () {
   const o = parseArgs(process.argv.slice(2))
-  if (!o.manifest || !o.outDir) { process.stderr.write('usage: node batch-golden.mjs <manifest> <outDir> [--size N] [--time T]\n'); process.exit(2) }
+  if (!o.manifest || !o.outDir) { process.stderr.write('usage: node batch-golden.mjs <manifest> <outDir> [--size N] [--width W] [--height H] [--time T]\\n'); process.exit(2) }
+  o.width ??= o.size; o.height ??= o.size
   mkdirSync(o.outDir, { recursive: true })
   const items = readFileSync(o.manifest, 'utf8').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'))
     .map(l => { const p = l.split(/\s+/); return { name: p[0], dslPath: p[1] } })
@@ -220,7 +223,7 @@ async function main () {
   let ok = 0, fail = 0
   try {
     await session.setup(); const page = session.page; await session.setBackend(o.backend)
-    await page.setViewportSize({ width: o.size, height: o.size })
+    await page.setViewportSize({ width: o.width, height: o.height })
     await page.waitForFunction(() => !!window.__noisemakerRenderingPipeline && !!document.getElementById('dsl-editor'), { timeout: STATUS_TIMEOUT })
     let lastId = await page.evaluate(() => window.__noisemakerRenderingPipeline?.graph?.id ?? null)
     let firstItem = true
@@ -238,7 +241,7 @@ async function main () {
         if (!firstItem) {
           await page.reload({ waitUntil: 'load' })
           await page.waitForFunction(() => !!window.__noisemakerRenderingPipeline && !!document.getElementById('dsl-editor'), { timeout: STATUS_TIMEOUT })
-          await page.setViewportSize({ width: o.size, height: o.size })
+          await page.setViewportSize({ width: o.width, height: o.height })
           lastId = await page.evaluate(() => window.__noisemakerRenderingPipeline?.graph?.id ?? null)
         }
         firstItem = false
@@ -246,7 +249,7 @@ async function main () {
         // graph.json (no browser needed; uses the reference compiler).
         try { const g = await exportGraph(dsl); writeFileSync(join(o.outDir, `${it.name}.graph.json`), JSON.stringify(g, null, 2) + '\n') }
         catch (e) { process.stderr.write(`[batch] ${it.name} GRAPH-FAIL ${e?.message || e}\n`); fail++; continue }
-        const { png, graphId, vel } = await renderOne(page, dsl, o.size, o.time, lastId, o.frames, o.timestep, o.veltex)
+        const { png, graphId, vel } = await renderOne(page, dsl, o.width, o.height, o.time, lastId, o.frames, o.timestep, o.veltex)
         lastId = graphId
         writeFileSync(join(o.outDir, `${it.name}.golden.png`), png)
         if (vel) {

@@ -229,6 +229,7 @@ default_ridge
 default_scale
 default_scanlineError
 heightGrid_billboard
+heightGrid_billboard_wide
 default_rotate
 filter_grade
 filter_grade_preset_bleachBypass
