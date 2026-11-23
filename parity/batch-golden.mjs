@@ -205,7 +205,7 @@ async function renderOne (page, dsl, width, height, time, lastId, frames = 8, ti
 
 async function main () {
   const o = parseArgs(process.argv.slice(2))
-  if (!o.manifest || !o.outDir) { process.stderr.write('usage: node batch-golden.mjs <manifest> <outDir> [--size N] [--width W] [--height H] [--time T]\\n'); process.exit(2) }
+  if (!o.manifest || !o.outDir) { process.stderr.write('usage: node batch-golden.mjs <manifest> <outDir> [--size N] [--width W] [--height H] [--time T]\n'); process.exit(2) }
   o.width ??= o.size; o.height ??= o.size
   mkdirSync(o.outDir, { recursive: true })
   const items = readFileSync(o.manifest, 'utf8').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'))
