@@ -1,3 +1,5 @@
 {
-  "noise_rectangular": {"width": 257, "height": 129}
+  "noise_rectangular": {"width": 257, "height": 129},
+  "heightmap3d_landscape_edge": {"width": 257, "height": 256},
+  "heightmap3d_landscape_perspective": {"width": 257, "height": 256}
 }

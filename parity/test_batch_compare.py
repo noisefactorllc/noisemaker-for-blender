@@ -332,7 +332,7 @@ class BatchCompareTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         report = json.loads(self.report.read_text())
-        self.assertEqual({"PASS": 8, "NEAR": 3}, report["counts"])
+        self.assertEqual({"PASS": 10, "NEAR": 3}, report["counts"])
         self.assertEqual([], report["unused_policies"])
         flythrough = next(row for row in report["results"] if row["name"] == "flythrough3d")
         self.assertEqual("NEAR", flythrough["cls"])

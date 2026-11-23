@@ -9,3 +9,5 @@ flow3d
 palette3d
 heightmap3d_landscape
 heightmap3d_landscape_isosurface
+heightmap3d_landscape_edge
+heightmap3d_landscape_perspective
