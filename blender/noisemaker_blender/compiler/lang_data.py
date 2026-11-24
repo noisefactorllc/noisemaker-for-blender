@@ -54,6 +54,7 @@ DIAGNOSTICS = {
     # for built-in effects only; portable registration still rejects the field).
     "S007": {"stage": "semantic", "severity": "warning", "message": "Deprecated parameter alias"},
     "S008": {"stage": "semantic", "severity": "warning", "message": "Deprecated effect"},
+    "S009": {"stage": "semantic", "severity": "warning", "message": "Too many positional arguments"},
     "R001": {"stage": "runtime", "severity": "error", "message": "Runtime error"},
 }
 

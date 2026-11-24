@@ -22,6 +22,10 @@ def _deep_clone(obj):
     return copy.deepcopy(obj)
 
 
+def _is_builtin_op(op):
+    return isinstance(op, str) and op.startswith("_")
+
+
 def _find_step_by_index(compiled, step_index):
     """Port of ``findStepByIndex``: returns dict {planIndex, chainIndex, step} or None."""
     if not compiled or not compiled.get("plans"):
@@ -359,6 +363,8 @@ def replace_effect(compiled, step_index, new_effect_name, new_args=None, options
     chain_index = location["chainIndex"]
     step = location["step"]
     old_effect_name = step.get("op")
+    if _is_builtin_op(old_effect_name):
+        return {"success": False, "error": f"Cannot replace builtin '{old_effect_name}': it is a structural chain node, not an effect."}
 
     current_is_starter = _check_is_starter(old_effect_name, search_order)
     # A step is in "starter position" if it is either:
@@ -472,8 +478,7 @@ def list_steps(compiled, options=None):
         if not plan or not plan.get("chain"):
             continue
         for chain_index, step in enumerate(plan["chain"]):
-            if step.get("builtin"):
-                continue
+            builtin = _is_builtin_op(step.get("op"))
             is_starter = _check_is_starter(step.get("op"), search_order)
             is_starter_position = chain_index == 0 or (
                 is_starter and (step.get("from") is None)
@@ -484,10 +489,11 @@ def list_steps(compiled, options=None):
                     "planIndex": plan_index,
                     "chainIndex": chain_index,
                     "effectName": step.get("op"),
+                    "kind": "builtin" if builtin else "effect",
                     "isStarter": is_starter,
                     "isStarterPosition": is_starter_position,
-                    "canReplaceWithStarter": is_starter_position,
-                    "canReplaceWithNonStarter": not is_starter_position,
+                    "canReplaceWithStarter": not builtin and is_starter_position,
+                    "canReplaceWithNonStarter": not builtin and not is_starter_position,
                     "args": step.get("args") or {},
                 }
             )
@@ -505,6 +511,8 @@ def get_compatible_replacements(compiled, step_index, options=None):
         return {"success": False, "error": "Step with index %s not found" % step_index}
     chain_index = location["chainIndex"]
     step = location.get("step") or {}
+    if _is_builtin_op(step.get("op")):
+        return {"success": False, "error": f"Cannot replace builtin '{step['op']}': it is a structural chain node, not an effect."}
     current_is_starter = _check_is_starter(step.get("op"), search_order)
     is_starter_position = chain_index == 0 or (
         current_is_starter and (step.get("from") is None)

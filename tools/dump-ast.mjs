@@ -7,7 +7,8 @@
 // Env: NM_REFERENCE_ROOT  reference repo root (default ../noisemaker)
 import { readFileSync } from 'node:fs'
 import { resolve, dirname, join } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { fileURLToPath } from 'node:url'
+import { importStableReference } from './stable-reference.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 if (!process.env.NM_REFERENCE_ROOT) {
@@ -16,7 +17,7 @@ if (!process.env.NM_REFERENCE_ROOT) {
 }
 const REF = resolve(process.env.NM_REFERENCE_ROOT)
 
-const lang = await import(pathToFileURL(join(REF, 'shaders', 'src', 'lang', 'index.js')).href)
+const lang = await importStableReference(REF, join(REF, 'shaders', 'src', 'lang', 'index.js'))
 const { lex, parse } = lang
 
 const file = process.argv[2]

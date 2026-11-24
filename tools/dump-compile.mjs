@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // dump-compile.mjs — REFERENCE compile() oracle.
 //
-// Runs the UNCHANGED reference `compile(source)` (shaders/src/lang/index.js:
+// Runs the reference effect compiler `compile(source)` (shaders/src/lang/index.js:
 // lex -> parse -> validate) on a DSL file and dumps the validated
 // compilationResult ({ plans, diagnostics, render, vars, searchNamespaces }) as
 // canonical JSON. This is the golden the ported Python validator (stage 3) is
@@ -21,6 +21,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve, basename } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { importStableReference } from './stable-reference.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -39,7 +40,7 @@ const EFFECTS_DIR = join(REFERENCE_ROOT, 'shaders', 'effects')
 // and registers each param's choices as resolvable enum members.
 // ---------------------------------------------------------------------------
 async function bootstrapReference () {
-  const mod = await import(pathToFileURL(SRC_INDEX).href)
+  const mod = await importStableReference(REFERENCE_ROOT, SRC_INDEX)
   const {
     compile, registerEffect, registerOp, registerStarterOps,
     mergeIntoEnums, stdEnums, sanitizeEnumName

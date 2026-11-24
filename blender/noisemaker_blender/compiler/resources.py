@@ -28,13 +28,40 @@ id lands in is parity-critical (the C#/Unity, three.js, etc. ports must agree on
 what makes the emitted ``phys_N`` assignment deterministic and matches every
 sibling port.
 
-stdlib-only and self-contained: no imports at all.
+This module uses only the Python standard library.
 """
 
 from __future__ import annotations
 
+import re
 
-def analyze_liveness(passes):
+
+_NODE_OUTPUT = re.compile(r"node_[0-9]+_out")
+
+
+def _build_input_aliases(passes):
+    written = {tex for pass_ in passes for tex in (pass_.get("outputs") or {}).values()
+               if isinstance(tex, str)}
+    aliases = {}
+    for index, pass_ in enumerate(passes):
+        node = pass_.get("nodeId")
+        if not node:
+            continue
+        names = (f"{node}_inputTex", f"{node}_inputColor")
+        for tex in (pass_.get("inputs") or {}).values():
+            if tex not in names or tex in written or tex in aliases:
+                continue
+            # The unresolved color input reads the nearest earlier node output.
+            for previous in range(index - 1, -1, -1):
+                output = next((out for out in (passes[previous].get("outputs") or {}).values()
+                               if isinstance(out, str) and out != f"{node}_out" and _NODE_OUTPUT.fullmatch(out)), None)
+                if output is not None:
+                    aliases[tex] = output
+                    break
+    return aliases
+
+
+def analyze_liveness(passes, *, _aliases=None):
     """Lifetime ``{start, end}`` (pass indices) per virtual texture id.
 
     Port of ``analyzeLiveness``. Both inputs (read at index i) and outputs
@@ -46,6 +73,7 @@ def analyze_liveness(passes):
     dict
         ``{virtualId: {"start": int, "end": int}}`` in first-seen order.
     """
+    aliases = _build_input_aliases(passes) if _aliases is None else _aliases
     lifetime = {}
 
     def touch(tex_id, index):
@@ -66,7 +94,7 @@ def analyze_liveness(passes):
         inputs = pass_.get("inputs")
         if inputs:
             for tex in inputs.values():
-                touch(tex, index)
+                touch(aliases.get(tex, tex), index)
         # Outputs are written at this index.
         outputs = pass_.get("outputs")
         if outputs:
@@ -89,7 +117,8 @@ def allocate_resources(passes):
     dict
         ``{virtualId: "phys_N"}`` in allocation (first-define) order.
     """
-    lifetime = analyze_liveness(passes)
+    aliases = _build_input_aliases(passes)
+    lifetime = analyze_liveness(passes, _aliases=aliases)
     allocations = {}
     # freeList: list of {"id": str, "availableAfter": int}.
     free_list = []
@@ -130,7 +159,7 @@ def allocate_resources(passes):
         # or its slot is handed to two textures that are live together.
         inputs = pass_.get("inputs")
         if inputs:
-            for tex_id in dict.fromkeys(inputs.values()):
+            for tex_id in dict.fromkeys(aliases.get(tex, tex) for tex in inputs.values()):
                 if tex_id.startswith("global_"):
                     continue
                 entry = lifetime.get(tex_id)

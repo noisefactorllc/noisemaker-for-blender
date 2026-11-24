@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // export-graph.mjs — GOLDEN graph producer.
 //
-// Runs the UNCHANGED reference JS engine (shaders/src/index.js -> compileGraph)
+// Runs the reference effect compiler (shaders/src/index.js -> compileGraph)
 // on a DSL string and serialises the result to the normalized Render Graph JSON
 // described in docs/GRAPH-JSON-SCHEMA.md. This is the ground truth the C# live
 // path (Compiler/Expander) is diffed against, and the loader format the Unity
@@ -24,6 +24,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve, basename } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { importStableReference } from './stable-reference.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -47,7 +48,7 @@ const EFFECTS_DIR = join(REFERENCE_ROOT, 'shaders', 'effects')
 // (See shaders/tests/test_canvas_apply_step_params.js loadEffect helper.)
 // ---------------------------------------------------------------------------
 async function bootstrapReference () {
-  const mod = await import(pathToFileURL(SRC_INDEX).href)
+  const mod = await importStableReference(REFERENCE_ROOT, SRC_INDEX)
   const {
     compileGraph, registerEffect, registerOp, registerStarterOps,
     mergeIntoEnums, stdEnums, sanitizeEnumName
@@ -314,6 +315,7 @@ export function normalizeGraph (graph, defineMap) {
 export async function exportGraph (dsl) {
   const { compileGraph, defineMap } = await bootstrapReference()
   const graph = compileGraph(dsl)
+  if (graph._isScene || graph.sceneIR) throw new Error('Blender graph export requires an effect program')
   return normalizeGraph(graph, defineMap)
 }
 

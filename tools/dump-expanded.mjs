@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // dump-expanded.mjs — REFERENCE expand() oracle.
 //
-// Runs the UNCHANGED reference compile(source) then expand(compilationResult) and
+// Runs the reference effect compiler then expand(compilationResult) and
 // dumps { passes, programs, textureSpecs, renderSurface } as canonical JSON. This
 // is the golden the ported Python expander (stage 4) is diffed against — the
 // Logical-Graph -> Render-Graph step that the resource allocator (stage 5) then
@@ -25,6 +25,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve, basename } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { importStableReference } from './stable-reference.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -42,7 +43,7 @@ const EFFECTS_DIR = join(REFERENCE_ROOT, 'shaders', 'effects')
 // `expand` (and `compile`).
 // ---------------------------------------------------------------------------
 async function bootstrapReference () {
-  const mod = await import(pathToFileURL(SRC_INDEX).href)
+  const mod = await importStableReference(REFERENCE_ROOT, SRC_INDEX)
   const {
     compile, registerEffect, registerOp, registerStarterOps,
     mergeIntoEnums, stdEnums, sanitizeEnumName

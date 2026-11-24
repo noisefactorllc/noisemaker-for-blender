@@ -16,6 +16,17 @@ from noisemaker_blender.compiler.resources import allocate_resources  # noqa: E4
 
 
 class AllocateResourcesTests(unittest.TestCase):
+    def test_unwritten_color_alias_releases_the_upstream_output_after_read(self):
+        allocations = allocate_resources([
+            {"nodeId": "node_0", "outputs": {"out": "node_0_out"}},
+            {"nodeId": "node_1", "inputs": {"inputColor": "node_1_inputColor"},
+             "outputs": {"out": "node_1_out"}},
+            {"nodeId": "node_2", "inputs": {"inputTex": "node_1_out"},
+             "outputs": {"out": "node_2_out"}},
+        ])
+        self.assertNotEqual(allocations["node_0_out"], allocations["node_1_out"])
+        self.assertEqual(allocations["node_0_out"], allocations["node_2_out"])
+
     def test_a_texture_read_under_two_names_in_one_pass_is_released_once(self):
         allocations = allocate_resources([
             {"outputs": {"out": "A"}},

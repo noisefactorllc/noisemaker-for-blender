@@ -121,14 +121,18 @@ class TransformTests(unittest.TestCase):
         self.assertIsNone(_get_effect_spec(None))
         self.assertIsNone(_get_effect_spec(123))
 
-    def test_list_steps_excludes_builtin_steps(self):
+    def test_list_steps_labels_builtin_steps_as_non_replaceable(self):
         compiled = compile("search synth, filter\nnoise(10).blur().write(o0)\nrender(o0)")
         steps = list_steps(compiled)
-        self.assertEqual(len(steps), 2)
+        self.assertEqual(len(steps), 3)
         self.assertEqual(steps[0]["effectName"], "synth.noise")
         self.assertEqual(steps[0]["stepIndex"], 0)
         self.assertEqual(steps[1]["effectName"], "filter.blur")
         self.assertEqual(steps[1]["stepIndex"], 1)
+        self.assertEqual(steps[2]["effectName"], "_write")
+        self.assertEqual(steps[2]["kind"], "builtin")
+        self.assertFalse(steps[2]["canReplaceWithStarter"])
+        self.assertFalse(steps[2]["canReplaceWithNonStarter"])
 
     def test_replace_effect_builtin_step_fails(self):
         compiled = compile("search synth, filter\nnoise(10).write(o0)\nrender(o0)")

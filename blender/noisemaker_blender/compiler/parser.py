@@ -235,6 +235,10 @@ def parse(tokens, options=None):
                 break
         return comments
 
+    def skip_comments():
+        while peek().get("type") == "COMMENT":
+            advance()
+
     expr_start_tokens = frozenset([
         "PLUS", "MINUS", "NUMBER", "HEX", "FUNC", "STRING",
         "IDENT", "OUTPUT_REF", "SOURCE_REF", "VOL_REF", "GEO_REF", "MESH_REF",
@@ -1092,6 +1096,7 @@ def parse(tokens, options=None):
         keyword = False
         positional = False
         allow_mixed = name_token["lexeme"] in ("midi", "audio")
+        skip_comments()
         if peek()["type"] != "RPAREN":
             while True:
                 nxt = tok_at(state["current"] + 1)
@@ -1115,13 +1120,15 @@ def parse(tokens, options=None):
                         )
                     positional = True
                     args.append(parse_arg())
+                skip_comments()
                 if peek()["type"] != "COMMA":
                     break
                 advance()
+                skip_comments()
                 if peek()["type"] == "RPAREN":
                     break
         expect("RPAREN", "Expect ')'")
-        call = {"type": "Call", "name": name_token["lexeme"], "args": args}
+        call = {"type": "Call", "name": name_token["lexeme"], "args": args, "loc": tok_loc(name_token)}
         if keyword:
             call["kwargs"] = kwargs
         name = name_token["lexeme"]
@@ -1198,6 +1205,7 @@ def parse(tokens, options=None):
             node = {
                 "type": "Number",
                 "value": _js_binary_number(left_val, right_val, op),
+                "loc": node["loc"],
             }
         return node
 
@@ -1211,6 +1219,7 @@ def parse(tokens, options=None):
             node = {
                 "type": "Number",
                 "value": _js_binary_number(left_val, right_val, op),
+                "loc": node["loc"],
             }
         return node
 
@@ -1224,6 +1233,7 @@ def parse(tokens, options=None):
             return {
                 "type": "Number",
                 "value": _make_number(-_to_js_number(to_number(val))),
+                "loc": val["loc"],
             }
         return parse_primary()
 
@@ -1232,10 +1242,10 @@ def parse(tokens, options=None):
         tt = token["type"]
         if tt == "NUMBER":
             advance()
-            return {"type": "Number", "value": _parse_js_number(token["lexeme"])}
+            return {"type": "Number", "value": _parse_js_number(token["lexeme"]), "loc": tok_loc(token)}
         if tt == "STRING":
             advance()
-            return {"type": "String", "value": token["lexeme"]}
+            return {"type": "String", "value": token["lexeme"], "loc": tok_loc(token)}
         if tt == "HEX":
             advance()
             hex_str = token["lexeme"][1:]
@@ -1261,6 +1271,7 @@ def parse(tokens, options=None):
                 )
             return {
                 "type": "Color",
+                "loc": tok_loc(token),
                 "value": [
                     _make_number(r / 255),
                     _make_number(g / 255),
@@ -1273,11 +1284,17 @@ def parse(tokens, options=None):
             bracket_pos = getattr(token, "position", None) or (token.get("position") if isinstance(token, dict) else None)
             advance()
             elements = []
+            skip_comments()
             if peek()["type"] != "RBRACKET":
                 elements.append(parse_arg())
+                skip_comments()
                 while peek()["type"] == "COMMA":
                     advance()
+                    skip_comments()
+                    if peek()["type"] == "RBRACKET":
+                        break
                     elements.append(parse_arg())
+                    skip_comments()
             if peek()["type"] != "RBRACKET":
                 t = peek()
                 raise parser_error(
@@ -1301,10 +1318,10 @@ def parse(tokens, options=None):
             return {"type": "Func", "src": token["lexeme"]}
         if tt == "TRUE":
             advance()
-            return {"type": "Boolean", "value": True}
+            return {"type": "Boolean", "value": True, "loc": tok_loc(token)}
         if tt == "FALSE":
             advance()
-            return {"type": "Boolean", "value": False}
+            return {"type": "Boolean", "value": False, "loc": tok_loc(token)}
         if tt == "IDENT":
             t1 = tok_at(state["current"] + 1)
             t2 = tok_at(state["current"] + 2)
@@ -1316,7 +1333,7 @@ def parse(tokens, options=None):
                 advance()
                 advance()
                 advance()
-                return {"type": "Number", "value": _make_number(math.pi)}
+                return {"type": "Number", "value": _make_number(math.pi), "loc": tok_loc(token)}
             if (t1 is not None and t1.get("type") == "LPAREN") or has_call_after_dot(
                 state["current"]
             ):
@@ -1407,6 +1424,7 @@ def parse(tokens, options=None):
     def parse_kwarg(obj):
         key = expect("IDENT", "Expected identifier")["lexeme"]
         expect("COLON", "Expect ':'")
+        skip_comments()
         if peek()["type"] not in expr_start_tokens:
             t = peek()
             raise parser_error(

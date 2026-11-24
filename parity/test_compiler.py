@@ -424,8 +424,10 @@ class CompilerTests(unittest.TestCase):
         result = validate(ast)
         self.assertEqual(result["diagnostics"][0]["location"], {"line": 2, "column": 9})
 
-    def test_compile_does_not_invent_location_for_unlocated_ast_node(self):
-        result = compile("search synth\n  missing().write(o0)")
+    def test_validate_does_not_invent_location_for_unlocated_ast_node(self):
+        ast = parse(lex("search synth\n  missing().write(o0)"))
+        del ast["plans"][0]["chain"][0]["loc"]
+        result = validate(ast)
         diagnostic = next(d for d in result["diagnostics"] if d.get("identifier") == "missing")
         self.assertEqual(diagnostic["code"], "S001")
         self.assertNotIn("location", diagnostic)
@@ -760,7 +762,7 @@ class CompilerTests(unittest.TestCase):
                 },
                 {
                     "type": "Midi",
-                    "channel": {"type": "Number", "value": 1},
+                    "channel": {"type": "Number", "value": 1, "loc": {"line": 2, "col": 29}},
                     "mode": {"type": "Member", "path": ["midiMode", "velocity"]},
                     "min": {"type": "Number", "value": 0},
                     "max": {"type": "Number", "value": 1},
@@ -1251,8 +1253,11 @@ class CompilerTests(unittest.TestCase):
                     },
                 )
 
-    def test_number_coercion_diagnostics_represent_unavailable_locations_explicitly(self):
-        for source in ["search synth\nlet x = 1 + o0", "search synth\nlet x = diagProbe() + 1"]:
+    def test_number_coercion_diagnostics_report_call_locations_and_mark_unavailable_locations(self):
+        for source, location in [
+            ("search synth\nlet x = 1 + o0", None),
+            ("search synth\nlet x = diagProbe() + 1", {"line": 2, "column": 9}),
+        ]:
             for entry_point in (lambda s: parse(lex(s)), compile):
                 with self.assertRaises(SyntaxError) as cm:
                     entry_point(source)
@@ -1265,7 +1270,7 @@ class CompilerTests(unittest.TestCase):
                         "stage": "parser",
                         "severity": "error",
                         "message": "Expected number",
-                        "location": None,
+                        "location": location,
                         "span": None,
                     },
                 )
@@ -1417,6 +1422,7 @@ class CompilerTests(unittest.TestCase):
                 "type": "Call",
                 "name": "probe",
                 "args": [],
+                "loc": {"line": 2, "col": 21},
                 "namespace": {
                     "name": "synth",
                     "path": ["synth"],
@@ -1430,6 +1436,29 @@ class CompilerTests(unittest.TestCase):
         )
         mixed = parse(lex("search synth\nlet a = midi(1, channel: 2)"))
         self.assertEqual(mixed["vars"][0]["expr"]["channel"]["value"], 2)
+
+    def test_comments_in_effect_calls_and_arrays_and_extra_positional_warning(self):
+        ast = parse(lex("search synth\nlet values = [1, /* second */ 2, /* end */ ]"))
+        self.assertEqual([node["value"] for node in ast["vars"][0]["expr"]["elements"]], [1, 2])
+        line = "solid(/* color */ #ff0000, 1, 42).write(o0)"
+        compiled = compile(f"search synth\n{line}\nrender(o0)")
+        self.assertEqual(compiled["diagnostics"], [{
+            "code": "S009", "severity": "warning",
+            "message": "Too many positional arguments for solid(): 'solid' takes 2",
+            "location": {"line": 2, "column": line.index("42") + 1},
+            "identifier": "42",
+        }])
+        self.assertEqual(compiled["render"], "o0")
+
+    def test_extra_positional_warning_keeps_location_through_a_let_binding(self):
+        source = "search synth\nlet recipe = solid(#f00, 1, probe())\nrecipe().write(o0)\nrender(o0)"
+        compiled = compile(source)
+        self.assertEqual(compiled["diagnostics"], [{
+            "code": "S009", "severity": "warning",
+            "message": "Too many positional arguments for solid(): 'solid' takes 2",
+            "location": {"line": 2, "column": 29},
+            "identifier": "probe",
+        }])
 
     def test_registered_effect_definitions_satisfy_specification(self):
         from noisemaker_blender.compiler import registry

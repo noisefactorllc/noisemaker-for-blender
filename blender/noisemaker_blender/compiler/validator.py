@@ -277,6 +277,11 @@ def validate(ast):
                     for k, v in call["kwargs"].items():
                         merged_kw[k] = v
                 merged = {"type": "Call", "name": val.get("name"), "args": merged_args}
+                location = call.get("loc")
+                if location is None:
+                    location = val.get("loc")
+                if location is not None:
+                    merged["loc"] = location
                 if merged_kw is not None:
                     merged["kwargs"] = merged_kw
                 if call.get("namespace"):
@@ -361,6 +366,8 @@ def validate(ast):
             for c in node["chain"]:
                 mapped_args = [substitute(a, resolving) for a in (c.get("args") or [])]
                 mapped_call = {"type": "Call", "name": c.get("name"), "args": mapped_args}
+                if c.get("loc") is not None:
+                    mapped_call["loc"] = c["loc"]
                 if c.get("kwargs"):
                     kw = {}
                     for k, v in c["kwargs"].items():
@@ -371,6 +378,8 @@ def validate(ast):
         if t == "Call":
             mapped_args = [substitute(a, resolving) for a in (node.get("args") or [])]
             mapped_call = {"type": "Call", "name": node.get("name"), "args": mapped_args}
+            if node.get("loc") is not None:
+                mapped_call["loc"] = node["loc"]
             if node.get("kwargs"):
                 kw = {}
                 for k, v in node["kwargs"].items():
@@ -811,6 +820,12 @@ def validate(ast):
                     for key in list(kw.keys()):
                         if key not in seen:
                             push_diag("S001", kw[key], "Unknown argument '%s' for %s()" % (key, call.get("name")))
+
+                positionals = call.get("args") or []
+                if len(positionals) > len(spec_args):
+                    name = call["name"]
+                    push_diag("S009", positionals[len(spec_args)] or call,
+                              f"Too many positional arguments for {name}(): '{name}' takes {len(spec_args)}")
 
                 # No validator hooks are registered in the reference compile()
                 # path (registerValidatorHook is unused by the catalog), so the
