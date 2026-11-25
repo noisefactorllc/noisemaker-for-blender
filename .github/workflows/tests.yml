@@ -1,7 +1,7 @@
 name: Tests
 
-# Runs the test suites on every push to main. GitHub-hosted runners only: this
-# public repository never targets self-hosted runners.
+# Runs the test suites on every push to main and 2.x. GitHub-hosted runners
+# only: this public repository never targets self-hosted runners.
 #
 # Jobs:
 #   engine-free  scripts/test: the parity/test_*.py unittest suites, the stdlib
@@ -31,7 +31,7 @@ on:
       - '!.github/FUNDING.yml'
       - '!.github/dependabot.yml'
       - '!.editorconfig'
-    branches: [main]
+    branches: [main, 2.x]
   workflow_dispatch:
 
 permissions:
