@@ -67,15 +67,15 @@ printf 'python: %s (%s)\nnode:   %s\ngit:    %s\n' \
   "$(node --version)" "$(git --version)"
 
 venv="$work/venv"
+"$py" tools/test_bootstrap.py venv "$venv"
 if have uv; then
-  uv venv --quiet --python "$py" "$venv"
-  uv pip install --quiet --python "$venv/bin/python" --only-binary :all: \
+  uv pip install --quiet --link-mode copy --python "$venv/bin/python" --only-binary :all: \
     "numpy==$NUMPY_VERSION" "pillow==$PILLOW_VERSION"
 else
-  "$py" -m venv "$venv" || fail "cannot create a venv with $py (install its venv module or uv)"
   "$venv/bin/python" -m pip install --quiet --only-binary :all: \
     "numpy==$NUMPY_VERSION" "pillow==$PILLOW_VERSION"
 fi
+"$py" tools/test_bootstrap.py check-tree "$venv"
 vpy="$venv/bin/python"
 "$vpy" -c 'import numpy, PIL; print("venv:   numpy %s, Pillow %s" % (numpy.__version__, PIL.__version__))'
 
@@ -89,16 +89,23 @@ vpy="$venv/bin/python"
 # below what the changed paths require.
 run_all=1
 run_pngread=0
-declare -A seen=()
+seen=()
 unit_selection=()
 gate_selection=()
+has_seen() {
+  local key
+  for key in ${seen[@]+"${seen[@]}"}; do
+    [[ "$key" == "$1" ]] && return 0
+  done
+  return 1
+}
 add_unit() {
   [[ -f "$1" ]] || return 0
-  [[ -n "${seen[$1]-}" ]] && return 0
-  seen[$1]=1
+  has_seen "$1" && return 0
+  seen+=("$1")
   unit_selection+=("$1")
 }
-add_gate() { [[ -n "${seen[gate:$1]-}" ]] || { seen[gate:$1]=1; gate_selection+=("$1"); }; }
+add_gate() { has_seen "gate:$1" || { seen+=("gate:$1"); gate_selection+=("$1"); }; }
 if [[ -n "${NM_CHANGED_FILES:-}" && -n "${NM_CHANGED_FILES//[[:space:]]/}" ]]; then
   run_all=0
   all_mapped=1
@@ -263,19 +270,21 @@ step "parity/compiler/check_*.py against the reference compiler"
 pin="$(tr -d '[:space:]' < parity/reference-revision)"
 [[ "$pin" =~ ^[0-9a-f]{40}$ ]] || fail "parity/reference-revision does not hold a full commit SHA"
 ref="$work/noisemaker"
-git clone --quiet --filter=blob:none --no-checkout "$REFERENCE_URL" "$ref"
-ref_sha="$(git -C "$ref" rev-parse --verify --quiet "$pin^{commit}")" \
-  || fail "reference revision $pin (parity/reference-revision) not found in $REFERENCE_URL"
-git -C "$ref" -c advice.detachedHead=false checkout --quiet --detach "$ref_sha"
+ref_sha="$("$vpy" tools/test_bootstrap.py reference "$REFERENCE_URL" "$pin" "$ref")" \
+  || fail "cannot authenticate reference revision $pin from $REFERENCE_URL"
 printf 'reference: %s at %s (pin %s)\n' "$REFERENCE_URL" "$ref_sha" "$pin"
 
 # The goldens are written into a scratch copy so the checkout's parity/out/
 # is left alone.
 gates="$work/gates"
 mkdir -p "$gates/blender" "$gates/parity"
+for input in blender/noisemaker_blender tools parity/compiler parity/corpus; do
+  "$vpy" tools/test_bootstrap.py check-tree "$input"
+done
 cp -R blender/noisemaker_blender "$gates/blender/"
 cp -R tools "$gates/"
 cp -R parity/compiler parity/corpus parity/regen-compiler-goldens.sh "$gates/parity/"
+"$vpy" tools/test_bootstrap.py check-tree "$gates"
 NM_REFERENCE_ROOT="$ref" bash "$gates/parity/regen-compiler-goldens.sh" | tail -n 1
 
 gate_list=(lex parse compile expanded graph)

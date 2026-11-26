@@ -57,6 +57,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "blender" / "harness"))
 import pngread  # noqa: E402
 import fixture_inputs  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools"))
+from test_bootstrap import verify_reference  # noqa: E402
 
 MANIFESTS = [ROOT / "parity" / "3d-expected.txt", ROOT / "parity" / "artistic-expected.txt"]
 POLICIES = [ROOT / "parity" / "3d-near-policy.json", ROOT / "parity" / "artistic-near-policy.json"]
@@ -401,14 +403,11 @@ def generate_goldens(missing, gold_dir, ref_root, timeout, protocol):
     if not node or not shutil.which(chrome):
         return "node or chromium not available"
     pairs = [f"{n}={ROOT / 'parity' / 'programs' / f'{n}.dsl'}" for n in missing]
-    try:
-        ref_rev = subprocess.run(["git", "-C", str(ref_root), "rev-parse", "HEAD"],
-                                 capture_output=True, text=True, timeout=30).stdout.strip() or None
-    except Exception:
-        ref_rev = None
     pin = pinned_revision()
-    if ref_rev != pin:
-        return "NM_REFERENCE_ROOT is at %s, not the pinned revision %s" % (ref_rev, pin)
+    try:
+        ref_rev = verify_reference(ref_root, pin)
+    except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as error:
+        return "Cannot authenticate NM_REFERENCE_ROOT at %s: %s" % (pin, error)
     procs = ensure_golden_infra(ref_root, serve_port, cdp_port, chrome)
     try:
         width, height = protocol_dimensions(protocol)
