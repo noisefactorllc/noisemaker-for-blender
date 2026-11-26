@@ -1163,6 +1163,8 @@ class FrameStepper:
             return False
         tt = (self.time + f * self.timestep) % 1.0 if self.timestep else self.time
         dt = 0.0 if (self.prev_tt is None) else (tt - self.prev_tt)
+        if dt < 0:
+            dt += 1
         self.prev_tt = tt
         backend = self.backend
         defaults = self.defaults
@@ -1214,8 +1216,8 @@ def render(backend, graph, time=0.25, frames=1, timestep=0.0, samples=None,
            sink_manager=None, external_state=None):
     """Run `frames` frames, matching the reference golden harness stepping EXACTLY
     (parity/batch-golden.mjs): per frame `tt = (time + i*timestep) % 1`, and engine
-    deltaTime = 0 on frame 0 else (tt - tt_prev) — the `lastTime>0` guard, raw diff
-    (can go negative at the time wrap, which the speed-driven sims ignore).
+    deltaTime is zero on the first frame; subsequent differences wrap through
+    the normalized loop boundary.
 
     - timestep=0  -> fixed-time deterministic render (deltaTime stays 0): single-pass
       effects and N-frames-from-zero (the 8-frame points/agents convention).

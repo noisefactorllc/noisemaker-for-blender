@@ -43,7 +43,7 @@ stdlib-only and self-contained: imports only sibling compiler modules + stdlib.
 from __future__ import annotations
 
 from .compile import compile
-from .expander import expand
+from .expander import expand, _truthy
 from .resources import allocate_resources
 from . import registry
 
@@ -148,7 +148,7 @@ def extract_texture_specs(passes, options, texture_specs=None):
             "height": _or(effect_spec.get("height"), "screen"),
             "format": _or(effect_spec.get("format"), "rgba16f"),
             # copyDst required so chain-handoff/external writes can target it.
-            "usage": ["render", "sample", "copySrc", "copyDst"],
+            "usage": effect_spec["usage"] if _truthy(effect_spec.get("usage")) else ["render", "sample", "copySrc", "copyDst"],
         }
         # Handle 3D textures.
         if effect_spec.get("is3D"):
@@ -174,6 +174,20 @@ def extract_texture_specs(passes, options, texture_specs=None):
                     "format": "rgba16f",
                     "usage": ["render", "sample", "copySrc", "copyDst"],
                 }
+
+    for pass_ in passes:
+        for tex_id in (pass_.get("storageTextures") or {}).values():
+            if not isinstance(tex_id, str) or tex_id.startswith("global_"):
+                continue
+            if tex_id in textures:
+                spec = textures[tex_id]
+                if "storage" not in spec["usage"]:
+                    spec["usage"] = [*spec["usage"], "storage"]
+                continue
+            textures[tex_id] = {
+                "width": "screen", "height": "screen", "format": "rgba16f",
+                "usage": ["render", "sample", "storage", "copySrc", "copyDst"],
+            }
 
     return textures
 
@@ -366,10 +380,13 @@ def _normalize_pass(pass_, programs, define_map):
         # the former stays inert (no `shaders` key on the effect JSONs).
         "defines": {} if is_blit else {**_defines_for_pass(pass_, programs), **_defines_from_program_name(pass_)},
         "inputs": pass_.get("inputs") or {},
-        "outputs": pass_.get("outputs") or {},
+        "outputs": pass_.get("outputs") or pass_.get("storageTextures") or {},
         "uniforms": dict(pass_.get("uniforms") or {}),
         "uniformSpecs": pass_.get("uniformSpecs") or {},
     }
+
+    if "storageTextures" in pass_:
+        out["storageTextures"] = pass_["storageTextures"]
 
     # Promote compile-time define globals (noise.type=2 -> NOISE_TYPE:2) from
     # uniforms into defines by DEFINE name.

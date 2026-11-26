@@ -149,6 +149,9 @@ class PortableRegistrationTests(unittest.TestCase):
             definition("portableInvalid", {"globals": {"mode": {"type": "int", "choices": "abc"}}}),
             definition("portableInvalid", {"globals": {"mode": {"type": "int", "choices": {"Broken": {}}}}}),
         ]
+        for field in ("outputTex", "outputXyz", "outputVel", "outputRgba"):
+            for value in (42, None, "", " ", {}):
+                invalid.append(definition("portableInvalid", {field: value}))
         for raw in invalid:
             with self.subTest(raw=raw):
                 with self.assertRaisesRegex(PortableEffectError, "Portable"):

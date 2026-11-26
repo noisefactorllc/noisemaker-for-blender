@@ -5,6 +5,9 @@
   "tags": [
     "sim"
   ],
+  "outputXyz": "global_xyz",
+  "outputVel": "global_vel",
+  "outputRgba": "global_rgba",
   "globals": {
     "diffuseTex": {
       "type": "surface",
@@ -117,9 +120,9 @@
         "velTex": "global_vel",
         "rgbaTex": "global_rgba",
         "diffuseTex": "diffuseTex",
-        "fieldTex": "global_lenia_field",
         "baseColorTex": "global_lenia_base_color",
-        "inputTex": "inputTex"
+        "inputTex": "inputTex",
+        "fieldTex": "global_lenia_field"
       },
       "outputs": {
         "outXYZ": "global_xyz",
@@ -149,16 +152,6 @@
     }
   ],
   "textures": {
-    "global_lenia_density": {
-      "width": "50%",
-      "height": "50%",
-      "format": "rgba16f"
-    },
-    "global_lenia_field": {
-      "width": "50%",
-      "height": "50%",
-      "format": "rgba16f"
-    },
     "global_lenia_base_color": {
       "width": {
         "param": "stateSize",
@@ -171,6 +164,16 @@
         "default": 256
       },
       "format": "rgba8"
+    },
+    "global_lenia_density": {
+      "width": "50%",
+      "height": "50%",
+      "format": "rgba16f"
+    },
+    "global_lenia_field": {
+      "width": "50%",
+      "height": "50%",
+      "format": "rgba16f"
     }
   }
 }

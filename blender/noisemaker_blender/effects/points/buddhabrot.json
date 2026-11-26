@@ -7,6 +7,9 @@
     "sim"
   ],
   "defaultProgram": "search points, synth, render\n\nperlin()\n  .pointsEmit(stateSize: 512)\n  .buddhabrot()\n  .pointsRender(intensity: 99)\n  .write(o0)\n\nrender(o0)",
+  "outputXyz": "global_xyz",
+  "outputVel": "global_vel",
+  "outputRgba": "global_rgba",
   "globals": {
     "diffuseTex": {
       "type": "surface",
@@ -116,17 +119,6 @@
     }
   ],
   "textures": {
-    "global_zState": {
-      "width": {
-        "param": "stateSize",
-        "paramDefault": 512
-      },
-      "height": {
-        "param": "stateSize",
-        "paramDefault": 512
-      },
-      "format": "rgba32float"
-    },
     "global_buddhabrot_base_color": {
       "width": {
         "param": "stateSize",
@@ -139,6 +131,17 @@
         "default": 256
       },
       "format": "rgba8"
+    },
+    "global_zState": {
+      "width": {
+        "param": "stateSize",
+        "paramDefault": 512
+      },
+      "height": {
+        "param": "stateSize",
+        "paramDefault": 512
+      },
+      "format": "rgba32float"
     }
   }
 }

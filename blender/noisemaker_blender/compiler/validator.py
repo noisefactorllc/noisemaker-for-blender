@@ -258,6 +258,12 @@ def validate(ast):
                 return True
         return False
 
+    def keep_element_id(node, args):
+        if (isinstance(node, dict) and node.get("type") == "String"
+                and "_varRef" not in node
+                and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", node.get("value", ""))):
+            args["_id"] = node["value"]
+
     def resolve_call(call):
         name = call.get("name")
         if name in symbols:
@@ -277,6 +283,12 @@ def validate(ast):
                     for k, v in call["kwargs"].items():
                         merged_kw[k] = v
                 merged = {"type": "Call", "name": val.get("name"), "args": merged_args}
+                if merged_kw and merged_args:
+                    has_bound_keyword = any(k not in ("_skip", "_id") for k in (val.get("kwargs") or {}))
+                    merged["positionalsByIndex"] = {
+                        "colorSplatLimit": (val.get("positionalsByIndex", {}).get("colorSplatLimit", len(val.get("args") or []))
+                                            if has_bound_keyword else len(merged_args)),
+                    }
                 location = call.get("loc")
                 if location is None:
                     location = val.get("loc")
@@ -362,24 +374,14 @@ def validate(ast):
                     mapped[field] = substitute(node[field], resolving)
             return mapped
         if t == "Chain":
-            mapped = []
-            for c in node["chain"]:
-                mapped_args = [substitute(a, resolving) for a in (c.get("args") or [])]
-                mapped_call = {"type": "Call", "name": c.get("name"), "args": mapped_args}
-                if c.get("loc") is not None:
-                    mapped_call["loc"] = c["loc"]
-                if c.get("kwargs"):
-                    kw = {}
-                    for k, v in c["kwargs"].items():
-                        kw[k] = substitute(v, resolving)
-                    mapped_call["kwargs"] = kw
-                mapped.append(resolve_call(mapped_call))
-            return {"type": "Chain", "chain": mapped}
+            return {"type": "Chain", "chain": [substitute(entry, resolving) for entry in node["chain"]]}
         if t == "Call":
             mapped_args = [substitute(a, resolving) for a in (node.get("args") or [])]
             mapped_call = {"type": "Call", "name": node.get("name"), "args": mapped_args}
             if node.get("loc") is not None:
                 mapped_call["loc"] = node["loc"]
+            if node.get("positionalsByIndex"):
+                mapped_call["positionalsByIndex"] = node["positionalsByIndex"]
             if node.get("kwargs"):
                 kw = {}
                 for k, v in node["kwargs"].items():
@@ -601,6 +603,7 @@ def validate(ast):
                     step_args = {"tex": surface}
                     if original.get("_skip") is True:
                         step_args["_skip"] = True
+                    keep_element_id(original.get("_id"), step_args)
                     step = {"op": "_read", "args": step_args, "from": None, "temp": idx, "builtin": True}
                     if original.get("leadingComments"):
                         step["leadingComments"] = original["leadingComments"]
@@ -636,6 +639,7 @@ def validate(ast):
                     step_args = {"tex3d": tex3d, "geo": geo}
                     if original.get("_skip") is True:
                         step_args["_skip"] = True
+                    keep_element_id(original.get("_id"), step_args)
                     step = {"op": "_read3d", "args": step_args, "from": None, "temp": idx, "builtin": True}
                     if original.get("leadingComments"):
                         step["leadingComments"] = original["leadingComments"]
@@ -653,7 +657,9 @@ def validate(ast):
                         continue
                     idx = temp_index[0]
                     temp_index[0] += 1
-                    step = {"op": "_write", "args": {"tex": surface}, "from": current, "temp": idx, "builtin": True}
+                    step_args = {"tex": surface}
+                    keep_element_id(original.get("_id"), step_args)
+                    step = {"op": "_write", "args": step_args, "from": current, "temp": idx, "builtin": True}
                     if original.get("leadingComments"):
                         step["leadingComments"] = original["leadingComments"]
                     chain.append(step)
@@ -680,7 +686,9 @@ def validate(ast):
                         continue
                     idx = temp_index[0]
                     temp_index[0] += 1
-                    step = {"op": "_write3d", "args": {"tex3d": tex3d, "geo": geo}, "from": current, "temp": idx, "builtin": True}
+                    step_args = {"tex3d": tex3d, "geo": geo}
+                    keep_element_id(original.get("_id"), step_args)
+                    step = {"op": "_write3d", "args": step_args, "from": current, "temp": idx, "builtin": True}
                     if original.get("leadingComments"):
                         step["leadingComments"] = original["leadingComments"]
                     chain.append(step)
@@ -807,6 +815,10 @@ def validate(ast):
                     process_chain, push_diag, resolve_enum, substitute, get_starter_info,
                     symbols,
                 )
+
+                if kw and "_id" in kw:
+                    keep_element_id(kw["_id"], args)
+                    seen.add("_id")
 
                 if kw and "_skip" in kw:
                     skip_node = kw["_skip"]
@@ -974,12 +986,26 @@ def _resolve_args(
 
     i = 0
     n = len(spec_args)
+    call_args = call.get("args") or []
+    color_splat_limit = call.get("positionalsByIndex", {}).get("colorSplatLimit", len(call_args))
+    splat_values = {}
     while i < n:
         def_ = spec_args[i]
+        arg_key = def_["name"]
+        if (i < color_splat_limit and def_.get("type") != "color"
+                and arg_key == "r" and i + 2 < n
+                and spec_args[i + 1].get("name") == "g"
+                and spec_args[i + 2].get("name") == "b"):
+            positional = substitute(call_args[i]) if i < len(call_args) else None
+            if positional and positional.get("type") == "Color":
+                splat_values = dict(zip(("r", "g", "b"), positional["value"]))
+        if not (kw and arg_key in kw) and arg_key in splat_values:
+            args[arg_key] = splat_values[arg_key]
+            i += 1
+            continue
         if kw and kw.get(def_["name"], _UNDEF) is not _UNDEF:
             node = kw[def_["name"]]
         else:
-            call_args = call.get("args") or []
             node = call_args[i] if i < len(call_args) else _UNDEF
         node = substitute(node) if node is not _UNDEF else _UNDEF
         if node is _UNDEF:
@@ -989,25 +1015,14 @@ def _resolve_args(
         def_type = def_.get("type")
         default = def_.get("default")
 
-        # Positional Color spread into r/g/b (only when no kwargs).
-        if (
-            not kw
-            and node
-            and node.get("type") == "Color"
-            and def_type != "color"
-            and def_["name"] == "r"
-            and i + 1 < n and spec_args[i + 1].get("name") == "g"
-            and i + 2 < n and spec_args[i + 2].get("name") == "b"
-        ):
-            r, g, b = node["value"][0], node["value"][1], node["value"][2]
-            args[arg_key] = r
-            args[spec_args[i + 1]["name"]] = g
-            args[spec_args[i + 2]["name"]] = b
-            i += 3
-            continue
-
         if kw and kw.get(def_["name"], _UNDEF) is not _UNDEF:
             seen.add(def_["name"])
+
+        if node and node.get("type") == "Chain" and any(entry.get("type") != "Call" for entry in node["chain"]):
+            push_diag("S001", node["chain"][0], "Chain for argument '%s' in %s() may contain only effect calls" % (arg_key, call.get("name")))
+            args[arg_key] = None
+            i += 1
+            continue
 
         # Array literal -> numeric array (additive input form).
         if node and node.get("type") == "ArrayLiteral":

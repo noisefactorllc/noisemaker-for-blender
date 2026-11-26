@@ -637,6 +637,8 @@ class GpuBackend:
         if not b:
             return 'NONE'
         if isinstance(b, list):
+            if len(b) == 2 and b[0] in ('ONE', 'one') and b[1] in ('ZERO', 'zero'):
+                return 'NONE'
             # Per-pass array blend [src, dst]. Blender's gpu module exposes presets only, so we
             # map the factor pairs the effects actually use to the matching preset:
             #   ['ONE','ONE']                 -> ADDITIVE_PREMULT (additive deposit)

@@ -32,6 +32,29 @@ def run():
         program = api.compile('search synth\nnoise(seed: 7).write(o0)\nrender(o0)')
         request = api.FrameRequest(frame=6, origin_frame=0, fps=24, loop_seconds=1)
         shaders = str(BLENDER / 'noisemaker_blender' / 'shaders' / 'effects')
+        overwrite = api.compile('search synth\nsolid(color: [1, 1, 1], alpha: 0.5).write(o0)\nrender(o0)').graph()
+        draw = next(p for p in overwrite.passes if p.get('func') == 'solid')
+        draw['outputs'] = {'color': 'global_o0'}
+        overwrite.passes = [draw]
+        blend_backend = GpuBackend(shaders, 8)
+        try:
+            blend_backend.setup(overwrite, pipeline.collect_default_uniforms(overwrite))
+            for blend, expected_pixel in [
+                    (['ONE', 'ONE'], [.75, 1., 1.5, 1.5]),
+                    (['ONE', 'ZERO'], [.5, .5, .5, .5]),
+                    (['one', 'zero'], [.5, .5, .5, .5])]:
+                blend_backend.frame_begin()
+                target = blend_backend._write('global_o0', overwrite)
+                with target.bind():
+                    gpu.state.active_framebuffer_get().clear(color=(.25, .5, 1., 1.))
+                draw['blend'] = blend
+                blend_backend.execute(draw, overwrite, pipeline.default_engine(8, .25, 0))
+                blend_backend.swap_after_write('global_o0')
+                pixels = blend_backend.read_surface_float('o0')
+                np.testing.assert_allclose(pixels, np.broadcast_to(expected_pixel, pixels.shape), atol=1e-6)
+            result['checks'].append('blend_overwrite_pixels_replace_nonzero_destination')
+        finally:
+            blend_backend.free()
         legacy = GpuBackend(shaders, 64)
         try:
             expected = pipeline.render(legacy, program.graph(), time=.25, frames=1)

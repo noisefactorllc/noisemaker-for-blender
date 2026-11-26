@@ -244,10 +244,12 @@ function normalizePass (pass, programs, defineMap) {
     program: pass.program ?? null,
     defines: isBlit ? {} : definesForPass(pass, programs),
     inputs: pass.inputs || {},
-    outputs: pass.outputs || {},
+    outputs: pass.outputs && Object.keys(pass.outputs).length ? pass.outputs : (pass.storageTextures || {}),
     uniforms: { ...(pass.uniforms || {}) },
     uniformSpecs: pass.uniformSpecs || {}
   }
+
+  if (pass.storageTextures !== undefined) out.storageTextures = pass.storageTextures
 
   // Promote compile-time define globals (e.g. noise.type=10 -> NOISE_TYPE:10)
   // from uniforms into defines by their DEFINE name. The HLSL port binds these by

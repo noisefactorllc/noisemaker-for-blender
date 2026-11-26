@@ -477,6 +477,9 @@ def _validate_portable(definition) -> str:
     # built-in catalog re-gained the field (effect-validator accepts it there).
     if "paramAliases" in definition:
         _fail("paramAliases is no longer supported")
+    for field in ("outputTex", "outputXyz", "outputVel", "outputRgba"):
+        if field in definition and not _has_source(definition[field]):
+            _fail("%s must be a nonempty texture name" % field)
     if registry.get_effect("user.%s" % func) or registry.get_effect("user/%s" % func):
         _fail("user.%s is already registered" % func)
     return func

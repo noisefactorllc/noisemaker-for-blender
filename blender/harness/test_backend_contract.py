@@ -15,6 +15,11 @@ import noisemaker_blender.backend.gpu_backend as _gb
 
 
 backend = GpuBackend.__new__(GpuBackend)
+for blend in (["ONE", "ZERO"], ["one", "zero"], ["ONE", "zero"]):
+    assert backend._blend_mode({"blend": blend}) == "NONE"
+assert backend._blend_mode({"blend": ["ONE", "ONE"]}) == "ADDITIVE_PREMULT"
+assert backend._blend_mode({"blend": ["ONE", "ONE_MINUS_SRC_ALPHA"]}) == "ALPHA_PREMULT"
+print("BACKEND CONTRACT PASS — overwrite blend factors select the NONE preset")
 assert backend.create_frame_export_queue(slots=3) is None
 print("BACKEND CONTRACT PASS — asynchronous frame export is explicitly unsupported")
 

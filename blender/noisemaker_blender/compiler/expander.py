@@ -15,15 +15,6 @@ definitions from :mod:`noisemaker_blender.compiler.registry`.
 
 Parity notes (intentional, do NOT "fix"):
 
-* The reference ``Effect`` constructor silently drops ``outputXyz``/``outputVel``/
-  ``outputRgba``/``outputTex``/``externalTexture`` for ``new Effect({...})``
-  effects, so the registry's ``points/*`` agent defs OMIT those fields. The
-  ``effectDef.outputXyz`` branches below are therefore DEAD for those effects;
-  agent/particle state propagates via the pass ``outputs`` (e.g. ``global_xyz``)
-  plus the ``createsParticleTextures = effectDef.textures.global_xyz`` scoping
-  path (the ``_node_<n>`` / ``_chain_<n>`` suffixing). This is reproduced exactly
-  given the omitted fields -- the dead branches are kept verbatim for fidelity.
-
 * In this addon, the normalized effect-definition JSON files carry NO ``shaders``
   key (the GLSL/WGSL source lives in the transpiled shaders, not in the compiler
   metadata). The ``shadersSource`` program-collection branch is therefore inert
@@ -698,6 +689,8 @@ def expand(compilation_result, options=None):
             if isinstance(step_args, dict):
                 for arg_name, arg in step_args.items():
                     is_object_arg = _is_object_arg(arg)
+                    if arg_name == "_id":
+                        continue
                     if _is_texture_arg(arg):
                         continue
 
@@ -753,7 +746,7 @@ def expand(compilation_result, options=None):
                     "blend": pass_def.get("blend", _UNDEFINED),
                     "workgroups": pass_def.get("workgroups", _UNDEFINED),
                     "storageBuffers": pass_def.get("storageBuffers", _UNDEFINED),
-                    "storageTextures": pass_def.get("storageTextures", _UNDEFINED),
+                    "storageTextures": {} if pass_def.get("storageTextures") is not None else _UNDEFINED,
                     # Pass labels and per-pass execution controls are
                     # copied verbatim. `name`/`type` stay queryable metadata
                     # (backend shader-kind dispatch remains source-derived);
@@ -824,6 +817,8 @@ def expand(compilation_result, options=None):
                 if isinstance(step_args, dict):
                     for arg_name, arg in step_args.items():
                         is_object_arg = _is_object_arg(arg)
+                        if arg_name == "_id":
+                            continue
                         if _is_texture_arg(arg):
                             continue
 
@@ -971,6 +966,44 @@ def expand(compilation_result, options=None):
                             pass_obj["inputs"][uniform_name] = "%s_out" % node_id
                         else:
                             pass_obj["inputs"][uniform_name] = "%s_%s" % (node_id, tex_ref)
+
+                # Storage targets use the same virtual namespace as sampled inputs.
+                if pass_def.get("storageTextures") is not None:
+                    for binding, tex_ref in pass_def["storageTextures"].items():
+                        if tex_ref == "outputTex":
+                            is_last_step = step is chain[-1]
+                            is_last_pass = i == len(effect_passes) - 1
+                            step_index = next(j for j, entry in enumerate(chain) if entry is step)
+                            next_step = chain[step_index + 1] if step_index + 1 < len(chain) else {}
+                            inline_write = (next_step.get("args", {}).get("tex")
+                                            if is_last_pass and next_step.get("builtin") and next_step.get("op") == "_write" else None)
+                            if inline_write and inline_write.get("name") != "none":
+                                prefix = "feedback" if inline_write.get("kind") == "feedback" else "global"
+                                virtual_tex = "%s_%s" % (prefix, inline_write["name"])
+                                last_written_surface = inline_write["name"]
+                            elif is_last_step and is_last_pass and plan.get("write"):
+                                pw = plan["write"]
+                                out_name = pw["name"] if isinstance(pw, dict) else pw
+                                out_kind = pw.get("kind") if isinstance(pw, dict) else None
+                                prefix = "feedback" if out_kind == "feedback" else "global"
+                                virtual_tex = "%s_%s" % (prefix, out_name)
+                                last_written_surface = out_name
+                            else:
+                                virtual_tex = "%s_out" % node_id
+                            texture_map["%s_out" % node_id] = virtual_tex
+                        elif tex_ref.startswith("global_"):
+                            virtual_tex = scope_chain_tex(tex_ref)
+                        else:
+                            virtual_tex = "%s_%s" % (node_id, tex_ref)
+                            storage_spec = texture_specs.get(virtual_tex)
+                            if storage_spec is not None:
+                                usage = storage_spec.get("usage")
+                                if not _truthy(usage):
+                                    usage = ["render", "sample", "copySrc", "copyDst"]
+                                storage_spec["usage"] = list(dict.fromkeys([*usage, "storage"]))
+                        pass_obj["storageTextures"][binding] = virtual_tex
+                    if pass_def.get("outputs") is None:
+                        del pass_obj["outputs"]
 
                 # Map Outputs.
                 pass_def_outputs = pass_def.get("outputs")

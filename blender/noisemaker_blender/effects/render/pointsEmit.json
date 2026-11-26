@@ -5,6 +5,9 @@
   "tags": [
     "agents"
   ],
+  "outputXyz": "global_xyz",
+  "outputVel": "global_vel",
+  "outputRgba": "global_rgba",
   "globals": {
     "stateSize": {
       "type": "int",

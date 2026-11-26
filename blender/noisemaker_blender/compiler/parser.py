@@ -911,12 +911,16 @@ def parse(tokens, options=None):
                     f"write() requires an explicit surface reference (e.g., o0, o1, xyz0, vel0, rgba0, mesh0, none) {loc_suffix(peek())}",
                     peek(),
                 )
+            element_id = parse_write_id()
             expect("RPAREN", "Expect ')'")
-            return {
+            node = {
                 "type": "Write",
                 "surface": surface,
                 "loc": {"line": token_line, "col": token_col},
             }
+            if element_id is not None:
+                node["_id"] = element_id
+            return node
         elif token_type == "WRITE3D":
             advance()  # consume 'write3d'
             expect("LPAREN", "Expect '('")
@@ -953,19 +957,34 @@ def parse(tokens, options=None):
                     f"Expected geo reference in write3d() {loc_suffix(peek())}",
                     peek(),
                 )
+            element_id = parse_write_id()
             expect("RPAREN", "Expect ')'")
-            return {
+            node = {
                 "type": "Write3D",
                 "tex3d": tex3d,
                 "geo": geo,
                 "loc": {"line": token_line, "col": token_col},
             }
+            if element_id is not None:
+                node["_id"] = element_id
+            return node
         loc_tok = {"line": token_line, "col": token_col}
         raise parser_error(
             "P005",
             f"Expected write or write3d {loc_suffix(loc_tok)}",
             loc_tok,
         )
+
+    def parse_write_id():
+        key = tok_at(state["current"] + 1) or {}
+        colon = tok_at(state["current"] + 2) or {}
+        if (peek()["type"] != "COMMA" or key.get("type") != "IDENT"
+                or key.get("lexeme") != "_id" or colon.get("type") != "COLON"):
+            return None
+        advance()
+        kwargs = {}
+        parse_kwarg(kwargs)
+        return kwargs["_id"]
 
     def parse_subchain_call():
         tok = peek()
@@ -1175,6 +1194,8 @@ def parse(tokens, options=None):
             skip = kwargs.get("_skip")
             if skip and skip.get("type") == "Boolean" and skip.get("value") is True:
                 node["_skip"] = True
+            if "_id" in kwargs:
+                node["_id"] = kwargs["_id"]
             return node
         # read3d() reads from tex3d (and optionally geo) surfaces.
         if name == "read3d":
@@ -1189,6 +1210,8 @@ def parse(tokens, options=None):
             skip = kwargs.get("_skip")
             if skip and skip.get("type") == "Boolean" and skip.get("value") is True:
                 node["_skip"] = True
+            if "_id" in kwargs:
+                node["_id"] = kwargs["_id"]
             return node
         return call
 
