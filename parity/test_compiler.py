@@ -63,9 +63,10 @@ class ChoiceNameShadowingTests(unittest.TestCase):
 
 
 class VecComponentCallTests(unittest.TestCase):
-    """vec2(x, y) on a vec2 parameter and vec4(x, y, z, w) on a vec4-shaped
-    color parameter give the written components (upstream bf66e1b8). Any other
-    form, including a wrong component count, gives S002 and the default."""
+    """vec2(x, y) on a vec2 parameter and vec3(...)/vec4(...) on a color
+    parameter give the written components (upstream bf66e1b8; 688794ac). Any
+    other form, including a wrong component count or keyword arguments, gives
+    S002 and the default."""
 
     def test_vec2_on_vec2_parameter_sets_the_components(self):
         result = compile("search synth\nmedia(imageSize: vec2(640, 480)).write(o0)\nrender(o0)")
@@ -85,13 +86,45 @@ class VecComponentCallTests(unittest.TestCase):
         args = result["plans"][0]["chain"][0]["args"]
         self.assertEqual(args["imageSize"], [1024, 1024])
 
-    def test_vec4_on_a_color_parameter_still_takes_the_color_branch(self):
-        # A color parameter keeps the S002-plus-default behavior; the vec4
-        # branch only applies when the default holds four components.
+    def test_vec4_on_a_color_parameter_sets_the_components(self):
+        # Color constructors preserve the supplied components independently of
+        # the parameter's default length (upstream 688794ac).
         result = compile("search synth\nremap(bgColor: vec4(0.2, 0.4, 0.6, 1.0)).write(o0)\nrender(o0)")
-        self.assertEqual([d["code"] for d in result.get("diagnostics") or []], ["S002"])
+        self.assertEqual(result.get("diagnostics"), [])
         args = result["plans"][0]["chain"][0]["args"]
-        self.assertEqual(args["bgColor"], [0, 0, 0])
+        self.assertEqual(args["bgColor"], [0.2, 0.4, 0.6, 1.0])
+
+    def test_vec3_on_a_color_parameter_sets_the_components(self):
+        result = compile("search synth\nsolid(color: vec3(0.3, 0.2, 0.25)).write(o0)\nrender(o0)")
+        self.assertEqual(result.get("diagnostics"), [])
+        args = result["plans"][0]["chain"][0]["args"]
+        self.assertEqual(args["color"], [0.3, 0.2, 0.25])
+
+    def test_a_color_array_literal_and_its_constructor_agree(self):
+        for color in ("[0.3, 0.2, 0.25]", "vec3(0.3, 0.2, 0.25)"):
+            result = compile("search synth\nsolid(color: %s).write(o0)\nrender(o0)" % color)
+            self.assertEqual(result.get("diagnostics"), [], color)
+            self.assertEqual(
+                result["plans"][0]["chain"][0]["args"]["color"], [0.3, 0.2, 0.25], color)
+
+    def test_vec4_on_a_color_parameter_keeps_four_components(self):
+        result = compile("search synth\nsolid(color: vec4(0.3, 0.2, 0.25, 0.4)).write(o0)\nrender(o0)")
+        self.assertEqual(result.get("diagnostics"), [])
+        self.assertEqual(result["plans"][0]["chain"][0]["args"]["color"], [0.3, 0.2, 0.25, 0.4])
+
+    def test_malformed_color_constructors_take_the_default_branch(self):
+        for color in ("vec2(0.3, 0.2)", "vec3(0.3, 0.2)", "vec3(0.3, 0.2, 0.25, 0.4)",
+                      "vec4(0.3, 0.2, 0.25)", "vec4(0.3, 0.2, 0.25, 0.4, 1)"):
+            result = compile("search synth\nsolid(color: %s).write(o0)\nrender(o0)" % color)
+            self.assertEqual([d["code"] for d in result.get("diagnostics") or []], ["S002"], color)
+            self.assertEqual(
+                result["plans"][0]["chain"][0]["args"]["color"], [0.5, 0.5, 0.5], color)
+
+    def test_malformed_color_constructors_fall_back_to_the_effect_default(self):
+        result = compile(
+            "search synth, filter\nsolid().tint(color: vec4(0.3, 0.2, 0.25)).write(o0)\nrender(o0)")
+        self.assertEqual([d["code"] for d in result.get("diagnostics") or []], ["S002"])
+        self.assertEqual(result["plans"][0]["chain"][1]["args"]["color"], [1, 1, 1])
 
 
 class StatementOrderTests(unittest.TestCase):
