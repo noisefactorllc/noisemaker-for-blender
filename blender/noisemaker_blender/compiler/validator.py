@@ -1117,9 +1117,9 @@ def _resolve_color(def_, node, args, arg_key, call, push_diag):
         push_diag("S001", node, "String literal not allowed for color parameter '%s'" % def_["name"])
         args[arg_key] = default
         return
-    # vec3(...)/vec4(...) constructors preserve the supplied components,
-    # independently of the parameter's default length. Invalid constructor
-    # arity, or keyword arguments, takes the branches below.
+    # vec4(x, y, z, w) on a color parameter whose default keeps four
+    # components (the loader registers vec4 parameters as `color`).
+    # Any other form, including a wrong component count, falls through.
     call_name = node.get("name") if node and node.get("type") == "Call" else None
     if (
         call_name in ("vec3", "vec4")
@@ -1139,7 +1139,7 @@ def _resolve_color(def_, node, args, arg_key, call, push_diag):
 
 
 def _vec_call_components(node, def_, call, push_diag):
-    """Number components of a vec2()/vec3()/vec4() call; a non-Number gives S002 and 0."""
+    """Number components of a vec2()/vec4() call; a non-Number gives S002 and 0."""
     value = []
     for arg in node["args"]:
         if arg.get("type") == "Number":

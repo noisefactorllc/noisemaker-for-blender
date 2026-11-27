@@ -126,6 +126,19 @@ class VecComponentCallTests(unittest.TestCase):
         self.assertEqual([d["code"] for d in result.get("diagnostics") or []], ["S002"])
         self.assertEqual(result["plans"][0]["chain"][1]["args"]["color"], [1, 1, 1])
 
+    def test_kwargs_on_a_correctly_sized_color_constructor_fall_back(self):
+        for size, components in ((3, "0.3, 0.2, 0.25"), (4, "0.3, 0.2, 0.25, 0.4")):
+            with self.subTest(size=size):
+                result = compile(
+                    "search synth\n"
+                    "let c = vec%d(pad: 1)\n"
+                    "solid(color: c(%s)).write(o0)\n"
+                    "render(o0)" % (size, components))
+                self.assertEqual(
+                    [d["code"] for d in result.get("diagnostics") or []], ["S002"])
+                self.assertEqual(
+                    result["plans"][0]["chain"][0]["args"]["color"], [0.5, 0.5, 0.5])
+
 
 class StatementOrderTests(unittest.TestCase):
     """Upstream 9cc041d0 (GAP-011): lets are declared in statement order. A
